@@ -83,7 +83,7 @@ This information is used throughout the semester for communication, grading, and
 |:------:|:---------:|:----------:|:---------------:|:----------------:|:------:|:---------------:|
 | #1 | | | | | Team Lead | No |
 | #2 | | | | | | No |
-| #3 | | | | | | No |
+| #3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg |  | Yes |
 | #4 | | | | | | No |
 | #5 | | | | | | No |
 | #6 | | | | | | No |
