@@ -81,7 +81,7 @@ This information is used throughout the semester for communication, grading, and
 
 | Student | Full Name | SFSU Email | GitHub Username | Discord Username | Role(s) | Contract Signed |
 |:------:|:---------:|:----------:|:---------------:|:----------------:|:------:|:---------------:|
-| #1 | Caleb Ponce | cponce8@sfsu.edu| calebponce | fusionn8 | Team Lead | No |
+| #1 | Caleb Ponce | cponce8@sfsu.edu| calebponce | fusionn8 | Team Lead | Yes |
 | #2 | | | | | | No |
 | #3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg |  | Yes |
 | #4 | Tyler Morris | tmorris6@sfsu.edu |  tylerrendon| sinigang4463| Unsure  | Yes |
