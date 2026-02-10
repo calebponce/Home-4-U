@@ -84,7 +84,7 @@ This information is used throughout the semester for communication, grading, and
 | #1 | Caleb Ponce | cponce8@sfsu.edu| calebponce | fusionn8 | Team Lead | No |
 | #2 | | | | | | No |
 | #3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg |  | Yes |
-| #4 | | | | | | No |
+| #4 | Tyler Morris | tmorris6@sfsu.edu |  tylerrendon| sinigang4463| Unsure  | Yes |
 | #5 | | | | | | No |
 | #6 | | | | | | No |
 | #7 | | | | | | No |
