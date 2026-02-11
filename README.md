@@ -223,7 +223,7 @@ The work you produce should be something you can confidently discuss in intervie
 
 ## Copyright
 
-© 2026 **Team Alias**. All rights reserved.
+© 2026 Vibecoding for Internship. All rights reserved.
 
 Each team must replace **Team Alias** with their approved team alias. Repositories that do not update this section will be considered incomplete.
 
