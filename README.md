@@ -121,8 +121,8 @@ This URL will be used to test prototypes and the final product.
 
 If the URL does not work at the time of testing, the team will receive **no credit**.
 
-| Vibecoding for Internship | Home4U | Project URL | Decision Making Policy |
-|:----------:|:------------:|:-----------:|:----------------------:|
+| Team Alias | Project Name | Project URL | Decision Making Policy |
+|:Vibecoding for Internship:|:Home4U:|:-----------:|:----------------------:|
 | | | | Consensus |
 
 ---
