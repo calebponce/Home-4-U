@@ -85,7 +85,7 @@ This information is used throughout the semester for communication, grading, and
 | #2 |Mason Lee |mlee82@sfsu.edu |mlee82 |masonl | | Yes |
 | #3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg |  | Yes |
 | #4 | Tyler Morris | tmorris6@sfsu.edu |  tylerrendon| sinigang4463| Unsure  | Yes |
-| #5 | | | | | | No |
+| #5 | Dias Almat | dalmat@sfsu.edu | vincivv | vinciv |  | Yes |
 | #6 | | | | | | No |
 | #7 | | | | | | No |
 
