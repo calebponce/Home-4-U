@@ -13,23 +13,45 @@ The **Technical Writer** or **GitHub Master** is responsible for keeping this do
 
 ## About the Project
 
-Provide a concise description of the application, including:
-- The problem the product solves
-- The target users
-- The core value or unique features of the system
+Home4U is a web-based platform that helps renters and first-time apartment dwellers transform their living spaces into a desired aesthetic style using structured, data-driven recommendations.
 
-This section should be understandable to a technical audience that is unfamiliar with the course.
+Existing inspiration platforms such as Pinterest and Houzz provide visual references but do not translate those references into actionable, personalized guidance based on a user’s actual room and budget.
+
+Home4U solves this gap by:
+
+Allowing users to upload a room image
+
+Identifying key visual elements through AI-assisted tagging
+
+Comparing the room against structured style definitions
+
+Computing a weighted resemblance score
+
+Generating prioritized, budget-aware recommendations
+
+Suggesting curated product items aligned with the selected style
+
+The system focuses on explainability, personalization, and structured decision support rather than simple inspiration browsing.
 
 ---
 
 ## Features
 
-List the main features of the application. Focus on:
-- Core functionality
-- Unique or distinguishing features
-- Major system capabilities
+User authentication and account management
 
-Avoid implementation details here; keep the focus on what the system does.
+Room project creation and management
+
+Image upload and AI-assisted tag suggestion
+
+Multi-style comparison engine
+
+Weighted resemblance scoring algorithm
+
+Budget-aware prioritization of recommendations
+
+Curated product suggestions
+
+Administrative style and weight management
 
 ---
 
@@ -37,13 +59,45 @@ Avoid implementation details here; keep the focus on what the system does.
 
 Describe how to set up the application locally or in a development environment.
 
-Include:
-- Prerequisites
-- Environment setup
-- Installation steps
-- Any required configuration before running the application
+Prerequisites:
 
-If setup instructions are long, link to a separate document.
+Python 3.11.x
+
+Node.js 18+
+
+PostgreSQL 14+
+
+Git
+
+Backend Setup
+cd application/backend
+
+python -m venv .venv
+.venv\Scripts\activate     # Windows
+# source .venv/bin/activate  # Mac/Linux
+
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload
+
+Backend will run at:
+
+http://127.0.0.1:8000
+
+Swagger docs available at:
+
+http://127.0.0.1:8000/docs
+
+Frontend Setup
+cd application/frontend
+
+npm install
+npm run dev
+
+
+Frontend will run at:
+
+http://localhost:5173
 
 ---
 
@@ -51,10 +105,21 @@ If setup instructions are long, link to a separate document.
 
 Explain how to run and use the application once it is installed.
 
-This may include:
-- How to start the application
-- Key workflows
-- Example use cases
+Create an account.
+
+Create a new Room Project.
+
+Upload a room image.
+
+Select one or more target styles.
+
+Confirm or adjust AI-suggested tags.
+
+View resemblance score.
+
+Review prioritized recommendations.
+
+Explore curated product suggestions.
 
 Screenshots or short examples may be added if helpful.
 
@@ -62,10 +127,12 @@ Screenshots or short examples may be added if helpful.
 
 ## Configuration
 
-Document any required or optional configuration:
-- Environment variables
-- Configuration files
-- External services or APIs
+Environment Variables: 
+    Backend requires: 
+    DATABASE_URL=
+    OPENAI_API_KEY=
+    JWT_SECRET_KEY=
+
 
 Do not include secrets or credentials in this file.
 
@@ -73,18 +140,67 @@ Do not include secrets or credentials in this file.
 
 ## Project Structure
 
-Briefly describe the structure of the application directory and the purpose of key folders or files.  
-This helps new contributors and reviewers understand the organization of the codebase.
+application/
+│
+├── backend/
+│   ├── app/
+│   │   ├── api/          # Route definitions
+│   │   ├── models/       # Database models
+│   │   ├── schemas/      # Pydantic schemas
+│   │   ├── services/     # Business logic layer
+│   │   ├── core/         # Configuration and security
+│   │   └── main.py       # FastAPI entry point
+│   └── requirements.txt
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/   # Reusable UI components
+│   │   ├── pages/        # Route-level pages
+│   │   ├── services/     # API calls
+│   │   └── App.jsx
+│   └── package.json
+│
+└── deployment/
+    └── nginx/            # Reverse proxy configuration
+
 
 ---
 
 ## Contributing
 
 Describe how contributors should work with the codebase:
-- Branching strategy
-- Code style expectations
-- Pull request workflow
-- Review requirements
+
+Branching Strategy
+
+master (or main) — stable branch
+
+Feature branches:
+feature/backend-auth
+feature/frontend-upload
+
+Code Standards: 
+
+Python follows PEP 8 guidelines.
+
+Use meaningful variable and function names.
+
+Include docstrings for public functions.
+
+All backend endpoints must use Pydantic schemas.
+
+Frontend components must be modular and reusable
+
+Pull Request Workflow: 
+
+Create feature branch.
+
+Complete feature.
+
+Ensure code runs locally.
+
+Submit pull request.
+
+Require at least one team review before merge.
 
 This section is especially important if the project is continued after the course.
 
@@ -96,16 +212,27 @@ Specify the license under which this project is released, if applicable.
 
 If no license has been chosen yet, state that explicitly.
 
+License to be determined.
+
 ---
 
 ## Credits
 
 List the project contributors and their roles.
 
-This section may include:
-- Team members
-- Advisors or instructors
-- External libraries or frameworks (if appropriate)
+Team 4 — Home4U
+
+Caleb Ponce — Team Lead / System Architecture
+
+Tyler Morris — Backend & AI Integration
+
+Christopher Quach — Frontend Development
+
+Mason Lee — Data Modeling & Scoring Engine
+
+Dias Almat — Technical Writer
+
+Instructor: Jose Ortiz
 
 ---
 
