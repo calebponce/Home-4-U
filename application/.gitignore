@@ -1,16 +1,23 @@
-# Python
+# --- Python ---
 .venv/
+venv/
+env/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
 
-# Node
+# --- Node ---
 node_modules/
 dist/
 
-# Env
+# --- Env files ---
 .env
-.env./*
+.env.*
 
-#OS
+# --- OS ---
 .DS_Store
 Thumbs.db
+
+# --- Project-specific (optional) ---
+application/backend/.venv/
+application/frontend/node_modules/
