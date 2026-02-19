@@ -17,7 +17,4 @@ dist/
 # --- OS ---
 .DS_Store
 Thumbs.db
-
-# --- Project-specific (optional) ---
-application/backend/.venv/
-application/frontend/node_modules/
+.vscode/
