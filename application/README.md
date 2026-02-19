@@ -61,7 +61,7 @@ Describe how to set up the application locally or in a development environment.
 
 Prerequisites:
 
-Python 3.11.x
+Python 3.12.x
 
 Node.js 18+
 
