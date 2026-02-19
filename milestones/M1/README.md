@@ -269,4 +269,4 @@ Decisions made here will carry forward. Treat them as engineering decisions, not
 
 ---
 
-© 2026 **Team Alias**. All rights reserved.
+© 2026 Vibecoding for Internship. All rights reserved.
