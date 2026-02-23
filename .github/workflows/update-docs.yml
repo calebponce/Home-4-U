@@ -1,0 +1,54 @@
+name: Update Project Documentation
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - 'application/**'
+      - 'milestones/**'
+      - 'deployment/**'
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - 'application/**'
+      - 'milestones/**'
+      - 'deployment/**'
+  workflow_dispatch:
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Generate documentation
+        run: |
+          python .github/workflows/generate_docs.py
+      
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: Auto-update project documentation"
+          file_pattern: "PROJECT_DOCUMENTATION.md"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
