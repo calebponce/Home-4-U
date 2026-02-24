@@ -61,9 +61,6 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   └── main.py
-│   │   ├── tests
-│   │   │   ├── api
-│   │   │   └── unit
 │   │   └── requirements.txt
 │   ├── credentials
 │   │   └── README.md
@@ -83,10 +80,9 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── package.json
 │   │   └── vite.config.js
 │   └── README.md
-├── deployment
-│   └── nginx
 ├── milestones
 │   ├── M1
+│   │   ├── Home4U Milestone 1.V2.pdf
 │   │   ├── M1.v1.pdf
 │   │   └── README.md
 │   ├── M2
@@ -293,5 +289,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-02-23 15:19:02*
+*Last Updated: 2026-02-24 04:27:05*
 *This document is maintained by the CI/CD pipeline*
