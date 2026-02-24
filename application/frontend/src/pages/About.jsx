@@ -13,10 +13,31 @@ const About = () => {
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [formStatus, setFormStatus] = useState('');
+  const [scrollY, setScrollY] = useState(0);
+  const [visibleSections, setVisibleSections] = useState({});
+  
+  const sectionsRef = useRef({});
 
   useEffect(() => {
     setIsLoaded(true);
     animateCounters();
+    
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+      const newVisible = {};
+      Object.keys(sectionsRef.current).forEach(key => {
+        const element = sectionsRef.current[key];
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          newVisible[key] = rect.top < window.innerHeight * 0.85;
+        }
+      });
+      setVisibleSections(newVisible);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const animateCounters = () => {
@@ -98,16 +119,18 @@ const About = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const setRef = (key) => (el) => {
+    sectionsRef.current[key] = el;
+  };
+
   return (
     <div className={`about-page ${isLoaded ? 'loaded' : ''}`}>
-      {/* Animated Background */}
-      <div className="bg-shapes">
+      <div className="bg-shapes" style={{ transform: `translateY(${scrollY * 0.3}px)` }}>
         <div className="shape shape-1"></div>
         <div className="shape shape-2"></div>
         <div className="shape shape-3"></div>
       </div>
 
-      {/* Header */}
       <header className="about-header">
         <div className="header-content">
           <h1 className="logo" onClick={() => navigate('/dashboard')}>
@@ -120,8 +143,7 @@ const About = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="hero-section">
+      <section className="hero-section" ref={setRef('hero')}>
         <div className="hero-content">
           <span className="hero-badge animate-fade-in">✨ Welcome to Home4U</span>
           <h2 className="hero-title animate-fade-in delay-1">
@@ -157,53 +179,127 @@ const About = () => {
         </div>
       </section>
 
-      {/* App Preview Section */}
-      <section className="app-preview-section">
+      <section className="app-preview-section" ref={setRef('preview')}>
         <div className="section-header">
           <h3>See It In Action</h3>
           <h2>Your Design Journey Starts Here</h2>
+          <p className="section-subtitle">Experience the power of Home4U in your browser</p>
         </div>
-        <div className="app-preview">
-          <div className="preview-mockup">
-            <div className="mockup-header">
-              <span className="mockup-dot"></span>
-              <span className="mockup-dot"></span>
-              <span className="mockup-dot"></span>
+        
+        <div className="app-preview-wrapper">
+          <div className="app-preview">
+            <div className="preview-header">
+              <div className="preview-url-bar">
+                <span className="url-dot"></span>
+                <span className="url-dot"></span>
+                <span className="url-dot"></span>
+                <span className="url-bar">home4u.app/dashboard</span>
+              </div>
             </div>
-            <div className="mockup-content">
-              <div className="mockup-sidebar">
-                <div className="mockup-nav-item active">Dashboard</div>
-                <div className="mockup-nav-item">Projects</div>
-                <div className="mockup-nav-item">Styles</div>
+            
+            <div className="preview-body">
+              <div className="preview-sidebar">
+                <div className="preview-logo">🏠 Home4U</div>
+                <nav className="preview-nav">
+                  <div className="nav-item active">
+                    <span className="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                  </div>
+                  <div className="nav-item">
+                    <span className="nav-icon">📁</span>
+                    <span>Projects</span>
+                  </div>
+                  <div className="nav-item">
+                    <span className="nav-icon">🎨</span>
+                    <span>Styles</span>
+                  </div>
+                  <div className="nav-item">
+                    <span className="nav-icon">💡</span>
+                    <span>Recommendations</span>
+                  </div>
+                </nav>
               </div>
-              <div className="mockup-main">
-                <div className="mockup-card">
-                  <span className="mockup-icon">🛏️</span>
-                  <span>Bedroom</span>
+              
+              <div className="preview-main">
+                <div className="preview-header-bar">
+                  <h3>My Dashboard</h3>
+                  <div className="preview-user">👤 John D.</div>
                 </div>
-                <div className="mockup-card">
-                  <span className="mockup-icon">🛋️</span>
-                  <span>Living Room</span>
+                
+                <div className="preview-cards">
+                  <div className="preview-card">
+                    <span className="card-emoji">🛏️</span>
+                    <span className="card-name">Bedroom</span>
+                    <span className="card-budget">$3,500</span>
+                    <div className="card-progress-bar"><div className="progress" style={{width: '65%'}}></div></div>
+                  </div>
+                  <div className="preview-card">
+                    <span className="card-emoji">🛋️</span>
+                    <span className="card-name">Living Room</span>
+                    <span className="card-budget">$5,000</span>
+                    <div className="card-progress-bar"><div className="progress" style={{width: '40%'}}></div></div>
+                  </div>
+                  <div className="preview-card">
+                    <span className="card-emoji">🍳</span>
+                    <span className="card-name">Kitchen</span>
+                    <span className="card-budget">$8,000</span>
+                    <div className="card-progress-bar"><div className="progress" style={{width: '80%'}}></div></div>
+                  </div>
                 </div>
-                <div className="mockup-card">
-                  <span className="mockup-icon">🍳</span>
-                  <span>Kitchen</span>
+                
+                <div className="preview-recommendations">
+                  <h4>💡 Recommended for You</h4>
+                  <div className="rec-items">
+                    <div className="rec-item">
+                      <span className="rec-img">🪑</span>
+                      <span className="rec-name">Modern Sofa</span>
+                      <span className="rec-price">$899</span>
+                    </div>
+                    <div className="rec-item">
+                      <span className="rec-img">🖼️</span>
+                      <span className="rec-name">Wall Art Set</span>
+                      <span className="rec-price">$149</span>
+                    </div>
+                    <div className="rec-item">
+                      <span className="rec-img">💡</span>
+                      <span className="rec-name">Floor Lamp</span>
+                      <span className="rec-price">$199</span>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          <div className="preview-features">
+            <div className="preview-feature">
+              <span className="feature-icon">📱</span>
+              <span>Responsive Design</span>
+            </div>
+            <div className="preview-feature">
+              <span className="feature-icon">⚡</span>
+              <span>Real-time Updates</span>
+            </div>
+            <div className="preview-feature">
+              <span className="feature-icon">🎯</span>
+              <span>Smart Suggestions</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="features-section">
+      <section id="features" className="features-section" ref={setRef('features')}>
         <div className="section-header">
           <h3>Features</h3>
           <h2>Everything You Need</h2>
         </div>
         <div className="features-grid">
           {features.map((feature, index) => (
-            <div key={index} className="feature-card">
+            <div 
+              key={index} 
+              className={`feature-card scroll-animate ${visibleSections['features'] ? 'visible' : ''}`}
+              style={{ transitionDelay: `${index * 0.1}s` }}
+            >
               <div className="feature-icon-wrapper">
                 <span className="feature-icon">{feature.icon}</span>
               </div>
@@ -214,15 +310,18 @@ const About = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="testimonials-section">
+      <section className="testimonials-section" ref={setRef('testimonials')}>
         <div className="section-header">
           <h3>Testimonials</h3>
           <h2>What Users Say</h2>
         </div>
         <div className="testimonials-grid">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="testimonial-card">
+            <div 
+              key={index} 
+              className={`testimonial-card scroll-animate ${visibleSections['testimonials'] ? 'visible' : ''}`}
+              style={{ transitionDelay: `${index * 0.15}s` }}
+            >
               <div className="testimonial-quote">"{testimonial.quote}"</div>
               <div className="testimonial-author">
                 <div className="author-avatar">{testimonial.author[0]}</div>
@@ -236,33 +335,35 @@ const About = () => {
         </div>
       </section>
 
-      {/* Counter Stats */}
-      <section className="counter-section">
+      <section className="counter-section" ref={setRef('counter')}>
         <div className="counter-grid">
-          <div className="counter-item">
+          <div className={`counter-item scroll-animate ${visibleSections['counter'] ? 'visible' : ''}`}>
             <span className="counter-number">{animatedCounters.users || 0}+</span>
             <span className="counter-label">Happy Users</span>
           </div>
-          <div className="counter-item">
+          <div className={`counter-item scroll-animate ${visibleSections['counter'] ? 'visible' : ''}`} style={{ transitionDelay: '0.15s' }}>
             <span className="counter-number">{animatedCounters.projects || 0}+</span>
             <span className="counter-label">Projects Created</span>
           </div>
-          <div className="counter-item">
+          <div className={`counter-item scroll-animate ${visibleSections['counter'] ? 'visible' : ''}`} style={{ transitionDelay: '0.3s' }}>
             <span className="counter-number">{animatedCounters.styles || 0}+</span>
             <span className="counter-label">Design Styles</span>
           </div>
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="team-section">
+      <section className="team-section" ref={setRef('team')}>
         <div className="section-header">
           <h3>Meet Our Team</h3>
           <h2>The People Behind Home4U</h2>
         </div>
         <div className="team-grid">
           {teamMembers.map((member, index) => (
-            <div key={index} className="team-card" style={{ '--member-color': member.color }}>
+            <div 
+              key={index} 
+              className={`team-card scroll-animate ${visibleSections['team'] ? 'visible' : ''}`}
+              style={{ '--member-color': member.color, transitionDelay: `${index * 0.1}s` }}
+            >
               <div className="team-avatar">{member.emoji}</div>
               <h4>{member.name}</h4>
               <span className="team-role">{member.role}</span>
@@ -271,8 +372,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Company Section */}
-      <section className="company-section">
+      <section className="company-section" ref={setRef('company')}>
         <div className="company-content">
           <div className="company-text">
             <h3>About Our Company</h3>
@@ -302,15 +402,18 @@ const About = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="how-it-works-section">
+      <section className="how-it-works-section" ref={setRef('howitworks')}>
         <div className="section-header">
           <h3>How It Works</h3>
           <h2>Simple Process</h2>
         </div>
         <div className="steps-container">
           {steps.map((step, index) => (
-            <div key={index} className="step-card">
+            <div 
+              key={index} 
+              className={`step-card scroll-animate ${visibleSections['howitworks'] ? 'visible' : ''}`}
+              style={{ transitionDelay: `${index * 0.15}s` }}
+            >
               <span className="step-number">{step.number}</span>
               <h4>{step.title}</h4>
               <p>{step.desc}</p>
@@ -319,8 +422,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="faq-section">
+      <section className="faq-section" ref={setRef('faq')}>
         <div className="section-header">
           <h3>FAQ</h3>
           <h2>Common Questions</h2>
@@ -329,7 +431,8 @@ const About = () => {
           {faqs.map((faq, index) => (
             <div 
               key={index} 
-              className={`faq-item ${openFaq === index ? 'open' : ''}`}
+              className={`faq-item scroll-animate ${visibleSections['faq'] ? 'visible' : ''} ${openFaq === index ? 'open' : ''}`}
+              style={{ transitionDelay: `${index * 0.1}s` }}
               onClick={() => setOpenFaq(openFaq === index ? null : index)}
             >
               <div className="faq-question">
@@ -342,8 +445,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Contact Form */}
-      <section className="contact-section">
+      <section className="contact-section" ref={setRef('contact')}>
         <div className="section-header">
           <h3>Contact Us</h3>
           <h2>Get In Touch</h2>
@@ -377,7 +479,6 @@ const About = () => {
         </form>
       </section>
 
-      {/* Newsletter */}
       <section className="newsletter-section">
         <div className="newsletter-content">
           <h2>Stay Updated</h2>
@@ -395,7 +496,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="cta-section">
         <div className="cta-content">
           <h2>Ready to Transform Your Space?</h2>
@@ -404,7 +504,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="about-footer">
         <div className="footer-content">
           <div className="footer-brand">
