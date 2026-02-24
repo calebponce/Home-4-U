@@ -1,0 +1,61 @@
+import axios from 'axios';
+
+// Create axios instance - using Vite proxy
+const api = axios.create({
+  baseURL: '/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auth API
+export const authAPI = {
+  signup: (email, password) => 
+    api.post('/auth/signup', { email, password }),
+  
+  login: (email, password) => {
+    const formData = new FormData();
+    formData.append('username', email);
+    formData.append('password', password);
+    return api.post('/auth/login', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+};
+
+// Projects API
+export const projectsAPI = {
+  getAll: () => api.get('/projects/'),
+  getById: (id) => api.get(`/projects/${id}`),
+  create: (room_type) => api.post('/projects/', { room_type }),
+  update: (id, data) => api.put(`/projects/${id}`, data),
+  delete: (id) => api.delete(`/projects/${id}`),
+};
+
+// Styles API
+export const stylesAPI = {
+  getAll: () => api.get('/styles/'),
+  getById: (id) => api.get(`/styles/${id}`),
+  getTags: (styleId) => api.get(`/styles/${styleId}/tags`),
+  getAllTags: () => api.get('/styles/tags/'),
+};
+
+// Recommendations API
+export const recommendationsAPI = {
+  getByProject: (projectId) => api.get(`/recommendations/project/${projectId}`),
+  create: (projectId, data) => api.post(`/recommendations/?project_id=${projectId}`, data),
+  markComplete: (id) => api.put(`/recommendations/${id}/complete`),
+  generate: (projectId) => api.post(`/recommendations/generate/${projectId}`),
+};
+
+export default api;
+
