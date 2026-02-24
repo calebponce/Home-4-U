@@ -61,24 +61,29 @@ Describe how to set up the application locally or in a development environment.
 
 Prerequisites:
 
-Python 3.12.x
+- Python 3.12.x
+- Node.js 18+
+- PostgreSQL 14+
+- Git
 
-Node.js 18+
+### Backend Setup
 
-PostgreSQL 14+
-
-Git
-
-Backend Setup
+**Option 1: Using the startup script (Recommended)**
+```bash
 cd application/backend
+./start_backend.sh
+```
 
+**Option 2: Manual setup**
+```bash
+cd application/backend
 python -m venv .venv
-.venv\Scripts\activate     # Windows
-# source .venv/bin/activate  # Mac/Linux
-
+# Windows: .venv\Scripts\activate
+# Mac/Linux: 
+source .venv/bin/activate
 pip install -r requirements.txt
-
-uvicorn app.main:app --reload
+python3 -m uvicorn app.main:app --reload
+```
 
 Backend will run at:
 
@@ -88,11 +93,20 @@ Swagger docs available at:
 
 http://127.0.0.1:8000/docs
 
-Frontend Setup
-cd application/frontend
+### Frontend Setup
 
+**Option 1: Using the startup script (Recommended)**
+```bash
+cd application/frontend
+./start_frontend.sh
+```
+
+**Option 2: Manual setup**
+```bash
+cd application/frontend
 npm install
 npm run dev
+```
 
 
 Frontend will run at:
