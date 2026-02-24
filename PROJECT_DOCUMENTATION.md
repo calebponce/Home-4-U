@@ -61,7 +61,10 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   └── main.py
-│   │   └── requirements.txt
+│   │   ├── home4u.db
+│   │   ├── requirements.txt
+│   │   ├── seed.py
+│   │   └── start_backend.sh
 │   ├── credentials
 │   │   └── README.md
 │   ├── frontend
@@ -69,6 +72,9 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   └── vite.svg
 │   │   ├── src
 │   │   │   ├── assets
+│   │   │   ├── context
+│   │   │   ├── pages
+│   │   │   ├── services
 │   │   │   ├── App.css
 │   │   │   ├── App.jsx
 │   │   │   ├── index.css
@@ -78,6 +84,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── index.html
 │   │   ├── package-lock.json
 │   │   ├── package.json
+│   │   ├── start_frontend.sh
 │   │   └── vite.config.js
 │   └── README.md
 ├── milestones
@@ -112,9 +119,10 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | pydantic | 2.6.1 | Data validation |
 | python-multipart | 0.0.9 | Form data parsing |
 | sqlalchemy | 2.0.25 | ORM |
-| psycopg2-binary | 2.9.9 | PostgreSQL driver |
 | python-jose | 3.3.0 | JWT handling |
 | passlib[bcrypt] | 1.7.4 | Utility |
+| email-validator | 2.3.0 | Utility |
+| bcrypt | 4.0.1 | Utility |
 
 
 ### Frontend
@@ -123,6 +131,8 @@ csc648-848-project-sp26-vibecoding-for-internship/
 |------------|---------|---------|
 | react | ^19.2.0 | UI framework |
 | react-dom | ^19.2.0 | UI framework |
+| react-router-dom | ^6.22.0 | Dependency |
+| axios | ^1.6.7 | Dependency |
 
 
 ### Infrastructure (Planned)
@@ -289,5 +299,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-02-24 04:27:05*
+*Last Updated: 2026-02-24 17:54:40*
 *This document is maintained by the CI/CD pipeline*
