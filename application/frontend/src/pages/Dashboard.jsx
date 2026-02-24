@@ -61,7 +61,10 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>My Dashboard</h1>
+        <div className="header-left">
+          <h1>My Dashboard</h1>
+          <button onClick={() => navigate('/about')} className="about-btn">About</button>
+        </div>
         <button onClick={logout} className="logout-btn">Logout</button>
       </header>
 

@@ -1,16 +1,83 @@
-# React + Vite
+# Home4U Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend application for Home4U - a room renovation recommendation platform built with React and Vite.
 
-Currently, two official plugins are available:
+## Project Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Home4U helps renters and first-time apartment dwellers transform their living spaces into a desired aesthetic style using structured, data-driven recommendations.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Framework**: React 19.x
+- **Build Tool**: Vite
+- **Language**: JavaScript/JSX
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+The frontend will be available at: http://localhost:5173
+
+### Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview production build
+
+## API Connection
+
+The frontend communicates with the backend through a proxy configured in vite.config.js:
+
+- API requests to `/api/*` are proxied to `http://localhost:8000`
+- CORS is configured to allow connections from `http://localhost:5173`
+
+## Project Structure
+
+```
+src/
+├── assets/          # Static assets
+├── components/      # Reusable React components
+├── pages/           # Page-level components
+├── services/        # API service functions
+├── App.jsx          # Main application component
+├── main.jsx         # Application entry point
+└── index.css        # Global styles
+```
+
+## Features
+
+- User authentication
+- Room project creation and management
+- Image upload functionality
+- Style selection and comparison
+- AI-assisted tag suggestions
+- Room resemblance scoring
+- Personalized recommendations
+- Budget-aware product suggestions
+
+## Team
+
+- **Caleb Ponce** - Team Lead / System Architecture
+- **Tyler Morris** - Backend & AI Integration
+- **Christopher Quach** - Frontend Development
+- **Mason Lee** - Data Modeling & Scoring Engine
+- **Dias Almat** - Technical Writer
+
+## License
+
+To be determined.
+

@@ -78,6 +78,12 @@ const Login = () => {
             {isRegister ? 'Login' : 'Sign Up'}
           </button>
         </p>
+        
+        <p className="toggle-auth">
+          <button onClick={() => navigate('/about')}>
+            Learn More About Home4U
+          </button>
+        </p>
       </div>
     </div>
   );

@@ -160,6 +160,22 @@ input:focus, select:focus {
   border-bottom: 1px solid var(--border);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.about-btn {
+  background-color: var(--secondary);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.about-btn:hover {
+  background-color: #059669;
+}
+
 .logout-btn {
   background-color: var(--text-secondary);
 }

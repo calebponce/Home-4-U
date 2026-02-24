@@ -53,6 +53,8 @@ Curated product suggestions
 
 Administrative style and weight management
 
+About page with team introduction and company information
+
 ---
 
 ## Installation and Setup
@@ -169,7 +171,7 @@ application/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/   # Reusable UI components
-│   │   ├── pages/        # Route-level pages
+│   │   ├── pages/        # Route-level pages (Login, Dashboard, ProjectDetails, About)
 │   │   ├── services/     # API calls
 │   │   └── App.jsx
 │   └── package.json
