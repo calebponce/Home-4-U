@@ -137,13 +137,13 @@ const About = () => {
     },
     { 
       name: 'Dias Almat', 
-      role: 'Technical Writer', 
+      role: 'Database Administrator', 
       emoji: '📝', 
       color: '#8B5CF6',
-      bio: 'Ensures clear documentation and communication. Bridges the gap between technical implementation and user understanding.',
-      skills: ['Documentation', 'Technical Writing', 'Content Strategy', 'API Docs'],
-      linkedin: 'https://linkedin.com/in/diasalmat',
-      github: 'https://github.com/diasalmat'
+      bio: 'Designs and maintains the database architecture. Ensures data integrity, manages migrations, and optimizes queries to keep the app fast and reliable.',
+      skills: ['SQLAlchemy', 'PostgreSQL', 'SQLite', 'Database Design', 'Python'],
+      linkedin: 'https://www.linkedin.com/in/dias-almat/',
+      github: 'https://github.com/vincivv'
     }
   ];
 
