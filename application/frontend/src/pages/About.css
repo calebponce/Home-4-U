@@ -5,15 +5,15 @@
    ======================================== */
 
 :root {
-  --primary: #4F46E5;
-  --primary-light: #818CF8;
-  --secondary: #10B981;
-  --background: #0F172A;
-  --background-alt: #1E293B;
-  --card-bg: #1E293B;
-  --text: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --border: #334155;
+  --primary: #6B21A8;
+  --primary-light: #A855F7;
+  --secondary: #9333EA;
+  --background: #0A0A0A;
+  --background-alt: #1A1A1A;
+  --card-bg: #1A1A1A;
+  --text: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --border: #3F3F46;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -130,7 +130,7 @@
   right: 0;
   z-index: 100;
   padding: 1rem 2rem;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
@@ -697,7 +697,7 @@
    ======================================== */
 .counter-section {
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%);
+  background: linear-gradient(135deg, #6B21A8 0%, #0A0A0A 100%);
   position: relative;
   z-index: 1;
 }
@@ -1182,7 +1182,7 @@
    ======================================== */
 .newsletter-section {
   padding: 5rem 2rem;
-  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+  background: linear-gradient(135deg, #9333EA 0%, #1A1A1A 100%);
   position: relative;
   z-index: 1;
 }

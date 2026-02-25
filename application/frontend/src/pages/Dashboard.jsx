@@ -154,6 +154,7 @@ const Dashboard = () => {
   const [newProjectType, setNewProjectType] = useState('');
   const [showNewProject, setShowNewProject] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [heroLoaded, setHeroLoaded] = useState(false);
   
   // House tour state
   const [tourMode, setTourMode] = useState(false);
@@ -167,6 +168,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData();
     window.addEventListener('scroll', handleScroll);
+    
+    // Trigger hero animation after component mounts
+    setTimeout(() => setHeroLoaded(true), 100);
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -322,19 +327,47 @@ const Dashboard = () => {
       <section className="parallax-hero" ref={parallaxRef}>
         <div 
           className="parallax-bg"
-          style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+          style={{ 
+            transform: `translateY(${scrollY * 0.5}px)`,
+            opacity: 1 - scrollY / 700
+          }}
+        />
+        {/* Additional parallax floating elements */}
+        <div 
+          className="parallax-float parallax-float-1"
+          style={{ 
+            transform: `translateY(${scrollY * -0.2}px) translateX(${scrollY * 0.1}px)`,
+            opacity: Math.max(0, 1 - scrollY / 600)
+          }}
         />
         <div 
-          className="parallax-content"
-          style={{ transform: `translateY(${scrollY * 0.3}px)` }}
+          className="parallax-float parallax-float-2"
+          style={{ 
+            transform: `translateY(${scrollY * -0.3}px) translateX(${scrollY * -0.15}px)`,
+            opacity: Math.max(0, 1 - scrollY / 800)
+          }}
+        />
+        <div 
+          className="parallax-float parallax-float-3"
+          style={{ 
+            transform: `translateY(${scrollY * -0.15}px) translateX(${scrollY * 0.05}px)`,
+            opacity: Math.max(0, 1 - scrollY / 500)
+          }}
+        />
+        <div 
+          className={`parallax-content ${heroLoaded ? 'loaded' : ''}`}
+          style={{ 
+            transform: `translateY(${scrollY * 0.25}px)`,
+            opacity: Math.max(0, 1 - scrollY / 500)
+          }}
         >
-          <h1 className="hero-title">
+          <h1 className={`hero-title ${heroLoaded ? 'fade-in' : ''}`}>
             Welcome to <span className="brand-name">Home4U</span>
           </h1>
-          <p className="hero-subtitle">
+          <p className={`hero-subtitle ${heroLoaded ? 'fade-in' : ''}`}>
             Your dream home starts here
           </p>
-          <div className="hero-cta">
+          <div className={`hero-cta ${heroLoaded ? 'fade-in' : ''}`}>
             <button className="cta-primary" onClick={() => document.getElementById('what-we-do').scrollIntoView({ behavior: 'smooth' })}>
               Discover More
             </button>
@@ -343,7 +376,10 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-        <div className="scroll-indicator">
+        <div 
+          className="scroll-indicator"
+          style={{ opacity: Math.max(0, 1 - scrollY / 300) }}
+        >
           <span>Scroll to explore</span>
           <div className="mouse-icon">
             <div className="wheel"></div>
@@ -533,7 +569,7 @@ const Dashboard = () => {
 
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>© 2024 Home4U - Your Dream Home Starts Here</p>
+        <p>© 2026 Home4U - Your Dream Home Starts Here</p>
       </footer>
     </div>
   );

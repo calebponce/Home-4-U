@@ -607,7 +607,7 @@ const About = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>© 2024 Home4U. All rights reserved.</p>
+          <p>© 2026 Home4U. All rights reserved.</p>
         </div>
       </footer>
     </div>
