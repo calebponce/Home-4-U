@@ -66,7 +66,8 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── seed.py
 │   │   └── start_backend.sh
 │   ├── credentials
-│   │   └── README.md
+│   │   ├── README.md
+│   │   └── home4u-key.pem
 │   ├── frontend
 │   │   ├── public
 │   │   │   └── vite.svg
@@ -299,5 +300,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-02-25 20:09:18*
+*Last Updated: 2026-02-25 20:30:25*
 *This document is maintained by the CI/CD pipeline*
