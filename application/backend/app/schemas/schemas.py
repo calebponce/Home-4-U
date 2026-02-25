@@ -11,7 +11,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -40,7 +40,8 @@ class RoomProjectResponse(BaseModel):
     room_type: str
     budget: float
     created_at: datetime
-    
+    photo_url: Optional[str] = None
+
     class Config:
         from_attributes = True
 
@@ -49,13 +50,13 @@ class StyleResponse(BaseModel):
     id: int
     name: str
     description: Optional[str]
-    
+
     class Config:
         from_attributes = True
 
 class StyleWithTagsResponse(StyleResponse):
     tags: List[dict] = []
-    
+
     class Config:
         from_attributes = True
 
@@ -63,7 +64,7 @@ class StyleWithTagsResponse(StyleResponse):
 class TagResponse(BaseModel):
     id: int
     name: str
-    
+
     class Config:
         from_attributes = True
 
@@ -73,7 +74,7 @@ class StyleTagResponse(BaseModel):
     style_id: int
     tag_id: int
     weight: float
-    
+
     class Config:
         from_attributes = True
 
@@ -87,7 +88,7 @@ class RoomTagResponse(BaseModel):
     room_project_id: int
     tag_id: int
     is_confirmed: bool
-    
+
     class Config:
         from_attributes = True
 
@@ -98,7 +99,7 @@ class ScoreResponse(BaseModel):
     style_id: int
     score_value: float
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -120,7 +121,7 @@ class RecommendationResponse(BaseModel):
     estimated_cost: float
     is_completed: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -132,7 +133,7 @@ class ProductItemResponse(BaseModel):
     estimated_cost: float
     url: Optional[str]
     image_url: Optional[str]
-    
+
     class Config:
         from_attributes = True
 
@@ -142,4 +143,3 @@ class AISuggestTagsRequest(BaseModel):
 
 class AISuggestTagsResponse(BaseModel):
     suggested_tags: List[dict]  # [{"tag_id": 1, "tag_name": "modern", "confidence": 0.95}]
-
