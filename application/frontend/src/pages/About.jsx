@@ -15,6 +15,7 @@ const About = () => {
   const [formStatus, setFormStatus] = useState('');
   const [scrollY, setScrollY] = useState(0);
   const [visibleSections, setVisibleSections] = useState({});
+  const [selectedMember, setSelectedMember] = useState(null);
   
   const sectionsRef = useRef({});
 
@@ -94,11 +95,56 @@ const About = () => {
   ];
 
   const teamMembers = [
-    { name: 'Caleb Ponce', role: 'Team Lead / System Architecture', emoji: '👨‍💼', color: '#4F46E5' },
-    { name: 'Tyler Morris', role: 'Backend & AI Integration', emoji: '⚙️', color: '#10B981' },
-    { name: 'Christopher Quach', role: 'Frontend Development', emoji: '🎨', color: '#F59E0B' },
-    { name: 'Mason Lee', role: 'Data Modeling & Scoring Engine', emoji: '📊', color: '#EC4899' },
-    { name: 'Dias Almat', role: 'Technical Writer', emoji: '📝', color: '#8B5CF6' }
+    { 
+      name: 'Caleb Ponce', 
+      role: 'Team Lead / System Architecture', 
+      emoji: '👨‍💼', 
+      color: '#4F46E5',
+      bio: 'Computer Science student at SFSU with a passion for building scalable web applications. Leads the technical direction and architecture of Home4U.',
+      skills: ['System Design', 'React', 'Node.js', 'Cloud Architecture'],
+      linkedin: 'https://linkedin.com/in/calebponce',
+      github: 'https://github.com/calebponce'
+    },
+    { 
+      name: 'Tyler Morris', 
+      role: 'Backend & AI Integration', 
+      emoji: '⚙️', 
+      color: '#10B981',
+      bio: 'Backend specialist focused on API development and integrating AI/ML features. Ensures Home4U delivers smart recommendations.',
+      skills: ['Python', 'FastAPI', 'Machine Learning', 'Database Design'],
+      linkedin: 'https://linkedin.com/in/tylermorris',
+      github: 'https://github.com/tylermorris'
+    },
+    { 
+      name: 'Christopher Quach', 
+      role: 'Frontend Development', 
+      emoji: '🎨', 
+      color: '#F59E0B',
+      bio: 'Creative developer who brings designs to life with beautiful, responsive interfaces. Passionate about user experience.',
+      skills: ['React', 'CSS/SASS', 'UI/UX Design', 'Animation'],
+      linkedin: 'https://linkedin.com/in/christopherquach',
+      github: 'https://github.com/christopherquach'
+    },
+    { 
+      name: 'Mason Lee', 
+      role: 'Data Modeling & Scoring Engine', 
+      emoji: '📊', 
+      color: '#EC4899',
+      bio: 'Data scientist who designed the resemblance scoring algorithm. Makes style matching accurate and meaningful.',
+      skills: ['Data Science', 'Python', 'Algorithms', 'Analytics'],
+      linkedin: 'https://linkedin.com/in/masonlee',
+      github: 'https://github.com/masonlee'
+    },
+    { 
+      name: 'Dias Almat', 
+      role: 'Technical Writer', 
+      emoji: '📝', 
+      color: '#8B5CF6',
+      bio: 'Ensures clear documentation and communication. Bridges the gap between technical implementation and user understanding.',
+      skills: ['Documentation', 'Technical Writing', 'Content Strategy', 'API Docs'],
+      linkedin: 'https://linkedin.com/in/diasalmat',
+      github: 'https://github.com/diasalmat'
+    }
   ];
 
   const testimonials = [
@@ -363,14 +409,51 @@ const About = () => {
               key={index} 
               className={`team-card scroll-animate ${visibleSections['team'] ? 'visible' : ''}`}
               style={{ '--member-color': member.color, transitionDelay: `${index * 0.1}s` }}
+              onClick={() => setSelectedMember(member)}
             >
               <div className="team-avatar">{member.emoji}</div>
               <h4>{member.name}</h4>
               <span className="team-role">{member.role}</span>
+              <span className="team-cta">Click to learn more →</span>
             </div>
           ))}
         </div>
       </section>
+
+      {/* Team Member Modal */}
+      {selectedMember && (
+        <div className="member-modal-overlay" onClick={() => setSelectedMember(null)}>
+          <div className="member-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedMember(null)}>×</button>
+            <div className="modal-header">
+              <div className="modal-avatar" style={{ background: selectedMember.color }}>
+                {selectedMember.emoji}
+              </div>
+              <h2>{selectedMember.name}</h2>
+              <p className="modal-role">{selectedMember.role}</p>
+            </div>
+            <div className="modal-body">
+              <p className="modal-bio">{selectedMember.bio}</p>
+              <div className="modal-skills">
+                <h4>Skills</h4>
+                <div className="skills-list">
+                  {selectedMember.skills.map((skill, i) => (
+                    <span key={i} className="skill-tag">{skill}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="modal-links">
+                <a href={selectedMember.linkedin} target="_blank" rel="noopener noreferrer" className="social-link linkedin">
+                  LinkedIn
+                </a>
+                <a href={selectedMember.github} target="_blank" rel="noopener noreferrer" className="social-link github">
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="company-section" ref={setRef('company')}>
         <div className="company-content">
