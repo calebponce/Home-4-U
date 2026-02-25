@@ -24,6 +24,9 @@ class RoomProject(Base):
     room_type = Column(String(100), nullable=False)
     budget = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # NEW: photo upload support
+    photo_url = Column(String(500), nullable=True)
     
     # Relationships
     user = relationship("User", back_populates="room_projects")
@@ -58,7 +61,7 @@ class StyleTag(Base):
     id = Column(Integer, primary_key=True, index=True)
     style_id = Column(Integer, ForeignKey("styles.id"), nullable=False)
     tag_id = Column(Integer, ForeignKey("tags.id"), nullable=False)
-    weight = Column(Float, default=1.0)  # How important is this tag for this style
+    weight = Column(Float, default=1.0)
     
     # Relationships
     style = relationship("Style", back_populates="style_tags")
@@ -82,7 +85,7 @@ class ResemblanceScore(Base):
     id = Column(Integer, primary_key=True, index=True)
     room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
     style_id = Column(Integer, ForeignKey("styles.id"), nullable=False)
-    score_value = Column(Float, nullable=False)  # 0-100 scale
+    score_value = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -95,7 +98,7 @@ class Recommendation(Base):
     id = Column(Integer, primary_key=True, index=True)
     room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
     description = Column(Text, nullable=False)
-    priority_score = Column(Float, default=0.0)  # Impact-to-cost ratio
+    priority_score = Column(Float, default=0.0)
     estimated_cost = Column(Float, default=0.0)
     is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -115,4 +118,3 @@ class ProductItem(Base):
     
     # Relationships
     style = relationship("Style", back_populates="product_items")
-
