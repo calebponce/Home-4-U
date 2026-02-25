@@ -107,13 +107,13 @@ const About = () => {
     },
     { 
       name: 'Tyler Morris', 
-      role: 'Backend & AI Integration', 
+      role: 'Backend Development', 
       emoji: '⚙️', 
       color: '#10B981',
-      bio: 'Backend specialist focused on API development and integrating AI/ML features. Ensures Home4U delivers smart recommendations.',
+      bio: 'SFSU CS 3rd year,leetcode lover, backend specialist focused on API development.',
       skills: ['Python', 'FastAPI', 'Machine Learning', 'Database Design'],
       linkedin: 'https://linkedin.com/in/tylermorris',
-      github: 'https://github.com/tylermorris'
+      github: 'https://github.com/tylerrendon'
     },
     { 
       name: 'Christopher Quach', 
