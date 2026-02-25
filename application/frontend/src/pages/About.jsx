@@ -120,7 +120,7 @@ const About = () => {
       role: 'Frontend Development', 
       emoji: '🎨', 
       color: '#F59E0B',
-      bio: 'Creative developer who brings designs to life with beautiful, responsive interfaces. Passionate about user experience.',
+      bio: 'Creative developer who brings designs to life through beautiful, responsive interfaces and a deep passion for user experience',
       skills: ['React', 'CSS/SASS', 'UI/UX Design', 'Animation'],
       linkedin: 'https://linkedin.com/in/christopherquach',
       github: 'https://github.com/christopherquach'
