@@ -130,10 +130,10 @@ const About = () => {
       role: 'Data Modeling & Scoring Engine', 
       emoji: '📊', 
       color: '#EC4899',
-      bio: 'Data scientist who designed the resemblance scoring algorithm. Makes style matching accurate and meaningful.',
+      bio: 'Data scientist designing the resemblance scoring algorithm. Working on accurate and meaningful sytle matching.',
       skills: ['Data Science', 'Python', 'Algorithms', 'Analytics'],
       linkedin: 'https://linkedin.com/in/masonlee',
-      github: 'https://github.com/masonlee'
+      github: 'https://github.com/mlee82'
     },
     { 
       name: 'Dias Almat', 
