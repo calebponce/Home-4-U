@@ -1,8 +1,9 @@
 import axios from 'axios';
 
-// Create axios instance - use environment variable for production
+// Create axios instance - always use relative path for Vite proxy
+// This ensures requests go through the proxy at /api -> http://localhost:8000
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
