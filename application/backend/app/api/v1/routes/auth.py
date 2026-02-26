@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.models.database import User
 from app.schemas.schemas import UserCreate, UserResponse, Token
 from app.utils.auth import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.utils.dependencies import get_current_user
 
 router = APIRouter(tags=["Authentication"])
 
@@ -53,11 +54,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(lambda: "")):
-    """Get current user info (placeholder - implement with actual token verification)."""
-    # This is a simplified version - in production, use the token to get the user
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Not implemented - requires JWT token dependency"
-    )
+def get_me(current_user: User = Depends(get_current_user)):
+    """Get current authenticated user info."""
+    return current_user
 
