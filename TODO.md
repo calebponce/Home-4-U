@@ -22,3 +22,29 @@ Update the website color palette to:
 - Text: #03110D (near black)
 - Various gradients and accents updated throughout
 
+---
+
+# AWS Production Deployment - Frontend Configuration
+
+## Task
+Configure frontend to communicate with backend in AWS production (fixes /api/v1 proxy issue)
+
+## Backend Information (from credentials/README.md):
+- **Public IP**: 16.59.35.21
+- **Backend URL**: http://16.59.35.21:8000/api/v1
+
+## Steps Completed:
+1. [x] Created .env.production with backend URL
+2. [x] Created .env.development for local dev
+3. [x] Updated vite.config.js to load environment variables
+
+## Files Created/Modified:
+- /application/frontend/.env.production (NEW)
+- /application/frontend/.env.development (NEW)
+- /application/frontend/vite.config.js (MODIFIED)
+
+## To Deploy:
+1. Build the frontend: `cd application/frontend && npm run build`
+2. Upload the `dist/` folder to AWS S3 or serve via EC2
+3. Ensure backend is running on EC2 at port 8000
+

@@ -4,7 +4,8 @@ Run this script after starting the database to add default styles and tags.
 """
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, engine
-from app.models.database import Base, Style, Tag, StyleTag
+from app.models.database import Base, Style, Tag, StyleTag, User
+from app.utils.auth import get_password_hash
 
 # Default styles for the app
 STYLES = [
@@ -50,6 +51,12 @@ STYLES = [
     }
 ]
 
+# Default test users
+TEST_USERS = [
+    {"email": "test@example.com", "password": "test123"},
+    {"email": "demo@home4u.com", "password": "demo123"},
+]
+
 def seed_database():
     """Seed the database with initial data."""
     # Create tables
@@ -58,10 +65,19 @@ def seed_database():
     db = SessionLocal()
     
     try:
+        # Create test users first
+        for user_data in TEST_USERS:
+            existing_user = db.query(User).filter(User.email == user_data["email"]).first()
+            if not existing_user:
+                hashed_password = get_password_hash(user_data["password"])
+                db_user = User(email=user_data["email"], password_hash=hashed_password)
+                db.add(db_user)
+        
         # Check if data already exists
         existing_styles = db.query(Style).count()
         if existing_styles > 0:
-            print(f"Database already has {existing_styles} styles. Skipping seed.")
+            print(f"Database already has {existing_styles} styles and {len(TEST_USERS)} users. Skipping seed.")
+            db.commit()
             return
         
         # Create tags first
@@ -93,7 +109,7 @@ def seed_database():
                 db.add(style_tag)
         
         db.commit()
-        print(f"Successfully seeded {len(STYLES)} styles and {len(tag_map)} tags!")
+        print(f"Successfully seeded {len(TEST_USERS)} users, {len(STYLES)} styles and {len(tag_map)} tags!")
         
     except Exception as e:
         print(f"Error seeding database: {e}")
