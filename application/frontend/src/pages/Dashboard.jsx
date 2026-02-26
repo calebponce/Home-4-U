@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { projectsAPI, stylesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import './Dashboard.css';
 
 // Room data for the interactive house tour
 const tourRooms = [
@@ -576,4 +577,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

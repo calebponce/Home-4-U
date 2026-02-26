@@ -12,12 +12,14 @@ fi
 # Activate virtual environment
 source .venv/bin/activate
 
-# Install dependencies if needed
-if [ -f "requirements.txt" ]; then
-    pip install -r requirements.txt 2>/dev/null
+# Install dependencies only when explicitly requested.
+# Usage: INSTALL_DEPS=1 ./start_backend.sh
+if [ "${INSTALL_DEPS:-0}" = "1" ] && [ -f "requirements.txt" ]; then
+    echo "Installing backend dependencies..."
+    pip install -r requirements.txt
 fi
 
 # Start the backend server
-echo "Starting Home4U Backend Server..."
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
+# Avoid --reload because file watchers can fail in restricted environments.
+echo "Starting Home4U Backend Server on http://127.0.0.1:8000 ..."
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
