@@ -7,8 +7,8 @@ set -e
 
 echo "=== Home4U Quick Fix Script ==="
 
-# Navigate to project directory (adjust if needed)
-cd /var/www/home4u/application 2>/dev/null || cd ~/application 2>/dev/null || cd /home/ubuntu/application 2>/dev/null || {
+# Navigate to project directory
+cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application 2>/dev/null || {
     echo "ERROR: Could not find project directory. Please navigate to your project first."
     exit 1
 }
@@ -44,7 +44,7 @@ fi
 # Step 3: Test API endpoint
 echo ""
 echo "[3/5] Testing API endpoint..."
-if curl -s http://localhost:8000/api/v1/health/ > /dev/null; then
+if curl -s http://localhost:8000/health > /dev/null; then
     echo "API is accessible"
 else
     echo "Warning: API health check failed, but continuing..."
@@ -55,21 +55,21 @@ echo ""
 echo "[4/5] Updating nginx configuration..."
 
 # Check if nginx config exists
-if [ -f /etc/nginx/sites-available/home4u ]; then
+if [ -f /etc/nginx/conf.d/home4u.conf ]; then
     echo "Updating existing nginx config..."
 else
     echo "Creating new nginx config..."
-    touch /etc/nginx/sites-available/home4u
+    touch /etc/nginx/conf.d/home4u.conf
 fi
 
 # Write nginx config
-cat > /etc/nginx/sites-available/home4u << 'EOF'
+cat > /etc/nginx/conf.d/home4u.conf << 'EOF'
 server {
     listen 80;
     server_name _;
 
     # Frontend static files
-    root /var/www/home4u/frontend/dist;
+    root /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/dist;
     index index.html;
 
     # Serve static files (React app)
@@ -78,7 +78,7 @@ server {
     }
 
     # Proxy API requests to backend
-    location /api/ {
+    location /api/v1/ {
         proxy_pass http://127.0.0.1:8000/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -95,10 +95,6 @@ server {
 }
 EOF
 
-# Enable the site
-ln -sf /etc/nginx/sites-available/home4u /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-
 # Test nginx config
 nginx -t
 
@@ -109,7 +105,7 @@ echo "Nginx restarted"
 # Step 5: Test the full flow
 echo ""
 echo "[5/5] Testing login endpoint..."
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+LOGIN_RESPONSE=$(curl -s -X POST http://localhost/api/v1/auth/login \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "username=test@example.com&password=test123")
 
@@ -121,5 +117,4 @@ echo ""
 echo "Try accessing your site at: http://18.225.117.117"
 echo ""
 echo "If login still fails, run this command to check logs:"
-echo "  curl http://localhost:8000/api/v1/auth/login -v"
-
+echo "  curl http://localhost/api/v1/auth/login -v"

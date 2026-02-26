@@ -20,8 +20,8 @@ echo "[3/8] Installing Node.js..."
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs
 
-# Navigate to app directory (adjust path as needed)
-cd /home/ubuntu/home4u || cd /var/www/home4u || cd ~
+# Navigate to app directory
+cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
 
 # Set up Python virtual environment for backend
 echo "[4/8] Setting up Python virtual environment..."
@@ -49,7 +49,7 @@ server {
     server_name _;
 
     # Frontend static files (from build folder)
-    root /var/www/home4u/frontend/dist;
+    root /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/dist;
     index index.html;
 
     # Serve static files
@@ -58,7 +58,7 @@ server {
     }
 
     # Proxy API requests to backend (uvicorn)
-    location /api/ {
+    location /api/v1/ {
         proxy_pass http://127.0.0.1:8000/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -75,10 +75,8 @@ server {
 }
 EOF
 
-# Copy nginx config
-cp /tmp/home4u_nginx.conf /etc/nginx/sites-available/home4u
-ln -sf /etc/nginx/sites-available/home4u /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
+# Copy nginx config (Amazon Linux path)
+cp /tmp/home4u_nginx.conf /etc/nginx/conf.d/home4u.conf
 
 # Test nginx config
 nginx -t
@@ -95,11 +93,11 @@ Description=Home4U Backend API
 After=network.target
 
 [Service]
-User=ubuntu
-Group=ubuntu
-WorkingDirectory=/var/www/home4u/application/backend
-Environment="PATH=/var/www/home4u/application/backend/.venv/bin"
-ExecStart=/var/www/home4u/application/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
+Environment="PATH=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/.venv/bin"
+ExecStart=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 Restart=always
 
 [Install]
@@ -113,10 +111,9 @@ systemctl start home4u-backend
 systemctl status home4u-backend
 
 echo "=== Deployment Complete! ==="
-echo "Frontend should be available at http://your-server-ip"
-echo "API should be at http://your-server-ip/api/v1"
+echo "Frontend should be available at http://18.225.117.117"
+echo "API should be at http://18.225.117.117/api/v1"
 echo ""
 echo "Test users:"
 echo "  - test@example.com / test123"
 echo "  - demo@home4u.com / demo123"
-
