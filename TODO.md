@@ -1,50 +1,34 @@
-# Color Scheme Update Plan
+# Login Error Debugging Plan
 
-## Task
-Update the website color palette to:
-- Bone White: #FAFAF5 (background)
-- Soft Mint: #C9E6DC (secondary/accent)
-- Rich Forest: #1F3D36 (primary/dark)
+## Issue
+Login "An error occurred" on AWS server. Need to identify whether shows it's:
+- Frontend not connecting to backend
+- Backend authentication logic issue
+- Database not seeded
+- Configuration mismatch
 
-## Steps:
-1. [x] Update index.css - Change CSS variables to new palette
-2. [x] Update About.css - Change color variables to new palette
-3. [x] Verify parallax scrolling is working throughout
+## Steps to Debug
 
-## Files edited:
-- /application/frontend/src/index.css
-- /application/frontend/src/pages/About.css
+### Step 1: Check if backend is accessible
+- Verify backend is running on AWS
+- Test API endpoint directly using curl or Postman
 
-## Color Updates Applied:
-- Primary: #390517 (deep burgundy/wine)
-- Secondary: #A38560 (warm bronze/tan)
-- Background: #FAFAF5 (bone white)
-- Text: #03110D (near black)
-- Various gradients and accents updated throughout
+### Step 2: Check database seeding
+- Verify users exist in the database on AWS
+- Ensure seed.py has been run
 
----
+### Step 3: Fix API configuration for production
+- Option A: Set up nginx reverse proxy to route /api to backend
+- Option B: Configure frontend with actual backend URL (e.g., http://your-aws-ip:8000)
+- Option C: Serve frontend and backend from same origin
 
-# AWS Production Deployment - Frontend Configuration
+### Step 4: Verify CORS configuration
+- Ensure backend CORS allows your frontend domain
 
-## Task
-Configure frontend to communicate with backend in AWS production (fixes /api/v1 proxy issue)
+## Required Information from User
 
-## Backend Information (from credentials/README.md):
-- **Public IP**: 16.59.35.21
-- **Backend URL**: http://16.59.35.21:8000/api/v1
-
-## Steps Completed:
-1. [x] Created .env.production with backend URL
-2. [x] Created .env.development for local dev
-3. [x] Updated vite.config.js to load environment variables
-
-## Files Created/Modified:
-- /application/frontend/.env.production (NEW)
-- /application/frontend/.env.development (NEW)
-- /application/frontend/vite.config.js (MODIFIED)
-
-## To Deploy:
-1. Build the frontend: `cd application/frontend && npm run build`
-2. Upload the `dist/` folder to AWS S3 or serve via EC2
-3. Ensure backend is running on EC2 at port 8000
+1. How is the frontend being served on AWS?
+2. How is the backend being run2, systemd on AWS (PM, etc.)?
+3. What URL are you accessing the frontend from?
+4. What URL is the backend running on?
 
