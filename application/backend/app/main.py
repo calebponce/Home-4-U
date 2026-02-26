@@ -28,8 +28,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
-app.include_router(api_router, prefix="/api/v1")
+# Include API routes (Vite proxy handles /api -> backend routing)
+app.include_router(api_router)
 
 
 @app.on_event("startup")
