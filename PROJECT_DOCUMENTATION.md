@@ -61,13 +61,17 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   └── main.py
-│   │   ├── home4u.db
 │   │   ├── requirements.txt
 │   │   ├── seed.py
 │   │   └── start_backend.sh
 │   ├── credentials
 │   │   ├── README.md
 │   │   └── home4u-key.pem
+│   ├── deployment
+│   │   ├── MANUAL_FIX.md
+│   │   ├── deploy.sh
+│   │   ├── nginx.conf
+│   │   └── quick_fix.sh
 │   ├── frontend
 │   │   ├── public
 │   │   │   └── vite.svg
@@ -301,5 +305,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-02-26 02:20:20*
+*Last Updated: 2026-02-26 05:40:09*
 *This document is maintained by the CI/CD pipeline*
