@@ -123,7 +123,11 @@ If the URL does not work at the time of testing, the team will receive **no cred
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
+<<<<<<< HEAD
 | Vibecoding for Internship | Home4U | ec2-16-59-35-21.us-east-2.compute.amazonaws.com | Consensus |
+=======
+| Vibecoding for Internship | Home4U | ec2-16-59-35-21.us-east-2.compute.amazonaws.com | Consensus |
+>>>>>>> origin/master
 
 ---
 
