@@ -156,11 +156,14 @@ const Dashboard = () => {
   const [showNewProject, setShowNewProject] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   
   // House tour state
   const [tourMode, setTourMode] = useState(false);
   const [currentRoom, setCurrentRoom] = useState(0);
-  const [isZooming, setIsZooming] = useState(false);
+  const [isEnteringTour, setIsEnteringTour] = useState(false);
+  const [roomTransitioning, setRoomTransitioning] = useState(false);
+  const [roomDirection, setRoomDirection] = useState('next');
   
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -175,6 +178,44 @@ const Dashboard = () => {
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const root = parallaxRef.current;
+    if (!root) return;
+
+    const onMove = (event) => {
+      const rect = root.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+      const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+      setMouseOffset({ x, y });
+    };
+
+    const onLeave = () => setMouseOffset({ x: 0, y: 0 });
+
+    root.addEventListener('mousemove', onMove);
+    root.addEventListener('mouseleave', onLeave);
+    return () => {
+      root.removeEventListener('mousemove', onMove);
+      root.removeEventListener('mouseleave', onLeave);
+    };
+  }, []);
+
+  useEffect(() => {
+    const elements = document.querySelectorAll('.reveal-on-scroll');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+          }
+        });
+      },
+      { threshold: 0.16 }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [projects, styles, showNewProject]);
 
   const handleScroll = () => {
     setScrollY(window.scrollY);
@@ -222,36 +263,45 @@ const Dashboard = () => {
 
   // House tour handlers
   const startTour = () => {
-    setIsZooming(true);
+    if (isEnteringTour) return;
+    setCurrentRoom(0);
+    setIsEnteringTour(true);
     setTimeout(() => {
       setTourMode(true);
-      setIsZooming(false);
-    }, 800);
+      setIsEnteringTour(false);
+    }, 700);
   };
 
   const exitTour = () => {
-    setIsZooming(true);
+    setIsEnteringTour(true);
     setTimeout(() => {
       setTourMode(false);
       setCurrentRoom(0);
-      setIsZooming(false);
-    }, 800);
+      setRoomTransitioning(false);
+      setIsEnteringTour(false);
+    }, 450);
   };
 
-  const nextRoom = () => {
-    setIsZooming(true);
+  const transitionRoom = (direction) => {
+    if (roomTransitioning) return;
+    setRoomDirection(direction);
+    setRoomTransitioning(true);
     setTimeout(() => {
-      setCurrentRoom((prev) => (prev + 1) % tourRooms.length);
-      setIsZooming(false);
-    }, 400);
+      setCurrentRoom((prev) =>
+        direction === 'next'
+          ? (prev + 1) % tourRooms.length
+          : (prev - 1 + tourRooms.length) % tourRooms.length
+      );
+    }, 190);
+    setTimeout(() => {
+      setRoomTransitioning(false);
+    }, 430);
   };
+
+  const nextRoom = () => transitionRoom('next');
 
   const prevRoom = () => {
-    setIsZooming(true);
-    setTimeout(() => {
-      setCurrentRoom((prev) => (prev - 1 + tourRooms.length) % tourRooms.length);
-      setIsZooming(false);
-    }, 400);
+    transitionRoom('prev');
   };
 
   const roomTypes = ['Bedroom', 'Living Room', 'Kitchen', 'Bathroom', 'Office', 'Dining Room'];
@@ -261,14 +311,17 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       {/* Interactive House Tour Modal */}
-      {(tourMode || isZooming) && (
+      {(tourMode || isEnteringTour) && (
         <div className={`house-tour-overlay ${tourMode ? 'active' : ''}`}>
-          <div className={`tour-content ${isZooming ? 'zooming' : ''}`}>
+          <div className={`tour-content ${isEnteringTour ? 'zooming' : ''}`}>
             <button className="tour-exit-btn" onClick={exitTour}>
               ✕ Exit Tour
             </button>
             
-            <div className="tour-room">
+            <div className={`tour-room ${roomTransitioning ? `room-fading room-${roomDirection}` : ''}`}>
+              <div className="room-progress">
+                Room {currentRoom + 1} of {tourRooms.length}
+              </div>
               <div 
                 className="room-emoji" 
                 style={{ background: `linear-gradient(135deg, ${tourRooms[currentRoom].color}40, ${tourRooms[currentRoom].color}20)` }}
@@ -326,10 +379,11 @@ const Dashboard = () => {
 
       {/* Parallax Hero Section */}
       <section className="parallax-hero" ref={parallaxRef}>
+        <div className="parallax-grid-layer" />
         <div 
           className="parallax-bg"
           style={{ 
-            transform: `translateY(${scrollY * 0.5}px)`,
+            transform: `translateY(${scrollY * 0.5}px) translateX(${mouseOffset.x * 8}px)`,
             opacity: 1 - scrollY / 700
           }}
         />
@@ -337,33 +391,34 @@ const Dashboard = () => {
         <div 
           className="parallax-float parallax-float-1"
           style={{ 
-            transform: `translateY(${scrollY * -0.2}px) translateX(${scrollY * 0.1}px)`,
+            transform: `translateY(${scrollY * -0.2 + mouseOffset.y * 18}px) translateX(${scrollY * 0.1 + mouseOffset.x * 24}px)`,
             opacity: Math.max(0, 1 - scrollY / 600)
           }}
         />
         <div 
           className="parallax-float parallax-float-2"
           style={{ 
-            transform: `translateY(${scrollY * -0.3}px) translateX(${scrollY * -0.15}px)`,
+            transform: `translateY(${scrollY * -0.3 + mouseOffset.y * -14}px) translateX(${scrollY * -0.15 + mouseOffset.x * -28}px)`,
             opacity: Math.max(0, 1 - scrollY / 800)
           }}
         />
         <div 
           className="parallax-float parallax-float-3"
           style={{ 
-            transform: `translateY(${scrollY * -0.15}px) translateX(${scrollY * 0.05}px)`,
+            transform: `translateY(${scrollY * -0.15 + mouseOffset.y * 22}px) translateX(${scrollY * 0.05 + mouseOffset.x * 16}px)`,
             opacity: Math.max(0, 1 - scrollY / 500)
           }}
         />
         <div 
           className={`parallax-content ${heroLoaded ? 'loaded' : ''}`}
           style={{ 
-            transform: `translateY(${scrollY * 0.25}px)`,
+            transform: `translateY(${scrollY * 0.25 + mouseOffset.y * -8}px) translateX(${mouseOffset.x * -6}px)`,
             opacity: Math.max(0, 1 - scrollY / 500)
           }}
         >
           <h1 className={`hero-title ${heroLoaded ? 'fade-in' : ''}`}>
-            Welcome to <span className="brand-name">Home4U</span>
+            <span className="title-line">Welcome to</span>
+            <span className="brand-name brand-animate" data-text="Home4U">Home4U</span>
           </h1>
           <p className={`hero-subtitle ${heroLoaded ? 'fade-in' : ''}`}>
             Your dream home starts here
@@ -389,44 +444,44 @@ const Dashboard = () => {
       </section>
 
       {/* What We Do - Introduction Section */}
-      <section className="what-we-do-section" id="what-we-do">
+      <section className="what-we-do-section reveal-on-scroll" id="what-we-do">
         <div className="section-intro">
           <h2>What We Do</h2>
           <p>Transform your space with our comprehensive interior design services</p>
         </div>
         
         <div className="services-grid">
-          <div className="service-card" style={{ '--delay': '0s' }}>
+          <div className="service-card reveal-on-scroll" style={{ '--delay': '0s' }}>
             <div className="service-icon">🎨</div>
             <h3>Design Consultation</h3>
             <p>Expert advice to help you discover your perfect style and create a cohesive vision for your space.</p>
           </div>
           
-          <div className="service-card" style={{ '--delay': '0.1s' }}>
+          <div className="service-card reveal-on-scroll" style={{ '--delay': '0.1s' }}>
             <div className="service-icon">💰</div>
             <h3>Budget Planning</h3>
             <p>Smart budgeting tools and vendor connections to maximize your renovation budget without compromising quality.</p>
           </div>
           
-          <div className="service-card" style={{ '--delay': '0.2s' }}>
+          <div className="service-card reveal-on-scroll" style={{ '--delay': '0.2s' }}>
             <div className="service-icon">🛋️</div>
             <h3>Furniture Curation</h3>
             <p>Access to curated collections from top brands, with custom orders and professional delivery setup.</p>
           </div>
           
-          <div className="service-card" style={{ '--delay': '0.3s' }}>
+          <div className="service-card reveal-on-scroll" style={{ '--delay': '0.3s' }}>
             <div className="service-icon">✨</div>
             <h3>Moodboard Creation</h3>
             <p>Visualize your dream space with interactive moodboards before committing to any changes.</p>
           </div>
           
-          <div className="service-card" style={{ '--delay': '0.4s' }}>
+          <div className="service-card reveal-on-scroll" style={{ '--delay': '0.4s' }}>
             <div className="service-icon">📋</div>
             <h3>Project Management</h3>
             <p>Track progress, manage tasks, and collaborate with our team all in one organized hub.</p>
           </div>
           
-          <div className="service-card" style={{ '--delay': '0.5s' }}>
+          <div className="service-card reveal-on-scroll" style={{ '--delay': '0.5s' }}>
             <div className="service-icon">🏠</div>
             <h3>Room Visualization</h3>
             <p>3D visualizations and virtual tours to see your new space before it's built.</p>
@@ -435,7 +490,7 @@ const Dashboard = () => {
       </section>
 
       {/* Explore Design Styles with Hover Preview Cards */}
-      <section className="styles-section">
+      <section className="styles-section reveal-on-scroll">
         <div className="section-intro">
           <h2>Explore Design Styles</h2>
           <p>Hover over each style to preview what's possible</p>
@@ -445,7 +500,7 @@ const Dashboard = () => {
           {styles.map((style, index) => (
             <div 
               key={style.id} 
-              className="style-preview-card"
+              className="style-preview-card reveal-on-scroll"
               style={{ '--index': index }}
             >
               <div 
@@ -484,7 +539,7 @@ const Dashboard = () => {
       </section>
 
       {/* Projects Section */}
-      <section className="projects-section">
+      <section className="projects-section reveal-on-scroll">
         <div className="section-header">
           <h2>My Room Projects</h2>
           <button 
@@ -519,7 +574,7 @@ const Dashboard = () => {
         ) : (
           <div className="projects-grid">
             {projects.map(project => (
-              <div key={project.id} className="project-card">
+              <div key={project.id} className="project-card reveal-on-scroll">
                 <h3>{project.room_type}</h3>
                 <p>Budget: ${project.budget || 0}</p>
                 <p>Created: {new Date(project.created_at).toLocaleDateString()}</p>
@@ -541,16 +596,21 @@ const Dashboard = () => {
       </section>
 
       {/* House Tour Section - Now at the bottom */}
-      <section className="house-tour-section">
+      <section className="house-tour-section reveal-on-scroll">
         <div className="section-intro">
           <h2>Take a Virtual Tour</h2>
-          <p>Explore our services in an interactive house tour</p>
+          <p>Click the house to enter. Explore one room at a time to see what we do.</p>
         </div>
         
         <div className="tour-cta-container">
-          <button className="tour-start-btn" onClick={startTour}>
-            <span className="tour-emoji">🏠</span>
-            <span className="tour-text">Start Virtual Tour</span>
+          <button className={`house-entry ${isEnteringTour ? 'entering' : ''}`} onClick={startTour}>
+            <span className="house-roof" />
+            <span className="house-body">
+              <span className="house-window window-left" />
+              <span className="house-window window-right" />
+              <span className="house-door" />
+            </span>
+            <span className="house-hint">Enter the House</span>
             <span className="tour-rooms">{tourRooms.length} Rooms</span>
           </button>
           <div className="tour-preview-mini">

@@ -1,14 +1,14 @@
 :root {
-  --primary: #6B21A8;
-  --primary-hover: #581C87;
-  --secondary: #9333EA;
-  --secondary-light: #A855F7;
-  --danger: #EF4444;
-  --background: #0A0A0A;
-  --card-bg: #1A1A1A;
-  --text: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --border: #3F3F46;
+  --primary: #a855f7;
+  --primary-hover: #9333ea;
+  --secondary: #7e22ce;
+  --secondary-light: #c084fc;
+  --danger: #ef5d88;
+  --background: #08060f;
+  --card-bg: #12101d;
+  --text: #f4eeff;
+  --text-secondary: #b4a8cf;
+  --border: #2c2540;
 }
 
 * {
@@ -79,7 +79,7 @@ input, select {
 input:focus, select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
 }
 
 /* Auth Styles */
@@ -137,7 +137,7 @@ input:focus, select:focus {
 }
 
 .error-message {
-  background-color: #FEE2E2;
+  background-color: #2a1220;
   color: var(--danger);
   padding: 0.75rem;
   border-radius: 8px;
@@ -1533,4 +1533,3 @@ input:focus, select:focus {
     grid-template-columns: 1fr;
   }
 }
-
