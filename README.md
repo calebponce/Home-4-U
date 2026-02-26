@@ -123,11 +123,7 @@ If the URL does not work at the time of testing, the team will receive **no cred
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
-<<<<<<< HEAD
-| Vibecoding for Internship | Home4U | ec2-16-59-35-21.us-east-2.compute.amazonaws.com | Consensus |
-=======
-| Vibecoding for Internship | Home4U | ec2-16-59-35-21.us-east-2.compute.amazonaws.com | Consensus |
->>>>>>> origin/master
+| Vibecoding for Internship | Home4U | ec2-18-225-117-117.us-east-2.compute.amazonaws.com | Consensus |
 
 ---
 
@@ -236,7 +232,6 @@ No part of this repository may be reproduced, distributed, or transmitted withou
 ---
 
 *This document may be updated during the semester. Students are responsible for reviewing the latest version.*
-
 
 
 

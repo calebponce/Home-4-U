@@ -22,7 +22,7 @@ chmod 400 home4u-key.pem
 
 ### Step 3: Connect to Server
 ```bash
-ssh -i home4u-key.pem ec2-user@16.59.35.21
+ssh -i home4u-key.pem ec2-user@18.225.117.117
 ```
 
 ### Step 4: Access Database
@@ -62,8 +62,8 @@ sudo -u postgres psql -d home4u
 | **Instance ID** | i-048b1547e5254509c |
 | **Instance Name** | Home4U |
 | **Instance Type** | t3.micro |
-| **Public IP Address** | 16.59.35.21 |
-| **Public DNS** | ec2-16-59-35-21.us-east-2.compute.amazonaws.com |
+| **Public IP Address** | 18.225.117.117 |
+| **Public DNS** | ec2-18-225-117-117.us-east-2.compute.amazonaws.com |
 | **SSH Username** | ec2-user |
 | **SSH Port** | 22 |
 
@@ -77,7 +77,7 @@ sudo -u postgres psql -d home4u
 2. **Convert PEM to PPK** using PuTTYgen:
    - Open PuTTYgen → Load → Select home4u-key.pem → Save private key
 3. **Connect with PuTTY**:
-   - Host: `ec2-user@16.59.35.21`
+   - Host: `ec2-user@18.225.117.117`
    - Port: 22
    - SSH → Auth → Browse for your PPK file
 
@@ -101,15 +101,15 @@ chmod 400 home4u-key.pem
 Run this command in Terminal:
 
 ```bash
-ssh -i ~/Downloads/home4u-key.pem ec2-user@16.59.35.21
+ssh -i ~/Downloads/home4u-key.pem ec2-user@18.225.117.117
 ```
 
 **Expected Result:**
 ```
-The authenticity of host '16.59.35.21 (16.59.35.21)' can't be established.
+The authenticity of host '18.225.117.117 (18.225.117.117)' can't be established.
 ECDSA key fingerprint is SHA256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
 Are you sure you (yes/no)? want to continue connecting yes
-Warning: Permanently added '16.59.35.21' (ECDSA) to the list of known hosts.
+Warning: Permanently added '18.225.117.117' (ECDSA) to the list of known hosts.
 ```
 
 #### Step 4: Verify Connection
@@ -170,7 +170,7 @@ cd ~/Downloads
 chmod 400 home4u-key.pem
 
 # Test SSH connection
-ssh -i home4u-key.pem ec2-user@16.59.35.21
+ssh -i home4u-key.pem ec2-user@18.225.117.117
 ```
 
 ### For Windows (PowerShell)
@@ -185,7 +185,7 @@ icacls home4u-key.pem /grant:r "$($env:USERNAME):(R)"
 
 ```bash
 chmod 400 home4u-key.pem
-ssh -i home4u-key.pem ec2-user@16.59.35.21
+ssh -i home4u-key.pem ec2-user@18.225.117.117
 ```
 
 ---
@@ -220,8 +220,8 @@ chmod 400 home4u-key.pem
 
 **Solution:**
 ```bash
-ssh-keygen -R 16.59.35.21
-ssh-keygen -R ec2-16-59-35-21.us-east-2.compute.amazonaws.com
+ssh-keygen -R 18.225.117.117
+ssh-keygen -R ec2-18-225-117-117.us-east-2.compute.amazonaws.com
 ```
 
 ---
@@ -260,7 +260,7 @@ sudo yum install postgresql postgresql-server
 
 | Task | Command |
 |------|---------|
-| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@16.59.35.21` |
+| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@18.225.117.117` |
 | **List Databases** | `sudo -u postgres psql -l` |
 | **Connect to home4u** | `sudo -u postgres psql -d home4u` |
 | **List Tables** | `sudo -u postgres psql -d home4u -c "\dt"` |
@@ -271,10 +271,10 @@ sudo yum install postgresql postgresql-server
 
 ## What to Do If Still Having Issues
 
-1. **Double-check the IP address**: Make sure you're using `16.59.35.21`
+1. **Double-check the IP address**: Make sure you're using `18.225.117.117`
 2. **Verify PEM file location**: Use the full path like `~/Downloads/home4u-key.pem`
 3. **Check permissions**: Run `ls -la home4u-key.pem` - should show `-r--------`
-4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@16.59.35.21`
+4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@18.225.117.117`
 
 ---
 
