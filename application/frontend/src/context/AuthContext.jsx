@@ -8,12 +8,62 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    if (token) {
-      // In a real app, verify token with backend
-      setUser({ token });
-    }
-    setLoading(false);
+    let cancelled = false;
+
+    const validateToken = async () => {
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/v1/auth/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const me = await response.json();
+          if (!cancelled) {
+            setUser(me);
+          }
+          return;
+        }
+
+        // Token is invalid/expired: clear auth state.
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('access_token');
+          if (!cancelled) {
+            setToken(null);
+            setUser(null);
+          }
+          return;
+        }
+
+        // Non-auth backend issues should not force logout.
+        if (!cancelled) {
+          setUser({ token });
+        }
+      } catch (error) {
+        // Temporary connectivity issues should not force logout.
+        if (!cancelled) {
+          setUser({ token });
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    setLoading(true);
+    validateToken();
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
   const login = (token) => {
@@ -42,4 +92,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

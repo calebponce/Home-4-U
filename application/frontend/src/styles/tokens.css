@@ -1,0 +1,40 @@
+:root {
+  /* Figma: Color / Brand */
+  --color-brand-400: #c084fc;
+  --color-brand-500: #a855f7;
+  --color-brand-600: #9333ea;
+  --color-brand-700: #7e22ce;
+
+  /* Figma: Color / Feedback */
+  --color-danger-500: #ef5d88;
+
+  /* Figma: Color / Surface (Dark Purple) */
+  --color-bg-950: #08060f;
+  --color-surface-900: #12101d;
+  --color-surface-850: #19152a;
+  --color-border-700: #2c2540;
+  --color-text-100: #f4eeff;
+  --color-text-300: #b4a8cf;
+
+  /* Figma: Typography */
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-serif: 'Fraunces', Georgia, Cambria, 'Times New Roman', serif;
+
+  /* Figma: Spacing (8pt) */
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 1.25rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* Figma: Radius */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+
+  /* Figma: Motion */
+  --motion-fast: 180ms;
+  --motion-mid: 300ms;
+  --motion-slow: 520ms;
+}

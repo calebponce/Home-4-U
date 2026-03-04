@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 import os
 
@@ -30,4 +30,31 @@ def init_db():
     """Initialize database tables."""
     from app.models.database import Base
     Base.metadata.create_all(bind=engine)
+    _run_sqlite_compat_migrations()
 
+
+def _run_sqlite_compat_migrations():
+    """
+    Lightweight compatibility migrations for local SQLite.
+    Keeps older dev DB files usable when model columns are added.
+    """
+    if "sqlite" not in DATABASE_URL:
+        return
+
+    with engine.begin() as conn:
+        cols = conn.execute(text("PRAGMA table_info(room_projects)")).fetchall()
+        existing = {row[1] for row in cols}
+        if "photo_url" not in existing:
+            conn.execute(text("ALTER TABLE room_projects ADD COLUMN photo_url VARCHAR(500)"))
+
+        # ensure style_tags table exists (seed expects it)
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS style_tags (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  style_id INTEGER NOT NULL,\n"
+            "  tag_id INTEGER NOT NULL,\n"
+            "  weight FLOAT DEFAULT 1.0,\n"
+            "  FOREIGN KEY(style_id) REFERENCES styles(id),\n"
+            "  FOREIGN KEY(tag_id) REFERENCES tags(id)\n"
+            ")"
+        ))

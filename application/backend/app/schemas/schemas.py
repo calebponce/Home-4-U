@@ -143,3 +143,25 @@ class AISuggestTagsRequest(BaseModel):
 
 class AISuggestTagsResponse(BaseModel):
     suggested_tags: List[dict]  # [{"tag_id": 1, "tag_name": "modern", "confidence": 0.95}]
+
+
+# Search Schemas
+class SearchResult(BaseModel):
+    id: int
+    type: str  # e.g., "style"
+    title: str
+    snippet: Optional[str]
+    tags: List[str] = []
+    score: float
+    rank: int
+
+    class Config:
+        from_attributes = True
+
+
+class SearchResponse(BaseModel):
+    results: List[SearchResult]
+    total: int
+    page: int
+    limit: int
+    has_more: bool

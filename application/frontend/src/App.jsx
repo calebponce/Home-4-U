@@ -4,6 +4,8 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import ProjectDetails from './pages/ProjectDetails'
 import About from './pages/About'
+import VirtualTour3D from './pages/VirtualTour3D'
+import Workspace from './pages/Workspace'
 
 const ProtectedRoute = ({ children }) => {
   const { token, loading } = useAuth()
@@ -40,10 +42,25 @@ function App() {
           </ProtectedRoute>
         } 
       />
+      <Route
+        path="/virtual-tour"
+        element={
+          <ProtectedRoute>
+            <VirtualTour3D />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workspace"
+        element={
+          <ProtectedRoute>
+            <Workspace />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
 
 export default App
-

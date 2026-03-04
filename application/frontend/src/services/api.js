@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-// Create axios instance - always use relative path for Vite proxy
-// This ensures requests go through the proxy at /api -> http://localhost:8000
+// Base URL: use VITE_API_BASE when set (e.g., https://ec2.../api/v1), otherwise proxy-relative /api/v1
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1';
+
+// Create axios instance - relative path goes through Vite proxy in dev
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -50,6 +52,12 @@ export const stylesAPI = {
   getAllTags: () => api.get('/styles/tags/'),
 };
 
+// Search API
+export const searchAPI = {
+  searchStyles: (query, limit = 20, page = 1) =>
+    api.get('/search/', { params: { q: query, limit, page } }),
+};
+
 // Recommendations API
 export const recommendationsAPI = {
   getByProject: (projectId) => api.get(`/recommendations/project/${projectId}`),
@@ -59,4 +67,3 @@ export const recommendationsAPI = {
 };
 
 export default api;
-
