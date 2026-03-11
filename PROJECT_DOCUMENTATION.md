@@ -103,8 +103,9 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── M1v2.pdf
 │   │   └── README.md
 │   ├── M2
-│   │   ├── M2.V1.pdf
-│   │   └── README.md
+│   │   ├── M2v1.pdf
+│   │   ├── README.md
+│   │   └── eer.drawio
 │   ├── M3
 │   │   └── README.md
 │   ├── M4
@@ -311,5 +312,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-03-11 20:41:15*
+*Last Updated: 2026-03-11 20:49:04*
 *This document is maintained by the CI/CD pipeline*
