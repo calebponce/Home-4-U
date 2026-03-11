@@ -100,6 +100,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   └── m1v2_feedback.md
 │   │   ├── Home4U Milestone 1.V2.pdf
 │   │   ├── M1.v1.pdf
+│   │   ├── M1v2.pdf
 │   │   └── README.md
 │   ├── M2
 │   │   ├── M2.V1.pdf
@@ -310,5 +311,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-03-06 08:29:27*
+*Last Updated: 2026-03-11 20:41:15*
 *This document is maintained by the CI/CD pipeline*
