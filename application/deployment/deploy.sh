@@ -41,6 +41,11 @@ cd ../frontend
 npm install
 npm run build
 
+# Copy frontend build to /var/www/home4u
+echo "[6b/8] Deploying frontend to /var/www/home4u..."
+mkdir -p /var/www/home4u
+cp -r dist/* /var/www/home4u/
+
 # Create nginx configuration
 echo "[7/8] Configuring nginx..."
 cat > /tmp/home4u_nginx.conf << 'EOF'
@@ -48,18 +53,25 @@ server {
     listen 80;
     server_name _;
 
-    # Frontend static files (from build folder)
-    root /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/dist;
+    # Frontend static files (from /var/www/home4u)
+    root /var/www/home4u;
     index index.html;
 
-    # Serve static files
+    # Serve React app static files - try files first, fallback to index.html
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Serve React app - fallback to index.html for SPA routing
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # Proxy API requests to backend (uvicorn)
-    location /api/v1/ {
-        proxy_pass http://127.0.0.1:8000/;
+    # Proxy API requests to backend (all /auth/, /projects/, /styles/, etc.)
+    location /auth/ {
+        proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -67,10 +79,58 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Proxy uploads
-    location /uploads/ {
-        proxy_pass http://127.0.0.1:8000/;
+    location /projects/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /styles/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /search/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /recommendations/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /health {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 EOF
@@ -111,8 +171,8 @@ systemctl start home4u-backend
 systemctl status home4u-backend
 
 echo "=== Deployment Complete! ==="
-echo "Frontend should be available at http://18.225.117.117"
-echo "API should be at http://18.225.117.117/api/v1"
+echo "Frontend should be available at http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com"
+echo "API is at http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com"
 echo ""
 echo "Test users:"
 echo "  - test@example.com / test123"

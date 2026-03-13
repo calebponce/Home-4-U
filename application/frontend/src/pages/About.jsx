@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Home, DollarSign, Palette, Lightbulb, CheckSquare, Smartphone } from 'lucide-react';
 import './About.css';
 
 const About = () => {
@@ -13,32 +14,55 @@ const About = () => {
   const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [formStatus, setFormStatus] = useState('');
-  const [scrollY, setScrollY] = useState(0);
-  const [visibleSections, setVisibleSections] = useState({});
+  const [formNotice, setFormNotice] = useState('');
+  const [newsletterNotice, setNewsletterNotice] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
   
-  const sectionsRef = useRef({});
+  const bgShapesRef = useRef(null);
 
   useEffect(() => {
+    const prevScene = document.body.dataset.scene;
+    document.body.dataset.scene = 'about';
+
     setIsLoaded(true);
     animateCounters();
     
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-      const newVisible = {};
-      Object.keys(sectionsRef.current).forEach(key => {
-        const element = sectionsRef.current[key];
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          newVisible[key] = rect.top < window.innerHeight * 0.85;
-        }
-      });
-      setVisibleSections(newVisible);
+    let rafId = 0;
+    const updateBg = () => {
+      rafId = 0;
+      if (!bgShapesRef.current) return;
+      bgShapesRef.current.style.transform = `translateY(${(window.scrollY || 0) * 0.3}px)`;
     };
-    
-    window.addEventListener('scroll', handleScroll);
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(updateBg);
+    };
+
+    updateBg();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Reveal scroll-animated elements without forcing React re-renders on every scroll.
+    const animatedEls = Array.from(document.querySelectorAll('.about-page .scroll-animate'));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+      },
+      { threshold: 0.18 }
+    );
+    animatedEls.forEach((el) => observer.observe(el));
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+      observer.disconnect();
+      if (document.body.dataset.scene === 'about') {
+        if (prevScene) document.body.dataset.scene = prevScene;
+        else delete document.body.dataset.scene;
+      }
+    };
   }, []);
 
   const animateCounters = () => {
@@ -69,22 +93,25 @@ const About = () => {
     setTimeout(() => {
       setFormStatus('success');
       setContactForm({ name: '', email: '', message: '' });
-    }, 1500);
+      setFormNotice('Demo mode: contact form submissions are disabled.');
+      setTimeout(() => setFormNotice(''), 3500);
+    }, 1000);
   };
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    alert(`Thanks for subscribing with ${newsletterEmail}!`);
+    setNewsletterNotice(`Demo mode: newsletter subscription for ${newsletterEmail} is disabled.`);
+    setTimeout(() => setNewsletterNotice(''), 3500);
     setNewsletterEmail('');
   };
 
   const features = [
-    { icon: '🏠', title: 'Room Projects', desc: 'Create and manage projects for any room in your home.' },
-    { icon: '💰', title: 'Budget Tracking', desc: 'Set and track your renovation budget with real-time updates.' },
-    { icon: '🎨', title: 'Style Exploration', desc: 'Discover various interior design styles for your space.' },
-    { icon: '💡', title: 'Smart Recommendations', desc: 'Get personalized product recommendations based on your style.' },
-    { icon: '✅', title: 'Task Management', desc: 'Track your renovation progress with built-in checklists.' },
-    { icon: '📱', title: 'Anywhere Access', desc: 'Access your projects from any device, anytime.' }
+    { icon: <Home size={28} />, title: 'Room Projects', desc: 'Create and manage projects for any room in your home.' },
+    { icon: <DollarSign size={28} />, title: 'Budget Tracking', desc: 'Set and track your renovation budget with real-time updates.' },
+    { icon: <Palette size={28} />, title: 'Style Exploration', desc: 'Discover various interior design styles for your space.' },
+    { icon: <Lightbulb size={28} />, title: 'Smart Recommendations', desc: 'Get personalized product recommendations based on your style.' },
+    { icon: <CheckSquare size={28} />, title: 'Task Management', desc: 'Track your renovation progress with built-in checklists.' },
+    { icon: <Smartphone size={28} />, title: 'Anywhere Access', desc: 'Access your projects from any device, anytime.' }
   ];
 
   const steps = [
@@ -165,13 +192,9 @@ const About = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const setRef = (key) => (el) => {
-    sectionsRef.current[key] = el;
-  };
-
   return (
     <div className={`about-page ${isLoaded ? 'loaded' : ''}`}>
-      <div className="bg-shapes" style={{ transform: `translateY(${scrollY * 0.3}px)` }}>
+      <div className="bg-shapes" ref={bgShapesRef}>
         <div className="shape shape-1"></div>
         <div className="shape shape-2"></div>
         <div className="shape shape-3"></div>
@@ -179,9 +202,9 @@ const About = () => {
 
       <header className="about-header">
         <div className="header-content">
-          <h1 className="logo" onClick={() => navigate('/dashboard')}>
+          <button type="button" className="logo" onClick={() => navigate('/dashboard')} aria-label="Go to dashboard">
             <span>🏠</span> Home4U
-          </h1>
+          </button>
           <nav className="header-nav">
             <button onClick={() => navigate('/dashboard')} className="nav-link">Dashboard</button>
             <button onClick={logout} className="logout-btn">Logout</button>
@@ -189,7 +212,7 @@ const About = () => {
         </div>
       </header>
 
-      <section className="hero-section" ref={setRef('hero')}>
+      <section className="hero-section">
         <div className="hero-content">
           <span className="hero-badge animate-fade-in">✨ Welcome to Home4U</span>
           <h2 className="hero-title animate-fade-in delay-1">
@@ -210,7 +233,7 @@ const About = () => {
         </div>
         
         <div className="hero-visual animate-slide-in">
-          <div className="hero-card">
+          <div className="hero-card" data-tilt>
             <div className="card-glow"></div>
             <div className="card-content">
               <div className="card-icon">🛋️</div>
@@ -225,7 +248,7 @@ const About = () => {
         </div>
       </section>
 
-      <section className="app-preview-section" ref={setRef('preview')}>
+      <section className="app-preview-section">
         <div className="section-header">
           <h3>See It In Action</h3>
           <h2>Your Design Journey Starts Here</h2>
@@ -334,7 +357,7 @@ const About = () => {
         </div>
       </section>
 
-      <section id="features" className="features-section" ref={setRef('features')}>
+      <section id="features" className="features-section">
         <div className="section-header">
           <h3>Features</h3>
           <h2>Everything You Need</h2>
@@ -343,7 +366,7 @@ const About = () => {
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className={`feature-card scroll-animate ${visibleSections['features'] ? 'visible' : ''}`}
+              className="feature-card scroll-animate"
               style={{ transitionDelay: `${index * 0.1}s` }}
             >
               <div className="feature-icon-wrapper">
@@ -356,7 +379,7 @@ const About = () => {
         </div>
       </section>
 
-      <section className="testimonials-section" ref={setRef('testimonials')}>
+      <section className="testimonials-section">
         <div className="section-header">
           <h3>Testimonials</h3>
           <h2>What Users Say</h2>
@@ -365,7 +388,7 @@ const About = () => {
           {testimonials.map((testimonial, index) => (
             <div 
               key={index} 
-              className={`testimonial-card scroll-animate ${visibleSections['testimonials'] ? 'visible' : ''}`}
+              className="testimonial-card scroll-animate"
               style={{ transitionDelay: `${index * 0.15}s` }}
             >
               <div className="testimonial-quote">"{testimonial.quote}"</div>
@@ -381,33 +404,34 @@ const About = () => {
         </div>
       </section>
 
-      <section className="counter-section" ref={setRef('counter')}>
+      <section className="counter-section">
         <div className="counter-grid">
-          <div className={`counter-item scroll-animate ${visibleSections['counter'] ? 'visible' : ''}`}>
+          <div className="counter-item scroll-animate">
             <span className="counter-number">{animatedCounters.users || 0}+</span>
             <span className="counter-label">Happy Users</span>
           </div>
-          <div className={`counter-item scroll-animate ${visibleSections['counter'] ? 'visible' : ''}`} style={{ transitionDelay: '0.15s' }}>
+          <div className="counter-item scroll-animate" style={{ transitionDelay: '0.15s' }}>
             <span className="counter-number">{animatedCounters.projects || 0}+</span>
             <span className="counter-label">Projects Created</span>
           </div>
-          <div className={`counter-item scroll-animate ${visibleSections['counter'] ? 'visible' : ''}`} style={{ transitionDelay: '0.3s' }}>
+          <div className="counter-item scroll-animate" style={{ transitionDelay: '0.3s' }}>
             <span className="counter-number">{animatedCounters.styles || 0}+</span>
             <span className="counter-label">Design Styles</span>
           </div>
         </div>
       </section>
 
-      <section className="team-section" ref={setRef('team')}>
+      <section className="team-section">
         <div className="section-header">
           <h3>Meet Our Team</h3>
           <h2>The People Behind Home4U</h2>
         </div>
         <div className="team-grid">
           {teamMembers.map((member, index) => (
-            <div 
+            <button
+              type="button"
               key={index} 
-              className={`team-card scroll-animate ${visibleSections['team'] ? 'visible' : ''}`}
+              className="team-card scroll-animate"
               style={{ '--member-color': member.color, transitionDelay: `${index * 0.1}s` }}
               onClick={() => setSelectedMember(member)}
             >
@@ -415,7 +439,7 @@ const About = () => {
               <h4>{member.name}</h4>
               <span className="team-role">{member.role}</span>
               <span className="team-cta">Click to learn more →</span>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -455,7 +479,7 @@ const About = () => {
         </div>
       )}
 
-      <section className="company-section" ref={setRef('company')}>
+      <section className="company-section">
         <div className="company-content">
           <div className="company-text">
             <h3>About Our Company</h3>
@@ -485,7 +509,7 @@ const About = () => {
         </div>
       </section>
 
-      <section className="how-it-works-section" ref={setRef('howitworks')}>
+      <section className="how-it-works-section">
         <div className="section-header">
           <h3>How It Works</h3>
           <h2>Simple Process</h2>
@@ -494,7 +518,7 @@ const About = () => {
           {steps.map((step, index) => (
             <div 
               key={index} 
-              className={`step-card scroll-animate ${visibleSections['howitworks'] ? 'visible' : ''}`}
+              className="step-card scroll-animate"
               style={{ transitionDelay: `${index * 0.15}s` }}
             >
               <span className="step-number">{step.number}</span>
@@ -505,7 +529,7 @@ const About = () => {
         </div>
       </section>
 
-      <section className="faq-section" ref={setRef('faq')}>
+      <section className="faq-section">
         <div className="section-header">
           <h3>FAQ</h3>
           <h2>Common Questions</h2>
@@ -514,26 +538,31 @@ const About = () => {
           {faqs.map((faq, index) => (
             <div 
               key={index} 
-              className={`faq-item scroll-animate ${visibleSections['faq'] ? 'visible' : ''} ${openFaq === index ? 'open' : ''}`}
+              className={`faq-item scroll-animate ${openFaq === index ? 'open' : ''}`}
               style={{ transitionDelay: `${index * 0.1}s` }}
-              onClick={() => setOpenFaq(openFaq === index ? null : index)}
             >
-              <div className="faq-question">
+              <button
+                type="button"
+                className="faq-question"
+                aria-expanded={openFaq === index}
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+              >
                 <span>{faq.question}</span>
                 <span className="faq-toggle">{openFaq === index ? '−' : '+'}</span>
-              </div>
+              </button>
               <div className="faq-answer">{faq.answer}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="contact-section" ref={setRef('contact')}>
+      <section className="contact-section">
         <div className="section-header">
           <h3>Contact Us</h3>
           <h2>Get In Touch</h2>
         </div>
         <form className="contact-form" onSubmit={handleContactSubmit}>
+          {formNotice && <div className="form-notice">{formNotice}</div>}
           <div className="form-row">
             <input 
               type="text" 
@@ -576,6 +605,7 @@ const About = () => {
             />
             <button type="submit">Subscribe</button>
           </form>
+          {newsletterNotice && <div className="form-notice">{newsletterNotice}</div>}
         </div>
       </section>
 
@@ -615,4 +645,3 @@ const About = () => {
 };
 
 export default About;
-

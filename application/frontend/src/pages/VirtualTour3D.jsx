@@ -1,6 +1,11 @@
+/**
+ * A high-fidelity spatial narrative engine using Spline camera waypoints and React state-driven context.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './VirtualTour3D.css';
+
+const BRAND_PURPLE = '#A855F7';
 
 const storyRooms = [
   {
@@ -16,7 +21,7 @@ const storyRooms = [
     nextStep: 'Scan your bedroom and save your first recommended style board.',
     metric: { label: 'Client Clarity', before: 42, after: 89, suffix: '%' },
     cta: 'Scan Bedroom',
-    accent: '#a855f7',
+    accent: BRAND_PURPLE,
     toneA: '#2b1d46',
     toneB: '#171028',
     glow: 'rgba(168, 85, 247, 0.16)',
@@ -40,10 +45,10 @@ const storyRooms = [
     nextStep: 'Open your living room feed and shortlist your top three concepts.',
     metric: { label: 'Project Delay Risk', before: 61, after: 18, suffix: '%' },
     cta: 'Open Idea Feed',
-    accent: '#9333ea',
-    toneA: '#2a153f',
-    toneB: '#140c24',
-    glow: 'rgba(147, 51, 234, 0.14)',
+    accent: BRAND_PURPLE,
+    toneA: '#2b1d46',
+    toneB: '#171028',
+    glow: 'rgba(168, 85, 247, 0.16)',
     plan: { x: 48, y: 28, w: 20, h: 16 },
     scene: [
       { id: 'p-1', kind: 'panel', x: '24%', y: '38%', z: 44, r: -7, s: 1.08, px: 11, py: 7, w: 92, h: 44 },
@@ -136,10 +141,10 @@ const storyRooms = [
     nextStep: 'Book a consultation to finalize your complete home transformation roadmap.',
     metric: { label: 'Launch Readiness', before: 36, after: 95, suffix: '%' },
     cta: 'Book Whole-Home Consult',
-    accent: '#8b5cf6',
+    accent: BRAND_PURPLE,
     toneA: '#2b1b41',
     toneB: '#130d22',
-    glow: 'rgba(139, 92, 246, 0.14)',
+    glow: 'rgba(168, 85, 247, 0.16)',
     plan: { x: 74, y: 55, w: 20, h: 16 },
     scene: [
       { id: 'c-1', kind: 'panel', x: '24%', y: '38%', z: 44, r: -5, s: 1.08, px: 10, py: 7, w: 92, h: 44 },
@@ -197,6 +202,138 @@ const blueprintNodeLabels = {
   action: 'Whole Home',
 };
 
+const CAMERA_EYE_LEVEL = 1.6;
+const CAMERA_ANIMATION_DURATION = 2500;
+
+const clampValue = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const createWaypoint = (x, z, y = CAMERA_EYE_LEVEL) => ({ x, y, z });
+
+const mapPlanToCameraLane = (plan) => {
+  const centerX = plan.x + plan.w / 2;
+  const centerY = plan.y + plan.h / 2;
+  return {
+    x: Number((clampValue((centerX - 50) / 50, -1, 1) * 5.1).toFixed(2)),
+    z: Number(clampValue(14 - ((centerY - 50) / 50) * 2.4, 9.5, 17.5).toFixed(2)),
+  };
+};
+
+const buildRoomCameraPath = (room) => {
+  const lane = mapPlanToCameraLane(room.plan);
+  return [
+    createWaypoint(0, 21.5),
+    createWaypoint(lane.x * 0.3, 18.2),
+    createWaypoint(lane.x * 0.7, 14.3),
+    createWaypoint(lane.x, lane.z),
+  ];
+};
+
+const subtractVector = (from, to) => ({
+  x: to.x - from.x,
+  y: to.y - from.y,
+  z: to.z - from.z,
+});
+
+const normalizeVector = (vector) => {
+  const length = Math.hypot(vector.x, vector.y, vector.z) || 1;
+  return {
+    x: vector.x / length,
+    y: vector.y / length,
+    z: vector.z / length,
+  };
+};
+
+const catmullRomPoint = (p0, p1, p2, p3, t) => {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return {
+    x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+    y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3),
+    z: 0.5 * ((2 * p1.z) + (-p0.z + p2.z) * t + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3),
+  };
+};
+
+const sampleSplinePoint = (points, progress) => {
+  if (points.length === 0) return createWaypoint(0, 50);
+  if (points.length === 1) return points[0];
+
+  const segmentCount = points.length - 1;
+  const clampedProgress = clampValue(progress, 0, 1);
+  const scaled = clampedProgress * segmentCount;
+  const segmentIndex = Math.min(segmentCount - 1, Math.floor(scaled));
+  const localT = scaled - segmentIndex;
+  const p0 = points[Math.max(0, segmentIndex - 1)];
+  const p1 = points[segmentIndex];
+  const p2 = points[Math.min(segmentIndex + 1, points.length - 1)];
+  const p3 = points[Math.min(segmentIndex + 2, points.length - 1)];
+  return catmullRomPoint(p0, p1, p2, p3, localT);
+};
+
+const getSplinePose = (points, progress) => {
+  const position = sampleSplinePoint(points, progress);
+  const lookAhead = sampleSplinePoint(points, clampValue(progress + 0.035, 0, 1));
+  return {
+    position,
+    tangent: normalizeVector(subtractVector(position, lookAhead)),
+  };
+};
+
+const mapSplinePoseToStage = ({ position, tangent }) => {
+  const lateralTurn = tangent.z === 0 ? tangent.x * 10 : (tangent.x / Math.abs(tangent.z)) * 8.5;
+  const pitch = tangent.z === 0 ? 0 : (tangent.y / Math.abs(tangent.z)) * 8;
+  return {
+    cameraDolly: clampValue(position.z, 8, 60),
+    lookAtOffset: {
+      x: Number(clampValue(lateralTurn + position.x * 0.18, -8, 8).toFixed(2)),
+      y: Number(clampValue(pitch, -3.5, 3.5).toFixed(2)),
+    },
+    nudge: {
+      x: Number(clampValue(position.x * 0.22, -1.6, 1.6).toFixed(2)),
+      y: Number(clampValue((CAMERA_EYE_LEVEL - position.y) * 2.2, -0.8, 0.8).toFixed(2)),
+    },
+    position,
+  };
+};
+
+const storyChapters = [
+  {
+    id: 'outside',
+    title: 'Outside Arrival',
+    narrationText: 'Narration: Begin at the front door to start a guided story of transformation.',
+    cameraPath: [
+      createWaypoint(-0.45, 56),
+      createWaypoint(-0.25, 52),
+      createWaypoint(0.1, 47),
+      createWaypoint(0, 42),
+    ],
+  },
+  {
+    id: 'foyer',
+    title: 'The Foyer',
+    narrationText: 'Narration: You are passing through the frosted entry and into the story map of the home.',
+    cameraPath: [
+      createWaypoint(0, 42),
+      createWaypoint(0.2, 35),
+      createWaypoint(0, 28),
+      createWaypoint(0, 21.5),
+    ],
+  },
+  ...storyRooms.map((room) => ({
+    id: room.id,
+    title: room.name,
+    narrationText: `Narration: ${room.promise}`,
+    cameraPath: buildRoomCameraPath(room),
+    framework: {
+      problem: room.problem,
+      method: room.method,
+      proof: room.proof,
+      nextStep: room.nextStep,
+    },
+  })),
+];
+
+const initialStageCamera = mapSplinePoseToStage(getSplinePose(storyChapters[0].cameraPath, 0));
+
 const RoomIcon = ({ name, className = '' }) => {
   const common = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' };
 
@@ -251,6 +388,18 @@ const RoomIcon = ({ name, className = '' }) => {
 const renderRoomIllustration = (roomId) => {
   const baseScene = (content, figureClass, figureExtras = null) => (
     <svg className={`room-scene scene-${roomId}`} viewBox="0 0 640 360" aria-hidden="true">
+      <defs>
+        <filter id="bloom-filter" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur" />
+          <feOffset in="blur" dx="0" dy="0" result="offsetBlur" />
+          <feFlood floodColor="var(--room-accent)" floodOpacity="0.4" result="offsetColor" />
+          <feComposite in="offsetColor" in2="offsetBlur" operator="in" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       <rect x="86" y="72" width="468" height="228" rx="20" className="scene-shell" />
       <g className="scene-world">
         <polygon points="118,104 522,104 548,126 94,126" className="scene-ceiling" />
@@ -377,13 +526,16 @@ const VirtualTour3D = () => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState('outside');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [currentChapter, setCurrentChapter] = useState(0);
   const [selectedHotspotId, setSelectedHotspotId] = useState(null);
   const [visitedHotspots, setVisitedHotspots] = useState({});
   const [focusCue, setFocusCue] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [smoothTilt, setSmoothTilt] = useState({ x: 0, y: 0 });
   const [nudge, setNudge] = useState({ x: 0, y: 0 });
+  const [hotspotTransitioning, setHotspotTransitioning] = useState(false);
   const [doorZooming, setDoorZooming] = useState(false);
+  const [isEnteringHome, setIsEnteringHome] = useState(false);
   const [roomZooming, setRoomZooming] = useState(false);
   const [phaseTransitioning, setPhaseTransitioning] = useState(false);
   const [blueprintEntered, setBlueprintEntered] = useState(false);
@@ -399,6 +551,8 @@ const VirtualTour3D = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ambientMotion, setAmbientMotion] = useState(true);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [cameraDolly, setCameraDolly] = useState(initialStageCamera.cameraDolly);
+  const [lookAtOffset, setLookAtOffset] = useState(initialStageCamera.lookAtOffset);
   const [transformSweepTick, setTransformSweepTick] = useState(0);
   const [visitedRooms, setVisitedRooms] = useState(() => new Set());
   const [showProControls, setShowProControls] = useState(false);
@@ -412,6 +566,9 @@ const VirtualTour3D = () => {
   });
   const [introPassed, setIntroPassed] = useState(false);
   const [introRevealing, setIntroRevealing] = useState(false);
+  const [activeSection, setActiveSection] = useState('problem');
+  const [chapterChangeKey, setChapterChangeKey] = useState(0);
+  const [autoOpenedSection, setAutoOpenedSection] = useState(null);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const tiltStartRef = useRef({ x: 0, y: 0 });
   const audioCtxRef = useRef(null);
@@ -421,8 +578,24 @@ const VirtualTour3D = () => {
   const introTimerRef = useRef(null);
   const detailScrollYRef = useRef(0);
   const detailRafRef = useRef(null);
+  const hotspotFocusTimerRef = useRef(null);
+  const enterHomeTimersRef = useRef([]);
+  const cameraAnimationFrameRef = useRef(null);
+  const cameraPositionRef = useRef(initialStageCamera.position);
+  const hasMountedCameraRef = useRef(false);
+  const [userInterrupted, setUserInterrupted] = useState(false);
+  const userInterruptedTimerRef = useRef(null);
+  const userInterruptedRef = useRef(false);
+  const phaseRef = useRef(phase);
 
   const activeRoom = storyRooms[activeIndex];
+  const activeStoryChapter = storyChapters[currentChapter] || storyChapters[0];
+  const activeFramework = activeStoryChapter.framework || {
+    problem: activeRoom.problem,
+    method: activeRoom.method,
+    proof: activeRoom.proof,
+    nextStep: activeRoom.nextStep,
+  };
   const hotspots = storyHotspots[activeRoom.id] || [];
   const selectedHotspot = hotspots.find((spot) => spot.id === selectedHotspotId) || null;
   const visitedCount = visitedHotspots[activeRoom.id]?.size || 0;
@@ -441,11 +614,12 @@ const VirtualTour3D = () => {
   );
 
   const chamberTransform = useMemo(() => {
-    const rotateX = (-6 + smoothTilt.y * 8 + nudge.y).toFixed(2);
-    const rotateY = (14 + smoothTilt.x * 14 + nudge.x).toFixed(2);
-    const dolly = (10 + Math.abs(smoothTilt.x) * 5 + Math.abs(smoothTilt.y) * 4).toFixed(2);
-    return `translateZ(${dolly}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-  }, [smoothTilt, nudge]);
+    const rotateX = (-6 + smoothTilt.y * 8 + nudge.y + lookAtOffset.y).toFixed(2);
+    const rotateY = (14 + smoothTilt.x * 14 + nudge.x + lookAtOffset.x).toFixed(2);
+    const dolly = (cameraDolly + Math.abs(smoothTilt.x) * 5 + Math.abs(smoothTilt.y) * 4).toFixed(2);
+    const perspectiveScale = 1 + (50 - cameraDolly) / 500;
+    return `translateZ(${dolly}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${perspectiveScale})`;
+  }, [smoothTilt, nudge, cameraDolly, lookAtOffset]);
 
   const pathMetrics = useMemo(() => {
     const dx = pathTarget.x - 50;
@@ -457,10 +631,8 @@ const VirtualTour3D = () => {
 
   const narrativeLine = useMemo(() => {
     if (!narrativeEnabled) return null;
-    if (phase === 'outside') return 'Narration: Begin at the front door to start a guided story of transformation.';
-    if (phase === 'blueprint') return 'Narration: Choose the chapter you want to explore in our project journey.';
-    return `Narration: ${activeRoom.promise}`;
-  }, [phase, activeRoom.promise, narrativeEnabled]);
+    return activeStoryChapter.narrationText;
+  }, [activeStoryChapter, narrativeEnabled]);
 
   const revealEvidence = activeRoom.id !== 'atrium';
   const revealOutcome = ['transform', 'proof', 'action'].includes(activeRoom.id);
@@ -483,6 +655,16 @@ const VirtualTour3D = () => {
     ];
   }, [phase, visitedRooms, visitedHotspots]);
 
+  const frameworkPanels = useMemo(
+    () => [
+      { key: 'problem', label: 'Problem', content: activeFramework.problem },
+      { key: 'method', label: 'Method', content: activeFramework.method },
+      { key: 'proof', label: 'Proof', content: activeFramework.proof },
+      { key: 'nextStep', label: 'Next Step', content: activeFramework.nextStep },
+    ],
+    [activeFramework],
+  );
+
   const playUiTone = (frequency = 420, duration = 0.06) => {
     if (!soundEnabled || typeof window === 'undefined') return;
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -500,6 +682,90 @@ const VirtualTour3D = () => {
     osc.stop(ctx.currentTime + duration);
   };
 
+  const clearEnterHomeTimers = () => {
+    enterHomeTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    enterHomeTimersRef.current = [];
+  };
+
+  const clearUserInterruptedTimer = () => {
+    if (userInterruptedTimerRef.current) {
+      window.clearTimeout(userInterruptedTimerRef.current);
+      userInterruptedTimerRef.current = null;
+    }
+  };
+
+  const stopCameraAnimation = () => {
+    if (cameraAnimationFrameRef.current) {
+      cancelAnimationFrame(cameraAnimationFrameRef.current);
+      cameraAnimationFrameRef.current = null;
+    }
+  };
+
+  const getChapterIndexById = (chapterId) => {
+    const nextIndex = storyChapters.findIndex((chapter) => chapter.id === chapterId);
+    return nextIndex === -1 ? 0 : nextIndex;
+  };
+
+  const applySplinePoseToStage = (pose) => {
+    const stagePose = mapSplinePoseToStage(pose);
+    cameraPositionRef.current = stagePose.position;
+    setCameraDolly(stagePose.cameraDolly);
+    setLookAtOffset(stagePose.lookAtOffset);
+    setNudge(stagePose.nudge);
+  };
+
+  const syncActiveSectionFromProgress = (progress) => {
+    if (phaseRef.current !== 'room' || userInterruptedRef.current) return;
+
+    if (progress >= 0.8) {
+      setActiveSection((current) => {
+        if (current !== 'proof') {
+          setAutoOpenedSection('proof');
+          return 'proof';
+        }
+        return current;
+      });
+      return;
+    }
+
+    if (progress >= 0.4) {
+      setActiveSection((current) => {
+        if (current !== 'method') {
+          setAutoOpenedSection('method');
+          return 'method';
+        }
+        return current;
+      });
+      return;
+    }
+
+    setActiveSection((current) => {
+      if (current !== 'problem') {
+        setAutoOpenedSection('problem');
+        return 'problem';
+      }
+      return current;
+    });
+  };
+
+  const handleManualSectionChange = (sectionKey) => {
+    setActiveSection(sectionKey);
+    setUserInterrupted(true);
+    clearUserInterruptedTimer();
+    userInterruptedTimerRef.current = window.setTimeout(() => {
+      setUserInterrupted(false);
+      userInterruptedTimerRef.current = null;
+    }, 10000);
+  };
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    userInterruptedRef.current = userInterrupted;
+  }, [userInterrupted]);
+
   useEffect(() => {
     if (phase === 'blueprint') {
       setBlueprintEntered(true);
@@ -511,6 +777,25 @@ const VirtualTour3D = () => {
   useEffect(() => {
     setBlueprintMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (phase === 'outside' && !isEnteringHome) {
+      setCurrentChapter(0);
+      return;
+    }
+    if (phase === 'blueprint') {
+      setCurrentChapter(1);
+      return;
+    }
+    if (phase === 'room') {
+      setCurrentChapter(getChapterIndexById(activeRoom.id));
+    }
+  }, [phase, activeRoom.id, isEnteringHome]);
+
+  useEffect(() => {
+    setActiveSection('problem');
+    setChapterChangeKey((prev) => prev + 1);
+  }, [currentChapter]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -533,7 +818,13 @@ const VirtualTour3D = () => {
 
   useEffect(() => {
     setSelectedHotspotId(null);
+    setHotspotTransitioning(false);
+    setNudge({ x: 0, y: 0 });
   }, [activeIndex, phase]);
+
+  useEffect(() => () => {
+    if (hotspotFocusTimerRef.current) window.clearTimeout(hotspotFocusTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'room') return;
@@ -561,6 +852,9 @@ const VirtualTour3D = () => {
   }, [showBookingModal]);
 
   useEffect(() => () => {
+    clearEnterHomeTimers();
+    clearUserInterruptedTimer();
+    stopCameraAnimation();
     if (introTimerRef.current) clearTimeout(introTimerRef.current);
     if (detailRafRef.current) cancelAnimationFrame(detailRafRef.current);
   }, []);
@@ -591,17 +885,62 @@ const VirtualTour3D = () => {
     return () => cancelAnimationFrame(frameId);
   }, [tilt]);
 
+  // AI-Driven Neural Sync: Maps spatial waypoints to narrative state.
+  useEffect(() => {
+    const chapter = storyChapters[currentChapter];
+    if (!chapter?.cameraPath?.length) return undefined;
+
+    stopCameraAnimation();
+    const path = [cameraPositionRef.current, ...chapter.cameraPath];
+
+    if (!hasMountedCameraRef.current) {
+      applySplinePoseToStage(getSplinePose(path, 0));
+      hasMountedCameraRef.current = true;
+      return undefined;
+    }
+
+    const startTime = performance.now();
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    const animate = (now) => {
+      const linearProgress = clampValue((now - startTime) / CAMERA_ANIMATION_DURATION, 0, 1);
+      const easedProgress = easeInOutCubic(linearProgress);
+      applySplinePoseToStage(getSplinePose(path, easedProgress));
+      syncActiveSectionFromProgress(easedProgress);
+
+      if (linearProgress < 1) {
+        cameraAnimationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        cameraAnimationFrameRef.current = null;
+      }
+    };
+
+    cameraAnimationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => stopCameraAnimation();
+  }, [currentChapter]);
+
   const enterHouse = () => {
-    if (doorZooming) return;
+    if (isEnteringHome || doorZooming) return;
+    clearEnterHomeTimers();
     setPhaseTransitioning(true);
     playUiTone(360, 0.09);
-    setDoorZooming(true);
-    setTimeout(() => {
+    setIsEnteringHome(true);
+    setCurrentChapter(0);
+
+    const midFlightTimer = window.setTimeout(() => {
+      setCurrentChapter(1);
+      playUiTone(480, 0.08);
+    }, 600);
+
+    const finishTimer = window.setTimeout(() => {
       setPhase('blueprint');
       setBlueprintIntroTick((prev) => prev + 1);
-      setDoorZooming(false);
+      setIsEnteringHome(false);
       setPhaseTransitioning(false);
-    }, 620);
+    }, 1200);
+
+    enterHomeTimersRef.current = [midFlightTimer, finishTimer];
   };
 
   const openRoomFromBlueprint = (index) => {
@@ -610,8 +949,11 @@ const VirtualTour3D = () => {
     const plan = storyRooms[index].plan;
     setPathTarget({ x: plan.x + plan.w / 2, y: plan.y + plan.h / 2 });
     setRoomZooming(true);
+
     setTimeout(() => {
+      const chapterIndex = getChapterIndexById(storyRooms[index].id);
       setActiveIndex(index);
+      setCurrentChapter(chapterIndex);
       setPhase('room');
       setVisitedRooms((prev) => new Set(prev).add(storyRooms[index].id));
       setRoomZooming(false);
@@ -621,6 +963,7 @@ const VirtualTour3D = () => {
 
   const onPointerDown = (event) => {
     if (phase !== 'room') return;
+    stopCameraAnimation();
     setIsDragging(true);
     dragStartRef.current = { x: event.clientX, y: event.clientY };
     tiltStartRef.current = { ...tilt };
@@ -646,6 +989,8 @@ const VirtualTour3D = () => {
   const onPointerUp = () => setIsDragging(false);
 
   const openHotspot = (hotspotId) => {
+    const hotspot = hotspots.find((spot) => spot.id === hotspotId);
+    stopCameraAnimation();
     playUiTone(660, 0.05);
     setSelectedHotspotId(hotspotId);
     setFocusCue((prev) => prev + 1);
@@ -654,8 +999,24 @@ const VirtualTour3D = () => {
       roomSet.add(hotspotId);
       return { ...prev, [activeRoom.id]: roomSet };
     });
-    setNudge({ x: 2.8, y: -1.4 });
-    setTimeout(() => setNudge({ x: 0, y: 0 }), 240);
+    if (hotspot) {
+      const xBias = (hotspot.x - 50) / 50;
+      const yBias = (hotspot.y - 50) / 50;
+      setHotspotTransitioning(true);
+      setLookAtOffset({ x: xBias * 6, y: yBias * 4.2 });
+      setNudge({ x: xBias * 1.25, y: yBias * 0.8 });
+      if (hotspotFocusTimerRef.current) window.clearTimeout(hotspotFocusTimerRef.current);
+      hotspotFocusTimerRef.current = window.setTimeout(() => {
+        setHotspotTransitioning(false);
+        setNudge({ x: 0, y: 0 });
+      }, 600);
+    }
+
+    // Deep-link to evidence panel
+    if (detailScrollRef.current) {
+      const top = detailScrollRef.current.querySelector('.virtual-hotspot-panel')?.offsetTop || 0;
+      detailScrollRef.current.scrollTo({ top: top - 100, behavior: 'smooth' });
+    }
   };
 
   const onDetailScroll = (event) => {
@@ -781,7 +1142,7 @@ const VirtualTour3D = () => {
           </div>
 
           <div className="outside-layer">
-            <div className="outside-shell">
+            <div className={`outside-shell ${isEnteringHome ? 'house-zoom-in' : ''}`}>
               <div className="house-structure">
                 <div className="house-floor" />
                 <div className="house-wall house-wall-back" />
@@ -867,7 +1228,7 @@ const VirtualTour3D = () => {
                 <span className="virtual-hotspot-tag">{spot.title}</span>
               </button>
             ))}
-            <div className={`room-shell room-shell-${activeRoom.id}`} style={{ transform: chamberTransform }}>
+            <div className={`room-shell room-shell-${activeRoom.id} ${hotspotTransitioning ? 'hotspot-transitioning' : ''}`} style={{ transform: chamberTransform }}>
               <div className="room-depth-atmo" style={{ '--atmo-x': `${(smoothTilt.x * 14).toFixed(2)}px`, '--atmo-y': `${(smoothTilt.y * 10).toFixed(2)}px` }} />
               <div className="room-depth-shadow" />
               <div className="room-depth-foreground" />
@@ -921,18 +1282,20 @@ const VirtualTour3D = () => {
                   </button>
                 ))}
               </div>
-              <div className="dock-room-detail">
-                <h4>{activeRoom.title}</h4>
-                <p>{activeRoom.promise}</p>
-                <div className="dock-geometry">
-                  <span>clickable insights</span>
-                  {hotspots.map((spot, idx) => (
-                    <span key={spot.id} className="dock-geo-chip">{idx + 1}. {spot.title}</span>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
+
+          <nav className={`virtual-sticky-dock ${phaseTransitioning ? 'hidden' : ''}`}>
+            {phase === 'room' && (
+              <>
+                <button className="dock-btn ghost" onClick={() => setPhase('blueprint')}>Open Story Map</button>
+                <button className="dock-btn primary" onClick={() => setActiveIndex((prev) => (prev + 1) % storyRooms.length)}>Next Room →</button>
+              </>
+            )}
+            {phase === 'blueprint' && (
+              <button className="dock-btn" onClick={() => setPhase('outside')}>← Back Outside</button>
+            )}
+          </nav>
         </section>
 
         <aside className={`virtual-info ${phase === 'room' ? 'room-info-mode' : ''}`}>
@@ -968,87 +1331,108 @@ const VirtualTour3D = () => {
                   </button>
                 ))}
               </div>
-              <div className="secondary-controls">
-                <button type="button" className="ghost-nav-btn" onClick={() => setPhase('outside')}>Back Outside</button>
-                <button type="button" className="ghost-nav-btn" onClick={() => setShowProControls((v) => !v)}>
-                  {showProControls ? 'Hide Pro Controls' : 'Show Pro Controls'}
-                </button>
-              </div>
             </section>
           )}
 
           {phase === 'room' && (
-            <div ref={detailScrollRef} className={`room-detail-scroll ${introRevealing ? 'locked' : ''}`} onScroll={onDetailScroll}>
-              <div
-                className="room-detail-parallax room-detail-parallax-a"
-                aria-hidden="true"
-              />
-              <div
-                className="room-detail-parallax room-detail-parallax-b"
-                aria-hidden="true"
-              />
-              <div
-                className="room-detail-parallax room-detail-parallax-c"
-                aria-hidden="true"
-              />
-              <div className={`room-detail-content ${introPassed ? 'intro-passed' : ''}`}>
-                <section
-                  key={activeRoom.id}
-                  className={`room-intro-showcase ${introRevealing ? 'reveal-active' : ''}`}
-                  style={{
-                    '--room-accent': activeRoom.accent,
-                    '--room-tone-a': activeRoom.toneA,
-                    '--room-tone-b': activeRoom.toneB,
-                    '--room-glow': activeRoom.glow,
-                  }}
-                >
-                  <p className="virtual-eyebrow room-kicker">Room Showcase</p>
-                  <h2 className="room-display-title">{activeRoom.title}</h2>
-                  <p className="room-display-lead">{activeRoom.promise}</p>
-                  <div className="room-intro-meta">
-                    <span className="meta-label">{activeRoom.metric.label}</span>
-                    <strong>{activeRoom.metric.after}{activeRoom.metric.suffix}</strong>
-                  </div>
-                  <button type="button" className="room-intro-cta" onClick={jumpToDetails}>Explore Details ↓</button>
-                  <span className="room-intro-scrollhint">Scroll to move deeper into this chapter</span>
-                  {introRevealing && <span className="room-intro-lock">Revealing room...</span>}
-                </section>
+            <>
+              <section
+                className="room-sidebar-header"
+                style={{
+                  '--room-accent': activeRoom.accent,
+                  '--room-tone-a': activeRoom.toneA,
+                  '--room-tone-b': activeRoom.toneB,
+                }}
+              >
+                <p className="virtual-eyebrow section-kicker">Chapter Insight</p>
+                <h2 className="section-title">{activeRoom.title}</h2>
+                <p className="section-lead">{activeStoryChapter.narrationText.replace(/^Narration:\s*/, '')}</p>
+              </section>
 
-                <div ref={detailBodyRef} className="room-detail-body">
-                <div className="room-detail-head">
-                  <p className="virtual-eyebrow section-kicker">Chapter Insight</p>
-                  <h2 className="section-title">{activeRoom.title}</h2>
-                  <p className="section-lead">{activeRoom.proof}</p>
-                </div>
-                <section className="story-framework">
-                  <p className="virtual-eyebrow">Story Framework</p>
-                  <div className="framework-grid">
-                    <article className="framework-step">
-                      <h4>Problem</h4>
-                      <p>{activeRoom.problem}</p>
-                    </article>
-                    <article className="framework-step">
-                      <h4>Method</h4>
-                      <p>{activeRoom.method}</p>
-                    </article>
-                    <article className="framework-step">
-                      <h4>Proof</h4>
-                      <p>{activeRoom.proof}</p>
-                    </article>
-                    <article className="framework-step">
-                      <h4>Next Step</h4>
-                      <p>{activeRoom.nextStep}</p>
-                    </article>
-                  </div>
-                  <button type="button" className="story-framework-cta" onClick={handleRoomCta}>{activeRoom.cta}</button>
-                </section>
+              <div ref={detailScrollRef} className={`room-detail-scroll ${introRevealing ? 'locked' : ''}`} onScroll={onDetailScroll}>
+                <div
+                  className="room-detail-parallax room-detail-parallax-a"
+                  aria-hidden="true"
+                />
+                <div
+                  className="room-detail-parallax room-detail-parallax-b"
+                  aria-hidden="true"
+                />
+                <div
+                  className="room-detail-parallax room-detail-parallax-c"
+                  aria-hidden="true"
+                />
+                <div className="room-scroll-mask" aria-hidden="true" />
+                <div key={chapterChangeKey} className={`room-detail-content ${introPassed ? 'intro-passed' : ''}`}>
+                  <section
+                    key={activeRoom.id}
+                    className={`room-intro-showcase sidebar-item-animate ${introRevealing ? 'reveal-active' : ''}`}
+                    style={{
+                      '--room-accent': activeRoom.accent,
+                      '--room-tone-a': activeRoom.toneA,
+                      '--room-tone-b': activeRoom.toneB,
+                      '--room-glow': activeRoom.glow,
+                    }}
+                  >
+                    <p className="virtual-eyebrow room-kicker">Room Showcase</p>
+                    <p className="room-display-label">{activeRoom.name}</p>
+                    <p className="room-display-lead">{activeRoom.promise}</p>
+                    <div className="room-intro-meta">
+                      <span className="meta-label">{activeRoom.metric.label}</span>
+                      <strong>{activeRoom.metric.after}{activeRoom.metric.suffix}</strong>
+                    </div>
+                    <button type="button" className="room-intro-cta shimmer-shine" onClick={jumpToDetails}>Explore Details ↓</button>
+                    <span className="room-intro-scrollhint">Scroll to move deeper into this chapter</span>
+                    {introRevealing && <span className="room-intro-lock">Revealing room...</span>}
+                  </section>
+
+                  <div ref={detailBodyRef} className="room-detail-body">
+                  <section className="story-framework sidebar-item-animate">
+                    <p className="virtual-eyebrow">Story Framework</p>
+                    <div key={activeStoryChapter.id} className="framework-accordion">
+                      {frameworkPanels.map((panel) => {
+                        const isOpen = activeSection === panel.key;
+                        const buttonId = `framework-${activeStoryChapter.id}-${panel.key}`;
+                        const panelId = `${buttonId}-panel`;
+                        return (
+                          <article key={panel.key} className={`framework-step ${isOpen ? 'is-open' : ''}`}>
+                            <button
+                              type="button"
+                              id={buttonId}
+                              className={`framework-trigger accordion-header ${isOpen ? 'active shimmer-shine' : ''} ${autoOpenedSection === panel.key ? 'sync-highlight' : ''}`}
+                              aria-expanded={isOpen}
+                              aria-controls={panelId}
+                              onClick={() => {
+                                setAutoOpenedSection(null);
+                                handleManualSectionChange(panel.key);
+                              }}
+                            >
+                              <span>{panel.label}</span>
+                              <span className="framework-chevron" aria-hidden="true">+</span>
+                            </button>
+                            <div
+                              id={panelId}
+                              className={`framework-panel ${isOpen ? 'is-open' : ''}`}
+                              role="region"
+                              aria-labelledby={buttonId}
+                            >
+                              <div className="framework-panel-inner">
+                                <p>{panel.content}</p>
+                              </div>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                    <button type="button" className="story-framework-cta shimmer-shine" onClick={handleRoomCta}>{activeRoom.cta}</button>
+                  </section>
                 {revealEvidence ? (
                   <>
-                    <div className="virtual-room-progress">
+                    <div className="virtual-room-progress sidebar-item-animate">
                       <span>{visitedCount}/{hotspots.length} insights viewed</span>
                       <span className={`virtual-complete-pill ${roomComplete ? 'complete' : ''}`}>{roomComplete ? 'Room Complete' : 'In Progress'}</span>
                     </div>
-                    <section className="virtual-hotspot-panel section-parallax section-parallax-fast">
+                    <section className="virtual-hotspot-panel section-parallax section-parallax-fast sidebar-item-animate">
                       <p className="virtual-eyebrow">Evidence Detail</p>
                       {selectedHotspot ? (
                         <div key={`${selectedHotspot.id}-${focusCue}`} className="hotspot-panel-inner">
@@ -1066,7 +1450,7 @@ const VirtualTour3D = () => {
                 )}
 
                 {revealOutcome && (
-                  <section className="before-after-panel section-parallax section-parallax-mid">
+                  <section className="before-after-panel section-parallax section-parallax-mid sidebar-item-animate">
                     <div className={`transform-panel ${isGeneratingPlan ? 'is-processing' : ''} ${transformSweepTick ? 'sweep-once' : ''}`}>
                       <div className="transform-header">
                         <p className="virtual-eyebrow">Outcome Progress</p>
@@ -1119,10 +1503,6 @@ const VirtualTour3D = () => {
                   </section>
                 )}
 
-                <div className="virtual-controls section-parallax section-parallax-slow">
-                  <button type="button" className="virtual-nav-btn" onClick={() => setPhase('blueprint')}>← Story Map</button>
-                  <button type="button" className="virtual-nav-btn" onClick={() => setActiveIndex((prev) => (prev + 1) % storyRooms.length)}>Next Room →</button>
-                </div>
 
                 {revealDeepControls && (
                   <div className="virtual-minimap">
@@ -1131,22 +1511,20 @@ const VirtualTour3D = () => {
                     ))}
                   </div>
                 )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           {phase !== 'room' && (
             <>
               <div className="virtual-controls hero-cta-row">
-                <button type="button" className="virtual-nav-btn primary-cta" onClick={() => setPhase('blueprint')}>Open Story Map</button>
+                <button type="button" className="virtual-nav-btn ghost-nav-btn" onClick={() => setPhase('blueprint')}>Open Story Map</button>
               </div>
             </>
           )}
 
-          <button type="button" className={`pro-controls-toggle ${showProControls ? 'active' : ''}`} onClick={() => setShowProControls((v) => !v)}>
-            {showProControls ? 'Hide Pro Controls' : 'Show Pro Controls'}
-          </button>
 
           {showProControls && (
             <>
@@ -1185,7 +1563,10 @@ const VirtualTour3D = () => {
             </>
           )}
 
-          {narrativeLine && <p className="narrative-line">{narrativeLine}</p>}
+          {narrativeLine && <p key={activeStoryChapter.id} className="narrative-line">{narrativeLine}</p>}
+          <button type="button" className="pro-controls-link" onClick={() => setShowProControls((v) => !v)}>
+            {showProControls ? 'Hide Pro Controls' : 'Show Pro Controls'}
+          </button>
         </aside>
       </main>
       {showBookingModal && (

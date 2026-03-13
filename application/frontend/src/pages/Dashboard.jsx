@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { DollarSign, FolderKanban, Home, Palette, PlayCircle } from 'lucide-react';
 import { projectsAPI, stylesAPI, searchAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
@@ -53,30 +54,6 @@ const tourRooms = [
   }
 ];
 
-// Style previews for hover cards
-const stylePreviews = {
-  1: {
-    images: ['🛋️', '🪑', '💡', '🖼️'],
-    features: ['Minimal Furniture', 'Neutral Colors', 'Natural Light', 'Clean Lines']
-  },
-  2: {
-    images: ['🏛️', '🕰️', '🪞', '🕯️'],
-    features: ['Classic Details', 'Rich Colors', 'Elegant Fabrics', 'Antique Accents']
-  },
-  3: {
-    images: ['🌿', '🪴', '☀️', '🌾'],
-    features: ['Organic Materials', 'Earthy Tones', 'Indoor Plants', 'Rustic Textures']
-  },
-  4: {
-    images: ['💎', '✨', '🌙', '🔮'],
-    features: ['Bold Colors', 'Metallic Accents', 'Velvet Fabrics', 'Glam Lighting']
-  },
-  5: {
-    images: ['🎭', '🎪', '🎨', '🪜'],
-    features: ['Eclectic Mix', 'Vintage Finds', 'Art Displays', 'Playful Spaces']
-  }
-};
-
 // Default styles with rich visuals
 const defaultStyles = [
   { 
@@ -85,6 +62,9 @@ const defaultStyles = [
     description: 'Clean lines, minimal clutter, and functional design with neutral colors',
     emoji: '🪟',
     gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    palette: ['#0b0f1a', '#667eea', '#c7d2fe', '#ffffff'],
+    materials: ['Glass', 'Polished concrete'],
+    signature: 'Statement lighting + negative space',
     previewEmojis: ['🛋️', '📐', '💡', '🪟'],
     previewFeatures: ['Clean Lines', 'Neutral Palette', 'Statement Lighting', 'Open Spaces']
   },
@@ -94,6 +74,9 @@ const defaultStyles = [
     description: 'Classic elegance with rich colors, ornate details, and quality craftsmanship',
     emoji: '🕰️',
     gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    palette: ['#2b0f16', '#f5576c', '#fbcfe8', '#fdf2f8'],
+    materials: ['Mahogany', 'Velvet'],
+    signature: 'Molding, symmetry, and heirloom pieces',
     previewEmojis: ['🕰️', '🪞', '🕯️', '🏺'],
     previewFeatures: ['Rich Fabrics', 'Antique Details', 'Crown Molding', 'Classic Furniture']
   },
@@ -103,6 +86,9 @@ const defaultStyles = [
     description: 'Cozy minimalism with natural materials, light colors, and hygge atmosphere',
     emoji: '🪵',
     gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    palette: ['#0b1116', '#00f2fe', '#e5e7eb', '#ffffff'],
+    materials: ['Light oak', 'Linen'],
+    signature: 'Warm neutrals + soft texture layers',
     previewEmojis: ['🌿', '🪵', '🧸', '🕯️'],
     previewFeatures: ['Natural Wood', 'Indoor Plants', 'Cozy Textiles', 'Warm Lighting']
   },
@@ -112,8 +98,11 @@ const defaultStyles = [
     description: 'Raw materials, exposed elements, and urban-inspired aesthetics',
     emoji: '⚙️',
     gradient: 'linear-gradient(135deg, #434343 0%, #000000 100%)',
+    palette: ['#0b0b0d', '#2a2a2f', '#8b8b96', '#f5f5f7'],
+    materials: ['Steel', 'Brick'],
+    signature: 'Raw texture + high contrast lighting',
     previewEmojis: ['⚙️', '🧱', '💡', '🪜'],
-    previewFeatures: ['Exposed Brick', 'Metal Accents', ' Edison Bulbs', 'Open Ductwork']
+    previewFeatures: ['Exposed Brick', 'Metal Accents', 'Edison Bulbs', 'Open Ductwork']
   },
   { 
     id: 5, 
@@ -121,6 +110,9 @@ const defaultStyles = [
     description: 'Eclectic, colorful, and free-spirited with layered textures and patterns',
     emoji: '🧶',
     gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    palette: ['#1a0b12', '#fa709a', '#fee140', '#fff7ed'],
+    materials: ['Rattan', 'Woven textiles'],
+    signature: 'Layered patterns + collected decor',
     previewEmojis: ['🌺', '💐', '🎭', '🪭'],
     previewFeatures: ['Layered Rugs', 'Vintage Finds', 'Art Displays', 'Pattern Mix']
   },
@@ -130,6 +122,9 @@ const defaultStyles = [
     description: 'Retro sophistication with bold colors, organic shapes, and timeless appeal',
     emoji: '🛋️',
     gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+    palette: ['#1a0f11', '#ff9a9e', '#f59e0b', '#fff7ed'],
+    materials: ['Teak', 'Leather'],
+    signature: 'Tapered legs + warm wood tones',
     previewEmojis: ['🪑', '📺', '🪵', '🌵'],
     previewFeatures: ['Tapered Legs', 'Bold Colors', 'Organic Curves', 'Retro Appliances']
   },
@@ -139,6 +134,9 @@ const defaultStyles = [
     description: 'Warm, inviting spaces with terracotta, wrought iron, and rustic textures',
     emoji: '🍋',
     gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+    palette: ['#1a1208', '#fda085', '#f6d365', '#fff7ed'],
+    materials: ['Terracotta', 'Wrought iron'],
+    signature: 'Arches, tiles, and sun-washed warmth',
     previewEmojis: ['🌞', '🍋', '🏺', '🪴'],
     previewFeatures: ['Terracotta', 'Arched Doorways', 'Wrought Iron', 'Clay Tiles']
   },
@@ -148,6 +146,9 @@ const defaultStyles = [
     description: 'Serene simplicity with natural materials, clean spaces, and zen harmony',
     emoji: '🎍',
     gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+    palette: ['#070a0d', '#a8edea', '#e5e7eb', '#ffffff'],
+    materials: ['Cedar', 'Rice paper'],
+    signature: 'Low furniture + calm negative space',
     previewEmojis: ['🗿', '🎋', '🧘', '🍵'],
     previewFeatures: ['Shoji Screens', 'Floor Cushions', 'Zen Garden', 'Minimal Decor']
   }
@@ -162,22 +163,119 @@ const styleEmojiMap = {
   'Mid-Century': '📺',
   Mediterranean: '🫒',
   Japanese: '🎎',
+  Minimalist: '⚪️',
+  Farmhouse: '🏡',
 };
 
 const styleEmojiFallback = ['🪟', '🏛️', '🪵', '⚒️', '🧿', '📺', '🫒', '🎎', '🪴', '🧭'];
 
+const normalizeStyleName = (name) => (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+const canonicalStyleKey = (name) => {
+  const n = normalizeStyleName(name);
+  if (!n) return '';
+  if (n.includes('midcentury')) return 'midcentury';
+  if (n.includes('scandinav')) return 'scandinavian';
+  if (n.includes('mediterr')) return 'mediterranean';
+  if (n.includes('industr')) return 'industrial';
+  if (n.includes('bohem')) return 'bohemian';
+  if (n.includes('minimal')) return 'minimalist';
+  if (n.includes('farm')) return 'farmhouse';
+  if (n.includes('japan') || n.includes('zen')) return 'japanese';
+  if (n.includes('trad') || n.includes('classic')) return 'traditional';
+  if (n.includes('modern')) return 'modern';
+  return n;
+};
+
+// Style-specific fallback element sets (used when the API doesn't provide rich per-style details).
+const styleElementSets = {
+  modern: {
+    previewEmojis: ['📐', '🪟', '💡', '⚪️'],
+    previewFeatures: ['Clean Lines', 'Neutral Palette', 'Statement Lighting', 'Open Spaces'],
+  },
+  traditional: {
+    previewEmojis: ['🕯️', '🏛️', '🪞', '🧵'],
+    previewFeatures: ['Crown Molding', 'Classic Furniture', 'Rich Fabrics', 'Warm Woods'],
+  },
+  scandinavian: {
+    previewEmojis: ['🪵', '🧸', '🕯️', '🌿'],
+    previewFeatures: ['Light Wood', 'Cozy Textiles', 'Soft Lighting', 'Calm Neutrals'],
+  },
+  industrial: {
+    previewEmojis: ['🧱', '🔩', '💡', '🪜'],
+    previewFeatures: ['Exposed Brick', 'Metal Accents', 'Edison Bulbs', 'Open Ductwork'],
+  },
+  bohemian: {
+    previewEmojis: ['🧶', '🎭', '🪭', '🌺'],
+    previewFeatures: ['Layered Rugs', 'Pattern Mix', 'Vintage Finds', 'Art Displays'],
+  },
+  midcentury: {
+    previewEmojis: ['🪑', '🪵', '🟧', '📺'],
+    previewFeatures: ['Tapered Legs', 'Warm Woods', 'Bold Accents', 'Organic Curves'],
+  },
+  mediterranean: {
+    previewEmojis: ['🏺', '🧱', '🌞', '🍋'],
+    previewFeatures: ['Terracotta', 'Arched Doorways', 'Wrought Iron', 'Clay Tiles'],
+  },
+  japanese: {
+    previewEmojis: ['🎋', '🍵', '🧘', '🪵'],
+    previewFeatures: ['Shoji Screens', 'Low Furniture', 'Natural Materials', 'Zen Calm'],
+  },
+  minimalist: {
+    previewEmojis: ['🗄️', '⚪️', '🪑', '🪟'],
+    previewFeatures: ['Hidden Storage', 'Neutral Palette', 'Floating Furniture', 'Natural Light'],
+  },
+  farmhouse: {
+    previewEmojis: ['🪵', '🚪', '🚰', '🔩'],
+    previewFeatures: ['Reclaimed Wood', 'Barn Doors', 'Apron Sink', 'Vintage Metal'],
+  },
+};
+
+const resolveStyleElements = (style) => {
+  const key = canonicalStyleKey(style?.name);
+  const fallback = styleElementSets[key] || {};
+
+  const previewEmojisRaw = Array.isArray(style?.previewEmojis) && style.previewEmojis.length
+    ? style.previewEmojis
+    : fallback.previewEmojis;
+
+  const previewFeaturesRaw =
+    (Array.isArray(style?.previewFeatures) && style.previewFeatures.length ? style.previewFeatures : null) ||
+    (Array.isArray(style?.features) && style.features.length ? style.features : null) ||
+    fallback.previewFeatures;
+
+  const previewEmojis = (previewEmojisRaw || ['📐', '🎨', '💡', '🧱']).slice(0, 4);
+  const previewFeatures = (previewFeaturesRaw || ['Layout', 'Palette', 'Materials', 'Lighting']).slice(0, 4);
+
+  return { key, previewEmojis, previewFeatures };
+};
+
 const resolveStyleEmoji = (style, index) => {
   const key = (style?.name || '').trim();
   if (styleEmojiMap[key]) return styleEmojiMap[key];
+  const canonical = canonicalStyleKey(key);
+  const canonicalMap = {
+    modern: styleEmojiMap.Modern,
+    traditional: styleEmojiMap.Traditional,
+    scandinavian: styleEmojiMap.Scandinavian,
+    industrial: styleEmojiMap.Industrial,
+    bohemian: styleEmojiMap.Bohemian,
+    midcentury: styleEmojiMap['Mid-Century'],
+    mediterranean: styleEmojiMap.Mediterranean,
+    japanese: styleEmojiMap.Japanese,
+    minimalist: styleEmojiMap.Minimalist,
+    farmhouse: styleEmojiMap.Farmhouse,
+  };
+  if (canonicalMap[canonical]) return canonicalMap[canonical];
   if (style?.emoji) return style.emoji;
   return styleEmojiFallback[index % styleEmojiFallback.length];
 };
 
 const mergeStylesWithDefaults = (incoming = []) => {
   const merged = new Map();
-  defaultStyles.forEach((s) => merged.set((s.name || '').toLowerCase(), s));
+  defaultStyles.forEach((s) => merged.set(canonicalStyleKey(s.name), s));
   incoming.forEach((s) => {
-    const key = (s.name || '').toLowerCase();
+    const key = canonicalStyleKey(s.name);
     const base = merged.get(key) || {};
     merged.set(key, { ...base, ...s });
   });
@@ -199,9 +297,7 @@ const Dashboard = () => {
   const [searchError, setSearchError] = useState(null);
   const [deletingProjectId, setDeletingProjectId] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
-  const [scrollY, setScrollY] = useState(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   const [initStyle, setInitStyle] = useState(null);
   const [initLoading, setInitLoading] = useState(false);
   const [selectedStyleDrawer, setSelectedStyleDrawer] = useState(null);
@@ -210,21 +306,30 @@ const Dashboard = () => {
   const drawerFirstFocusRef = useRef(null);
   const [drawerStages, setDrawerStages] = useState({ preview: false, compat: false, dna: false });
   const [hoveredTrait, setHoveredTrait] = useState('');
-  
-  // House tour state
   const [tourMode, setTourMode] = useState(false);
-  const [currentRoom, setCurrentRoom] = useState(0);
   const [isEnteringTour, setIsEnteringTour] = useState(false);
-  const [roomTransitioning, setRoomTransitioning] = useState(false);
-  const [roomDirection, setRoomDirection] = useState('next');
   
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const parallaxRef = useRef(null);
+  const heroInViewRef = useRef(true);
   const initPanelRef = useRef(null);
   function styleSlug(name) {
     return (name || '').toLowerCase().replace(/\s+/g, '-');
+  }
+
+  function startTour() {
+    setIsEnteringTour(true);
+    setTimeout(() => {
+      setTourMode(true);
+      setIsEnteringTour(false);
+      navigate('/virtual-tour');
+    }, 600);
+  }
+
+  function exitTour() {
+    setTourMode(false);
   }
 
   function openDrawer(style, triggerEl) {
@@ -257,12 +362,127 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-    window.addEventListener('scroll', handleScroll);
     
     // Trigger hero animation after component mounts
     setTimeout(() => setHeroLoaded(true), 100);
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {};
+  }, []);
+
+  useEffect(() => {
+    const prevScene = document.body.dataset.scene;
+    document.body.dataset.scene = 'dashboard';
+    return () => {
+      if (document.body.dataset.scene === 'dashboard') {
+        if (prevScene) document.body.dataset.scene = prevScene;
+        else delete document.body.dataset.scene;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 900px) and (hover: hover) and (pointer: fine)');
+    const apply = (on) => {
+      document.documentElement.classList.toggle('dash-snap', on);
+      document.body.classList.toggle('dash-snap', on);
+    };
+    const update = () => apply(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    return () => {
+      mql.removeEventListener('change', update);
+      apply(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = parallaxRef.current;
+    if (!root) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    let rafId = 0;
+    let pointer = { x: 0, y: 0, active: false };
+    let io = null;
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const tick = () => {
+      rafId = 0;
+      if (!heroInViewRef.current) return;
+
+      const rect = root.getBoundingClientRect();
+      if (!rect.height) return;
+
+      // 0 -> 1 as the hero scrolls past the top of the viewport; used for fade + depth.
+      const progress = clamp((-rect.top) / rect.height, 0, 1);
+
+      let mx = 0;
+      let my = 0;
+      if (pointer.active && rect.width > 0 && rect.height > 0) {
+        mx = clamp(((pointer.x - rect.left) / rect.width - 0.5) * 2, -1, 1);
+        my = clamp(((pointer.y - rect.top) / rect.height - 0.5) * 2, -1, 1);
+      }
+
+      root.style.setProperty('--p-s', progress.toFixed(4));
+      root.style.setProperty('--p-mx', mx.toFixed(4));
+      root.style.setProperty('--p-my', my.toFixed(4));
+    };
+
+    const requestTick = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    const onScroll = () => requestTick();
+    const onResize = () => requestTick();
+
+    const onPointerMove = (event) => {
+      pointer = { x: event.clientX, y: event.clientY, active: true };
+      requestTick();
+    };
+
+    const onPointerLeave = () => {
+      pointer = { x: 0, y: 0, active: false };
+      requestTick();
+    };
+
+    // Initialize variables before first paint.
+    root.style.setProperty('--p-s', '0');
+    root.style.setProperty('--p-mx', '0');
+    root.style.setProperty('--p-my', '0');
+    requestTick();
+
+    // Only update hero parallax while the hero is near the viewport.
+    io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        heroInViewRef.current = !!entry?.isIntersecting;
+        if (heroInViewRef.current) requestTick();
+      },
+      { threshold: 0, rootMargin: '240px 0px 240px 0px' }
+    );
+    io.observe(root);
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    if (finePointer) {
+      root.addEventListener('pointermove', onPointerMove, { passive: true });
+      root.addEventListener('pointerleave', onPointerLeave, { passive: true });
+    }
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      if (finePointer) {
+        root.removeEventListener('pointermove', onPointerMove);
+        root.removeEventListener('pointerleave', onPointerLeave);
+      }
+      if (rafId) window.cancelAnimationFrame(rafId);
+      if (io) io.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -337,27 +557,6 @@ const Dashboard = () => {
   }, [isDrawerOpen]);
 
   useEffect(() => {
-    const root = parallaxRef.current;
-    if (!root) return;
-
-    const onMove = (event) => {
-      const rect = root.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-      const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-      setMouseOffset({ x, y });
-    };
-
-    const onLeave = () => setMouseOffset({ x: 0, y: 0 });
-
-    root.addEventListener('mousemove', onMove);
-    root.addEventListener('mouseleave', onLeave);
-    return () => {
-      root.removeEventListener('mousemove', onMove);
-      root.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
-
-  useEffect(() => {
     const elements = document.querySelectorAll('.reveal-on-scroll');
     const observer = new IntersectionObserver(
       (entries) => {
@@ -390,10 +589,6 @@ const Dashboard = () => {
     const timer = setTimeout(() => setActionMessage(null), 2600);
     return () => clearTimeout(timer);
   }, [actionMessage]);
-
-  const handleScroll = () => {
-    setScrollY(window.scrollY);
-  };
 
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -535,173 +730,43 @@ const Dashboard = () => {
     }
   };
 
-  // House tour handlers
-  const startTour = () => {
-    if (isEnteringTour) return;
-    setCurrentRoom(0);
-    setIsEnteringTour(true);
-    setTimeout(() => {
-      setTourMode(true);
-      setIsEnteringTour(false);
-    }, 700);
-  };
-
-  const exitTour = () => {
-    setTourMode(false);
-    setCurrentRoom(0);
-    setRoomTransitioning(false);
-    setIsEnteringTour(false);
-  };
-
-  const transitionRoom = (direction) => {
-    if (roomTransitioning) return;
-    setRoomDirection(direction);
-    setRoomTransitioning(true);
-    setTimeout(() => {
-      setCurrentRoom((prev) =>
-        direction === 'next'
-          ? (prev + 1) % tourRooms.length
-          : (prev - 1 + tourRooms.length) % tourRooms.length
-      );
-    }, 190);
-    setTimeout(() => {
-      setRoomTransitioning(false);
-    }, 430);
-  };
-
-  const nextRoom = () => transitionRoom('next');
-
-  const prevRoom = () => {
-    transitionRoom('prev');
-  };
-
   const roomTypes = ['Bedroom', 'Living Room', 'Kitchen', 'Bathroom', 'Office', 'Dining Room'];
   const totalBudget = projects.reduce((sum, project) => sum + (Number(project.budget) || 0), 0);
   const avgBudget = projects.length > 0 ? Math.round(totalBudget / projects.length) : 0;
-  const latestProject = projects.length > 0
-    ? [...projects].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
-    : null;
-  const activeRoom = tourRooms[currentRoom];
-  const tourProgress = ((currentRoom + 1) / tourRooms.length) * 100;
-
-  const jumpToRoom = (index) => {
-    if (roomTransitioning || index === currentRoom) return;
-    setRoomDirection(index > currentRoom ? 'next' : 'prev');
-    setRoomTransitioning(true);
-    setTimeout(() => setCurrentRoom(index), 190);
-    setTimeout(() => setRoomTransitioning(false), 430);
-  };
-
-  if (loading) return <div className="loading">Loading...</div>;
+  const sortedProjects =
+    projects.length > 0 ? [...projects].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) : [];
+  const recentProjects = sortedProjects.slice(0, 3);
+  const dashboardStats = [
+    { label: 'Projects', value: projects.length, icon: FolderKanban },
+    { label: 'Styles', value: styles.length, icon: Palette },
+    { label: 'Tour Rooms', value: tourRooms.length, icon: Home },
+    { label: 'Avg Budget', value: `$${avgBudget}`, icon: DollarSign },
+  ];
 
   return (
     <div className="dashboard">
-      {/* Interactive House Tour Modal */}
-      {(tourMode || isEnteringTour) && (
-        <div className={`house-tour-overlay ${tourMode ? 'active' : ''}`} onClick={exitTour}>
-          <div className={`tour-content ${isEnteringTour ? 'zooming' : ''}`} onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="tour-exit-btn" onClick={exitTour}>
-              ✕ Exit Tour
-            </button>
-            
-            <div className={`tour-room ${roomTransitioning ? `room-fading room-${roomDirection}` : ''}`}>
-              <div
-                className="tour-ambient"
-                style={{
-                  background: `radial-gradient(circle at 20% 20%, ${activeRoom.color}44 0, transparent 46%), radial-gradient(circle at 80% 80%, ${activeRoom.color}2c 0, transparent 50%)`
-                }}
-              />
-              <div className="room-progress-wrap">
-                <div className="room-progress">
-                  Room {currentRoom + 1} of {tourRooms.length}
-                </div>
-                <div className="tour-progress-track">
-                  <span className="tour-progress-fill" style={{ width: `${tourProgress}%`, backgroundColor: activeRoom.color }} />
-                </div>
-              </div>
-              <div className="tour-stage">
-                <div className="motif-layer" aria-hidden="true">
-                  {activeRoom.motifs.map((motif, idx) => (
-                    <span
-                      key={idx}
-                      className={`motif motif-${idx + 1}`}
-                      style={{ '--motif-color': `${activeRoom.color}55` }}
-                    >
-                      {motif}
-                    </span>
-                  ))}
-                </div>
-                <div 
-                  className="room-emoji" 
-                  style={{ background: `linear-gradient(135deg, ${activeRoom.color}50, ${activeRoom.color}22)` }}
-                >
-                  {activeRoom.emoji}
-                </div>
-                <h2 className="room-name">{activeRoom.name}</h2>
-                <p className="room-description">{activeRoom.description}</p>
-                
-                <div className="room-services">
-                  {activeRoom.services.map((service, idx) => (
-                    <span 
-                      key={idx} 
-                      className="service-tag"
-                      style={{ 
-                        borderColor: activeRoom.color,
-                        color: activeRoom.color
-                      }}
-                    >
-                      {service}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="room-navigation">
-                <button className="nav-arrow prev" onClick={prevRoom}>
-                  ←
-                </button>
-                <div className="room-dots">
-                  {tourRooms.map((room, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`dot ${idx === currentRoom ? 'active' : ''}`}
-                      style={{ background: idx === currentRoom ? room.color : '' }}
-                      onClick={() => jumpToRoom(idx)}
-                      aria-label={`Go to ${room.name}`}
-                    />
-                  ))}
-                </div>
-                <button className="nav-arrow next" onClick={nextRoom}>
-                  →
-                </button>
-              </div>
-              <div className="tour-room-strip">
-                {tourRooms.map((room, idx) => (
-                  <button
-                    type="button"
-                    key={room.id}
-                    className={`room-chip ${idx === currentRoom ? 'active' : ''}`}
-                    onClick={() => jumpToRoom(idx)}
-                  >
-                    <span>{room.emoji}</span>
-                    <span>{room.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+      <div className="dashboard-shell">
+        <header className="dashboard-header">
+          <div className="header-left">
+            <h1>My Dashboard</h1>
+            <span className="project-count-chip">{projects.length} Projects</span>
           </div>
-        </div>
-      )}
-
-      <header className="dashboard-header">
-        <div className="header-left">
-              <h1>My Dashboard</h1>
-              <span className="project-count-chip">{projects.length} Projects</span>
-              <button onClick={() => navigate('/about')} className="about-btn">About</button>
-            </div>
-            <button onClick={logout} className="logout-btn">Logout</button>
-          </header>
+          <div className="header-actions">
+            <button
+              type="button"
+              className="header-action header-action-primary"
+              onClick={() => {
+                setShowNewProject(true);
+                // Keep user oriented: jump to the creation area.
+                requestAnimationFrame(() => {
+                  document.querySelector('.projects-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+              }}
+            >
+              + New Project
+            </button>
+          </div>
+        </header>
       {loadError && <div className="status-banner status-error">{loadError}</div>}
       {loadError && (
         <div className="status-banner-actions">
@@ -719,61 +784,34 @@ const Dashboard = () => {
       {/* Parallax Hero Section */}
       <section className="parallax-hero" ref={parallaxRef}>
         <div className="parallax-grid-layer" />
-        <div 
-          className="parallax-bg"
-          style={{ 
-            transform: `translateY(${scrollY * 0.5}px) translateX(${mouseOffset.x * 8}px)`,
-            opacity: 1 - scrollY / 700
-          }}
-        />
-        {/* Additional parallax floating elements */}
-        <div 
-          className="parallax-float parallax-float-1"
-          style={{ 
-            transform: `translateY(${scrollY * -0.2 + mouseOffset.y * 18}px) translateX(${scrollY * 0.1 + mouseOffset.x * 24}px)`,
-            opacity: Math.max(0, 1 - scrollY / 600)
-          }}
-        />
-        <div 
-          className="parallax-float parallax-float-2"
-          style={{ 
-            transform: `translateY(${scrollY * -0.3 + mouseOffset.y * -14}px) translateX(${scrollY * -0.15 + mouseOffset.x * -28}px)`,
-            opacity: Math.max(0, 1 - scrollY / 800)
-          }}
-        />
-        <div 
-          className="parallax-float parallax-float-3"
-          style={{ 
-            transform: `translateY(${scrollY * -0.15 + mouseOffset.y * 22}px) translateX(${scrollY * 0.05 + mouseOffset.x * 16}px)`,
-            opacity: Math.max(0, 1 - scrollY / 500)
-          }}
-        />
+        <div className="parallax-bg" aria-hidden="true" />
         <div 
           className={`parallax-content ${heroLoaded ? 'loaded' : ''}`}
-          style={{ 
-            transform: `translateY(${scrollY * 0.25 + mouseOffset.y * -8}px) translateX(${mouseOffset.x * -6}px)`,
-            opacity: Math.max(0, 1 - scrollY / 500)
-          }}
         >
+          <p className={`hero-eyebrow ${heroLoaded ? 'fade-in' : ''}`}>
+            Home4U AI Studio
+          </p>
           <h1 className={`hero-title ${heroLoaded ? 'fade-in' : ''}`}>
-            <span className="title-line">Your Design Workspace</span>
+            <span className="title-line">
+              Your <span className="hero-emphasis">Design</span> Workspace
+            </span>
           </h1>
           <p className={`hero-subtitle ${heroLoaded ? 'fade-in' : ''}`}>
             Create, explore, and transform spaces with AI.
           </p>
           <div className={`hero-cta ${heroLoaded ? 'fade-in' : ''}`}>
-            <button className="cta-primary" onClick={() => setShowNewProject(true)}>
-              Start a Project
+            <button className="cta-primary" onClick={() => navigate('/workspace')}>
+              Upload Room
             </button>
-            <button className="cta-secondary" onClick={() => document.getElementById('what-we-do').scrollIntoView({ behavior: 'smooth' })}>
-              Explore Features
+            <button
+              className="cta-secondary"
+              onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Explore Styles
             </button>
           </div>
         </div>
-        <div 
-          className="scroll-indicator"
-          style={{ opacity: Math.max(0, 1 - scrollY / 300) }}
-        >
+        <div className="scroll-indicator">
           <span>Scroll to explore</span>
           <div className="mouse-icon">
             <div className="wheel"></div>
@@ -781,91 +819,118 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Quick Actions */}
-      <section className="quick-actions reveal-on-scroll">
-        <div className="quick-actions-head">
-          <p className="virtual-eyebrow">Quick Actions</p>
-          <h2>Jump right in</h2>
+      {/* Recent Projects */}
+      <section className="recent-projects reveal-on-scroll">
+        <div className="section-intro">
+          <h2>Recent Projects</h2>
+          <p>Pick up where you left off.</p>
         </div>
-        <div className="quick-actions-grid">
-          <button
-            className="quick-action-card"
-            onClick={() => setShowNewProject(true)}
-          >
-            <span className="qa-icon">＋</span>
-            <div>
-              <h3>Create Project</h3>
-              <p>Start a new room design.</p>
-            </div>
-          </button>
-          <button
-            className="quick-action-card"
-            onClick={() => navigate('/workspace')}
-          >
-            <span className="qa-icon">📤</span>
-            <div>
-              <h3>Upload Room</h3>
-              <p>Generate an AI transformation.</p>
-            </div>
-          </button>
-          <button
-            className="quick-action-card"
-            onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <span className="qa-icon">🎨</span>
-            <div>
-              <h3>Explore Styles</h3>
-              <p>Preview design aesthetics.</p>
-            </div>
-          </button>
+        {recentProjects.length ? (
+          <div className="recent-projects-grid">
+            {recentProjects.map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                className="recent-project-card"
+                data-tilt
+                onClick={() => navigate(`/project/${project.id}`)}
+              >
+                <div className="recent-project-top">
+                  <span className="recent-project-title">{project.room_type || 'Project'}</span>
+                  <span className="recent-project-date">
+                    {project.created_at ? new Date(project.created_at).toLocaleDateString() : ''}
+                  </span>
+                </div>
+                <div className="recent-project-meta">
+                  <span className="recent-project-chip">
+                    Budget {project.budget ? `$${Number(project.budget).toLocaleString()}` : '—'}
+                  </span>
+                  <span className="recent-project-chip subtle">Open</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>No recent projects. Create one above to get started.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="stats-row-section reveal-on-scroll">
+        <div className="stats-row" aria-label="Dashboard statistics">
+          {dashboardStats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <article key={stat.label} className="stats-row-item">
+                <span className="stats-row-icon" aria-hidden="true">
+                  <Icon size={16} strokeWidth={2.1} />
+                </span>
+                <div className="stats-row-copy">
+                  <span className="stats-row-value">{stat.value}</span>
+                  <span className="stats-row-label">{stat.label}</span>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
-      <div className="dashboard-grid">
-        <aside className="metrics-rail">
+	      <div className="dashboard-grid">
+	        <aside className="metrics-rail">
           <div className="metrics-card reveal-on-scroll" style={{ '--delay': '0s' }}>
             <p className="metrics-label">Welcome Back</p>
             <h3 className="metrics-user">{user?.full_name || user?.email || 'Designer'}</h3>
             <p className="metrics-subtle">Keep building spaces your clients will love.</p>
           </div>
-          <div className="metrics-stat-grid">
-            <article className="metric-item reveal-on-scroll" style={{ '--delay': '0.06s' }}>
-              <span className="metric-value">{projects.length}</span>
-              <span className="metric-name">Projects</span>
-            </article>
-            <article className="metric-item reveal-on-scroll" style={{ '--delay': '0.12s' }}>
-              <span className="metric-value">{styles.length}</span>
-              <span className="metric-name">Styles</span>
-            </article>
-            <article className="metric-item reveal-on-scroll" style={{ '--delay': '0.18s' }}>
-              <span className="metric-value">{tourRooms.length}</span>
-              <span className="metric-name">Tour Rooms</span>
-            </article>
-            <article className="metric-item reveal-on-scroll" style={{ '--delay': '0.24s' }}>
-              <span className="metric-value">${avgBudget}</span>
-              <span className="metric-name">Avg Budget</span>
-            </article>
-          </div>
-          <div className="metrics-card metrics-card-accent reveal-on-scroll" style={{ '--delay': '0.3s' }}>
-            <p className="metrics-label">Latest Project</p>
-            <h4>{latestProject ? latestProject.room_type : 'No projects yet'}</h4>
-            <p className="metrics-subtle">
-              {latestProject
-                ? `Created ${new Date(latestProject.created_at).toLocaleDateString()}`
-                : 'Start your first room plan to unlock recommendations.'}
-            </p>
-            <button className="rail-action-btn" onClick={() => setShowNewProject(true)}>
-              + Create Project
-            </button>
-          </div>
         </aside>
 
-      <div className="dashboard-main">
-        {/* What We Do - Introduction Section */}
-      <section className="what-we-do-section reveal-on-scroll" id="what-we-do">
+	      <div className="dashboard-main">
+          <section className="house-tour-section reveal-on-scroll">
+            <div className="section-intro">
+              <h2>Take a Virtual Tour</h2>
+              <p>Walk through a sample interior experience and preview how Home4U presents design direction.</p>
+            </div>
+
+            <button
+              type="button"
+              className={`tour-media-card ${isEnteringTour ? 'entering' : ''}`}
+              onClick={startTour}
+            >
+              <span className="tour-media-scrim" aria-hidden="true" />
+              <span className="tour-media-play" aria-hidden="true">
+                <PlayCircle size={72} strokeWidth={1.65} />
+              </span>
+              <span className="tour-media-copy">
+                <span className="tour-media-kicker">Interactive walkthrough</span>
+                <span className="tour-media-title">Enter the Home4U showcase house</span>
+                <span className="tour-media-meta">{tourRooms.length} curated rooms ready to explore</span>
+              </span>
+            </button>
+
+            <div className="tour-preview-mini">
+              {tourRooms.map((room, idx) => (
+                <span 
+                  key={idx} 
+                  className="mini-room-dot"
+                  style={{ background: room.color }}
+                  title={room.name}
+                >
+                  {room.emoji}
+                </span>
+              ))}
+            </div>
+
+            <button className="tour-immersive-btn" onClick={() => navigate('/virtual-tour')}>
+              Launch Immersive 3D Tour
+            </button>
+          </section>
+
+	        {/* What We Do - Introduction Section */}
+	      <section className="search-section reveal-on-scroll" id="search-section">
           <div className="section-intro">
-            <h2>What We Do</h2>
-            <p>AI-powered services to design, plan, and manage your spaces end-to-end.</p>
+            <h2>Find Your Style</h2>
+            <p>Search our database of interior design aesthetics.</p>
           </div>
 
           {/* Search bar */}
@@ -917,50 +982,13 @@ const Dashboard = () => {
             )}
           </div>
             
-            <div className="services-grid">
-              <div className="service-card reveal-on-scroll" style={{ '--delay': '0.04s' }}>
-                <div className="service-icon">🎨</div>
-                <h3>Design Consultation</h3>
-                <p>Expert advice to help you discover your perfect style and create a cohesive vision for your space.</p>
-              </div>
-              
-              <div className="service-card reveal-on-scroll" style={{ '--delay': '0.08s' }}>
-                <div className="service-icon">💰</div>
-                <h3>Budget Planning</h3>
-                <p>Smart budgeting tools and vendor connections to maximize your renovation budget without compromising quality.</p>
-              </div>
-              
-              <div className="service-card reveal-on-scroll" style={{ '--delay': '0.12s' }}>
-                <div className="service-icon">🛋️</div>
-                <h3>Furniture Curation</h3>
-                <p>Access to curated collections from top brands, with custom orders and professional delivery setup.</p>
-              </div>
-              
-              <div className="service-card reveal-on-scroll" style={{ '--delay': '0.16s' }}>
-                <div className="service-icon">✨</div>
-                <h3>Moodboard Creation</h3>
-                <p>Visualize your dream space with interactive moodboards before committing to any changes.</p>
-              </div>
-              
-              <div className="service-card reveal-on-scroll" style={{ '--delay': '0.2s' }}>
-                <div className="service-icon">📋</div>
-                <h3>Project Management</h3>
-                <p>Track progress, manage tasks, and collaborate with our team all in one organized hub.</p>
-              </div>
-              
-              <div className="service-card reveal-on-scroll" style={{ '--delay': '0.24s' }}>
-                <div className="service-icon">🏠</div>
-                <h3>Room Visualization</h3>
-                <p>3D visualizations and virtual tours to see your new space before it's built.</p>
-              </div>
-            </div>
           </section>
 
           {/* Explore Design Styles with Hover Preview Cards */}
           <section className="styles-section reveal-on-scroll" id="styles-section">
             <div className="section-intro">
               <h2>Explore Design Styles</h2>
-              <p>Hover over each style to preview what's possible.</p>
+              <p>Select a style to preview palette, materials, and a tailored AI direction.</p>
             </div>
             
             {initStyle && (
@@ -972,7 +1000,7 @@ const Dashboard = () => {
                     <p className="virtual-eyebrow">Style Activated</p>
                     <div className="init-head">
                       <h3>{initStyle.name} Style Activated</h3>
-                      <span className="init-meta">{(initStyle.previewFeatures || initStyle.features || ['AI-guided layout']).slice(0, 3).join(' • ')}</span>
+                      <span className="init-meta">{resolveStyleElements(initStyle).previewFeatures.slice(0, 3).join(' • ')}</span>
                     </div>
                     <p className="init-copy">AI will analyze your room geometry and apply {initStyle.name} design principles.</p>
                     <div className="init-actions">
@@ -1004,67 +1032,98 @@ const Dashboard = () => {
             )}
             
             <div className="styles-showcase">
-              {styles.map((style, index) => (
-                <div 
-                  key={style.id} 
-                  className="style-preview-card reveal-on-scroll"
-                  style={{ '--index': index, '--delay': `${0.05 + index * 0.04}s` }}
-                  role="button"
-                  tabIndex={0}
-                  onClick={(e) => handleStyleSelect(style, e.currentTarget)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleStyleSelect(style, e.currentTarget); }}
-                >
+              {loading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <div key={`skel-style-${i}`} className="style-preview-card skeleton-card">
+                    <div className="skeleton skeleton-img"></div>
+                    <div className="skeleton skeleton-text"></div>
+                    <div className="skeleton skeleton-text-sm"></div>
+                  </div>
+                ))
+              ) : (
+                styles.map((style, index) => (
+                  <div 
+                    key={style.id} 
+                    className="style-preview-card reveal-on-scroll"
+                    style={{ '--index': index, '--delay': `${0.05 + index * 0.04}s` }}
+                  >
                   {/** resolve per-card emoji with unique fallback */} 
                   {(() => {
                     const resolvedEmoji = resolveStyleEmoji(style, index);
+                    const { key: styleKey, previewEmojis, previewFeatures } = resolveStyleElements(style);
+                    const palette = Array.isArray(style.palette) && style.palette.length
+                      ? style.palette.slice(0, 4)
+                      : [style.accent || '#b18bff', style.accentTwo || '#9273d8', style.base || '#0c0a14', '#ffffff'].slice(0, 4);
+                    const materials = Array.isArray(style.materials) && style.materials.length ? style.materials.slice(0, 2) : [];
                     return (
-                      <div 
-                        className={`style-card-main ${style.name === 'Modern' ? 'style-modern' : ''}`}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => handleStyleSelect(style)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleStyleSelect(style); }}
+                      <button
+                        type="button"
+                        className={`style-card-main${styleKey ? ` style-${styleKey}` : ''}`}
+                        data-tilt
+                        aria-label={`Explore ${style.name} style`}
+                        onClick={(e) => handleStyleSelect(style, e.currentTarget)}
                         style={{ 
-                          background: style.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          '--card-bg': style.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                           '--style-accent': style.accent || (style.name === 'Scandinavian' ? '#c9b5ff' : style.name === 'Industrial' ? '#7a74ff' : style.name === 'Bohemian' ? '#d78bff' : '#b18bff'),
                           '--style-accent-2': style.accentTwo || (style.name === 'Scandinavian' ? '#b39cf3' : style.name === 'Industrial' ? '#4c4a7a' : style.name === 'Bohemian' ? '#b66fd8' : '#9273d8'),
                           '--style-base': style.base || '#0c0a14'
                         }}
                       >
-                        <div className="style-icon-wrapper">
-                          <span className="style-emoji">{resolvedEmoji}</span>
-                        </div>
-                        <h3>{style.name}</h3>
-                        <p>{style.description || 'Modern interior style'}</p>
-                        <div className="style-glow"></div>
-                        
-                        {/* Key Elements - Shows on Hover */}
-                        <div className="style-key-elements">
-                          <h4>Key Elements</h4>
-                          <div className="key-elements-grid">
-                            {(style.previewEmojis || ['🛋️', '💡', '🪟', '🪴']).map((emoji, i) => (
-                              <div key={i} className="key-element">
-                                <span className="key-emoji">{emoji}</span>
-                                <span>{(style.previewFeatures || ['Element 1', 'Element 2', 'Element 3', 'Element 4'])[i]}</span>
-                              </div>
-                            ))}
+                        <div className="style-card-head">
+                          <div className="style-icon-wrapper" aria-hidden="true">
+                            <span className="style-emoji">{resolvedEmoji}</span>
                           </div>
-                        <div
-                          className="style-cta-strip"
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => { e.stopPropagation(); handleStyleSelect(style, e.currentTarget); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); handleStyleSelect(style, e.currentTarget); } }}
-                        >
-                          <span className="cta-label">Explore style</span>
+                          <div className="style-card-headtext">
+                            <h3 className="style-card-title">{style.name}</h3>
+                            <p className="style-card-desc">
+                              {style.description || 'A modern interior style.'}
+                            </p>
+                            <div className="style-card-details">
+                              <div className="style-palette" aria-label={`${style.name} palette`}>
+                                {palette.map((color, i) => (
+                                  <span key={`${style.id}-sw-${i}`} className="style-swatch" style={{ '--swatch': color }} aria-hidden="true" />
+                                ))}
+                              </div>
+                              {style.signature ? (
+                                <span className="style-signature" title={style.signature}>
+                                  {style.signature}
+                                </span>
+                              ) : materials.length ? (
+                                <span className="style-signature" title={materials.join(' + ')}>
+                                  {materials.join(' + ')}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="style-chips" aria-label="Style highlights">
+                          {previewEmojis.map((emoji, i) => (
+                            <span
+                              key={`${style.id}-chip-${i}`}
+                              className="style-chip"
+                              title={previewFeatures[i] || `Element ${i + 1}`}
+                            >
+                              <span className="chip-emoji" aria-hidden="true">{emoji}</span>
+                              <span className="chip-text">
+                                {previewFeatures[i] || `Element ${i + 1}`}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="style-cta-strip" aria-hidden="true">
+                          <span className="cta-left">
+                            <span className="cta-label">Explore</span>
+                            <span className="cta-tag">{style.name}</span>
+                          </span>
                           <span className="cta-arrow">→</span>
                         </div>
-                      </div>
-                    </div>
+                      </button>
                     );
                   })()}
                 </div>
-              ))}
+              )))}
             </div>
           </section>
 
@@ -1164,8 +1223,8 @@ const Dashboard = () => {
                       <span className="section-label">Style DNA</span>
                     </div>
                     <div className="drawer-dna">
-                      {(selectedStyleDrawer.previewFeatures || selectedStyleDrawer.features || ['Clean Lines', 'Neutral Palette', 'Statement Lighting']).slice(0, 3).map((item, idx) => {
-                        const icons = ['📐', '🎨', '💡', '🪵', '🪟', '🛋️'];
+                      {resolveStyleElements(selectedStyleDrawer).previewFeatures.slice(0, 3).map((item, idx) => {
+                        const icons = resolveStyleElements(selectedStyleDrawer).previewEmojis;
                         const icon = icons[idx % icons.length];
                         return (
                           <span
@@ -1240,17 +1299,30 @@ const Dashboard = () => {
               </form>
             )}
 
-            {projects.length === 0 ? (
-              <div className="empty-state">
-                <p>No projects yet. Upload a room photo and let AI generate a design transformation.</p>
+            {loading ? (
+              <div className="projects-grid">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={`skel-proj-${i}`} className="project-card skeleton-card">
+                    <div className="skeleton skeleton-text-lg"></div>
+                    <div className="skeleton skeleton-text"></div>
+                    <div className="skeleton skeleton-btn"></div>
+                  </div>
+                ))}
+              </div>
+            ) : projects.length === 0 ? (
+              <div className="empty-state projects-empty-state">
+                <span className="projects-empty-icon" aria-hidden="true">
+                  <FolderKanban size={28} strokeWidth={1.9} />
+                </span>
+                <p>No projects yet.</p>
                 <button className="new-project-btn" onClick={() => setShowNewProject(true)}>
-                  Create First Project
+                  Create Project
                 </button>
               </div>
             ) : (
               <div className="projects-grid">
                 {projects.map((project, index) => (
-                  <div key={project.id} className="project-card reveal-on-scroll" style={{ '--delay': `${0.04 + (index % 6) * 0.04}s` }}>
+                  <div key={project.id} className="project-card reveal-on-scroll" data-tilt style={{ '--delay': `${0.04 + (index % 6) * 0.04}s` }}>
                     <h3>{project.room_type}</h3>
                     <p>Budget: ${project.budget || 0}</p>
                     <p>Created: {new Date(project.created_at).toLocaleDateString()}</p>
@@ -1271,44 +1343,6 @@ const Dashboard = () => {
               </div>
             )}
           </section>
-
-          {/* House Tour Section - Now at the bottom */}
-          <section className="house-tour-section reveal-on-scroll">
-            <div className="section-intro">
-              <h2>Take a Virtual Tour</h2>
-              <p>Click the house to enter. Explore one room at a time to see what we do.</p>
-            </div>
-            
-          <div className="tour-cta-container">
-            <button className={`house-entry ${isEnteringTour ? 'entering' : ''}`} onClick={startTour}>
-              <span className="house-figure">
-                <span className="house-roof" />
-                <span className="house-body">
-                  <span className="house-window window-left" />
-                  <span className="house-window window-right" />
-                  <span className="house-door" />
-                </span>
-              </span>
-                <span className="house-hint">Enter the House</span>
-                <span className="tour-rooms">{tourRooms.length} Rooms</span>
-              </button>
-            <div className="tour-preview-mini">
-              {tourRooms.map((room, idx) => (
-                  <span 
-                    key={idx} 
-                    className="mini-room-dot"
-                    style={{ background: room.color }}
-                    title={room.name}
-                  >
-                    {room.emoji}
-                  </span>
-              ))}
-            </div>
-            <button className="tour-immersive-btn" onClick={() => navigate('/virtual-tour')}>
-              Launch Immersive 3D Tour
-            </button>
-          </div>
-        </section>
       </div>
       </div>
 
@@ -1316,6 +1350,7 @@ const Dashboard = () => {
       <footer className="dashboard-footer">
         <p>© 2026 Home4U - Your Dream Home Starts Here</p>
       </footer>
+      </div>
     </div>
   );
 };

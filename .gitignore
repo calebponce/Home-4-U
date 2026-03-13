@@ -20,3 +20,5 @@ Thumbs.db
 
 # --- Database ---
 *.db
+application/backend/server.log
+nohup.out

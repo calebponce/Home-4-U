@@ -5,6 +5,14 @@
   --color-brand-600: #9333ea;
   --color-brand-700: #7e22ce;
 
+  /* Alias: Primary (used across newer UI) */
+  --color-primary-200: #e9d5ff;
+  --color-primary-300: #d8b4fe;
+  --color-primary-400: var(--color-brand-400);
+  --color-primary-500: var(--color-brand-500);
+  --color-primary-600: var(--color-brand-600);
+  --color-primary-700: var(--color-brand-700);
+
   /* Figma: Color / Feedback */
   --color-danger-500: #ef5d88;
 
@@ -15,10 +23,19 @@
   --color-border-700: #2c2540;
   --color-text-100: #f4eeff;
   --color-text-300: #b4a8cf;
+  --color-text-50: #ffffff;
+  --color-text-200: #ded3f1;
+  --color-text-400: #8f83aa;
 
   /* Figma: Typography */
   --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   --font-serif: 'Fraunces', Georgia, Cambria, 'Times New Roman', serif;
+  /* Alias used by some pages/components */
+  --font-display: var(--font-serif);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(168, 85, 247, 0.22);
+  --focus-ring-strong: 0 0 0 4px rgba(168, 85, 247, 0.28);
 
   /* Figma: Spacing (8pt) */
   --space-1: 0.5rem;

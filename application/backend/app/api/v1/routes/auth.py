@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
@@ -11,11 +12,18 @@ from app.utils.dependencies import get_current_user
 
 router = APIRouter(tags=["Authentication"])
 
+def _normalize_email(email: str) -> str:
+    """Lowercase and strip whitespace to avoid case/space mismatches."""
+    return email.strip().lower()
+
+
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user."""
-    # Check if email already exists
-    existing_user = db.query(User).filter(User.email == user.email).first()
+    normalized_email = _normalize_email(user.email)
+
+    # Check if email already exists (case-insensitive)
+    existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -24,7 +32,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     
     # Hash password and create user
     hashed_password = get_password_hash(user.password)
-    db_user = User(email=user.email, password_hash=hashed_password)
+    db_user = User(email=normalized_email, password_hash=hashed_password)
     
     db.add(db_user)
     db.commit()
@@ -35,8 +43,10 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """Authenticate user and return access token."""
-    # Find user by email (OAuth2 sends username field)
-    user = db.query(User).filter(User.email == form_data.username).first()
+    email = _normalize_email(form_data.username)
+
+    # Find user by email (case-insensitive)
+    user = db.query(User).filter(func.lower(User.email) == email).first()
     
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
@@ -57,4 +67,3 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def get_me(current_user: User = Depends(get_current_user)):
     """Get current authenticated user info."""
     return current_user
-

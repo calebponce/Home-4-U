@@ -125,6 +125,37 @@ If the URL does not work at the time of testing, the team will receive **no cred
 |:----------:|:------------:|:-----------:|:----------------------:|
 | Vibecoding for Internship | Home4U | ec2-18-225-117-117.us-east-2.compute.amazonaws.com | Consensus |
 
+## Deployment Info
+
+- API URL: http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com
+- Test login (returns JWT):
+  ```bash
+  curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
+    http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com/auth/login
+  ```
+
+Frontend → Nginx → FastAPI → Database → JWT token
+
+### Deployment / Ops Checklist (AWS)
+
+1. Pull latest code and restart the service
+   ```bash
+   cd /home/ec2-user/backend
+   git pull
+   sudo systemctl restart home4u
+   ```
+2. Smoke test the API (auth expects form fields)
+   ```bash
+   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
+     http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com/auth/login
+   ```
+3. Keep code/DB in sync
+   - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
+   - If a user exists locally but not on AWS, add/reset once in the AWS DB.
+4. Service management
+   - Managed by systemd unit `home4u` (uvicorn :8000, proxied by Nginx).
+   - Logs: `journalctl -u home4u -n 200 --no-pager`.
+
 ---
 
 ## Repository Structure
@@ -232,7 +263,5 @@ No part of this repository may be reproduced, distributed, or transmitted withou
 ---
 
 *This document may be updated during the semester. Students are responsible for reviewing the latest version.*
-
-
 
 
