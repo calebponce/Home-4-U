@@ -60,7 +60,8 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── services
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
-│   │   │   └── main.py
+│   │   │   ├── main.py
+│   │   │   └── tests_search_smoke.py
 │   │   ├── requirements.txt
 │   │   ├── seed.py
 │   │   └── start_backend.sh
@@ -77,6 +78,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   └── vite.svg
 │   │   ├── src
 │   │   │   ├── assets
+│   │   │   ├── components
 │   │   │   ├── context
 │   │   │   ├── pages
 │   │   │   ├── services
@@ -142,10 +144,11 @@ csc648-848-project-sp26-vibecoding-for-internship/
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
+| axios | ^1.6.7 | Dependency |
+| lucide-react | ^0.577.0 | Dependency |
 | react | ^19.2.0 | UI framework |
 | react-dom | ^19.2.0 | UI framework |
 | react-router-dom | ^6.22.0 | Dependency |
-| axios | ^1.6.7 | Dependency |
 
 
 ### Infrastructure (Planned)
@@ -312,5 +315,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-03-11 20:49:04*
+*Last Updated: 2026-03-13 00:08:20*
 *This document is maintained by the CI/CD pipeline*
