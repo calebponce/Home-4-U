@@ -1,12 +1,18 @@
+import os
+from pathlib import Path
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-import os
 
-# Database configuration
-# Use SQLite for local development, PostgreSQL for production
+# Database configuration.
+# SQLite defaults to an absolute file path so systemd/uvicorn working-directory
+# changes do not create a second database in an unexpected location.
+BASE_DIR = Path(__file__).resolve().parents[2]
+DEFAULT_DB_PATH = BASE_DIR / "home4u.db"
+
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "sqlite:///./home4u.db"
+    "DATABASE_URL",
+    f"sqlite:///{DEFAULT_DB_PATH}"
 )
 
 # Create engine

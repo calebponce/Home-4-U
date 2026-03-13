@@ -5,6 +5,11 @@
 
 set -e
 
+PUBLIC_DNS="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || true)"
+if [ -z "$PUBLIC_DNS" ]; then
+  PUBLIC_DNS="_"
+fi
+
 echo "=== Home4U Deployment Script ==="
 
 # Update and install dependencies
@@ -171,8 +176,13 @@ systemctl start home4u-backend
 systemctl status home4u-backend
 
 echo "=== Deployment Complete! ==="
-echo "Frontend should be available at http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com"
-echo "API is at http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com"
+if [ "$PUBLIC_DNS" = "_" ]; then
+  echo "Frontend should be available at your current EC2 public DNS or IP"
+  echo "API is available at your current EC2 public DNS or IP"
+else
+  echo "Frontend should be available at http://$PUBLIC_DNS"
+  echo "API is at http://$PUBLIC_DNS"
+fi
 echo ""
 echo "Test users:"
 echo "  - test@example.com / test123"

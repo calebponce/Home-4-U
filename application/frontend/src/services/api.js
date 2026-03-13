@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base URL: use VITE_API_BASE when set (e.g., https://ec2.../api/v1), otherwise proxy-relative /api/v1
-const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1';
+// Use a reverse-proxy-relative base in production and the Vite proxy in development.
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 // Create axios instance - relative path goes through Vite proxy in dev
 const api = axios.create({
@@ -26,11 +26,11 @@ export const authAPI = {
     api.post('/auth/signup', { email, password }),
   
   login: (email, password) => {
-    const formData = new FormData();
+    const formData = new URLSearchParams();
     formData.append('username', email);
     formData.append('password', password);
     return api.post('/auth/login', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
   },
 };

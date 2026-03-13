@@ -10,14 +10,13 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        '/api/v1': {
+        '/api': {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/v1/, ''),
+          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
     },
-    // The VITE_ prefix makes env variables available to the client
-    // VITE_API_URL will be automatically available from .env files
+    // The VITE_ prefix makes env variables available to the client.
   }
 })

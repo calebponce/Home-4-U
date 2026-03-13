@@ -1,0 +1,17 @@
+[Unit]
+Description=Home4U FastAPI Backend
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
+Environment="PATH=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/.venv/bin"
+Environment="DATABASE_URL=sqlite:////home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/home4u.db"
+ExecStart=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

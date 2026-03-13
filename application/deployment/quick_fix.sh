@@ -5,6 +5,11 @@
 
 set -e
 
+PUBLIC_DNS="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || true)"
+if [ -z "$PUBLIC_DNS" ]; then
+    PUBLIC_DNS="your-current-ec2-public-dns-or-ip"
+fi
+
 echo "=== Home4U Quick Fix Script ==="
 
 # Navigate to project directory
@@ -114,7 +119,7 @@ echo "Login response: $LOGIN_RESPONSE"
 echo ""
 echo "=== Fix Complete! ==="
 echo ""
-echo "Try accessing your site at: http://18.225.117.117"
+echo "Try accessing your site at: http://$PUBLIC_DNS"
 echo ""
 echo "If login still fails, run this command to check logs:"
 echo "  curl http://localhost/api/v1/auth/login -v"
