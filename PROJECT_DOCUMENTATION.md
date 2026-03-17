@@ -71,6 +71,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   ├── deployment
 │   │   ├── MANUAL_FIX.md
 │   │   ├── deploy.sh
+│   │   ├── deploy_fix.sh
 │   │   ├── home4u-backend.service
 │   │   ├── nginx.conf
 │   │   └── quick_fix.sh
@@ -316,5 +317,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-03-13 01:28:11*
+*Last Updated: 2026-03-17 23:18:47*
 *This document is maintained by the CI/CD pipeline*
