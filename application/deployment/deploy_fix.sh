@@ -113,6 +113,24 @@ echo "  ✓ Backend service restarted"
 # Give the service time to start
 sleep 4
 
+# ── Step 5.5: Build Frontend ────────────────────────────────────────
+echo ""
+echo "▶ Step 5.5: Building frontend..."
+FRONTEND_DIR="$REPO_ROOT/application/frontend"
+if [ -d "$FRONTEND_DIR" ]; then
+  cd "$FRONTEND_DIR"
+  echo "  Installing Node dependencies..."
+  npm install
+  echo "  Building production assets..."
+  npm run build
+  echo "  Deploying to /var/www/home4u..."
+  sudo mkdir -p /var/www/home4u
+  sudo cp -r dist/* /var/www/home4u/
+  echo "  ✓ Frontend built and deployed"
+else
+  echo "  ⚠  Frontend directory not found at $FRONTEND_DIR"
+fi
+
 # ── Step 6: Health-check gate ───────────────────────────────────────
 echo ""
 echo "▶ Step 6: Health-check gate..."
@@ -157,10 +175,17 @@ curl -s -X POST http://localhost/api/auth/login \
   -d 'username=smoketest@home4u.dev&password=SmokeTest123!' && echo "" || echo "  ✗ FAILED"
 
 # ── Done ────────────────────────────────────────────────────────────
-PUBLIC_DNS=$(curl -sf http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || echo '<your-ec2-public-dns>')
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s 2>/dev/null || true)
+if [ -n "$TOKEN" ]; then
+  PUBLIC_DNS=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -sf http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || echo '18.225.117.117')
+else
+  PUBLIC_DNS="18.225.117.117"
+fi
+
 echo ""
 echo "============================================"
 echo "  ✓ Deploy complete!"
 echo "  DB location: $DB_FILE"
-echo "  Open http://$PUBLIC_DNS in a browser."
+echo "  Open http://$PUBLIC_DNS in Safari or Chrome."
+echo "  (Make sure to use http://, not https://)"
 echo "============================================"
