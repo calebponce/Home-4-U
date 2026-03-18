@@ -956,8 +956,8 @@ const Dashboard = () => {
             )}
             {searchResults.length > 0 && (
               <div className="search-results">
-                {searchResults.map((r) => (
-                  <div key={`${r.type}-${r.id}`} className="search-result-card">
+                {searchResults.map((r, idx) => (
+                  <div key={`${r.type}-${r.id}`} className="search-result-card" style={{ '--index': idx }}>
                     <div className="result-head">
                       <span className="result-rank">#{r.rank}</span>
                       <span className="result-type">{r.type}</span>
@@ -1310,29 +1310,51 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : projects.length === 0 ? (
-              <div className="empty-state projects-empty-state">
-                <span className="projects-empty-icon" aria-hidden="true">
-                  <FolderKanban size={28} strokeWidth={1.9} />
-                </span>
-                <p>No projects yet.</p>
-                <button className="new-project-btn" onClick={() => setShowNewProject(true)}>
-                  Create Project
+              <div className="empty-state projects-empty-state zero-state-onboarding">
+                <div className="zero-state-header">
+                  <span className="projects-empty-icon" aria-hidden="true">
+                    <FolderKanban size={32} strokeWidth={1.5} />
+                  </span>
+                  <h3>Start Your First Project</h3>
+                  <p>Select a room template or create a custom space.</p>
+                </div>
+                <div className="zero-state-templates">
+                  <button className="template-card" onClick={() => { setNewProjectType('Living Room'); setShowNewProject(true); }}>
+                    <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1583847268964-b28ce8f52f30?auto=format&fit=crop&q=80&w=600')" }}></div>
+                    <span className="template-name">Living Room</span>
+                  </button>
+                  <button className="template-card" onClick={() => { setNewProjectType('Bedroom'); setShowNewProject(true); }}>
+                    <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=600')" }}></div>
+                    <span className="template-name">Bedroom</span>
+                  </button>
+                  <button className="template-card" onClick={() => { setNewProjectType('Kitchen'); setShowNewProject(true); }}>
+                    <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=600')" }}></div>
+                    <span className="template-name">Kitchen</span>
+                  </button>
+                </div>
+                <button className="new-project-btn cta-primary" onClick={() => setShowNewProject(true)}>
+                  Create Custom Project
                 </button>
               </div>
             ) : (
               <div className="projects-grid">
                 {projects.map((project, index) => (
                   <div key={project.id} className="project-card reveal-on-scroll" data-tilt style={{ '--delay': `${0.04 + (index % 6) * 0.04}s` }}>
-                    <h3>{project.room_type}</h3>
-                    <p>Budget: ${project.budget || 0}</p>
-                    <p>Created: {new Date(project.created_at).toLocaleDateString()}</p>
+                    <div className="project-card-header">
+                      <h3>{project.room_type}</h3>
+                      <span className="status-badge">Open</span>
+                    </div>
+                    <div className="project-meta">
+                      <p><strong>Budget:</strong> ${project.budget ? Number(project.budget).toLocaleString() : 0}</p>
+                      <p><strong>Created:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
+                    </div>
                     <div className="project-actions">
-                      <button onClick={() => navigate(`/project/${project.id}`)}>
+                      <button className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
                         Open Project
                       </button>
                       <button 
                         onClick={() => handleDeleteProject(project.id)}
-                        className="delete-btn"
+                        className="delete-btn ghost-danger"
                         disabled={deletingProjectId === project.id}
                       >
                         {deletingProjectId === project.id ? 'Deleting...' : 'Delete'}

@@ -373,13 +373,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
   top: -10px;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--color-primary-400);
-  opacity: calc(0.55 + (var(--proc, 0) * 0.45));
-  box-shadow: 0 0 20px 4px var(--color-primary-500);
-  filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.35));
-  animation: scan 2s linear infinite;
+  height: 4px;
+  background: #a855f7;
+  opacity: calc(0.85 + (var(--proc, 0) * 0.15));
+  box-shadow: 0 0 30px 8px rgba(168, 85, 247, 0.8), 0 0 60px 15px rgba(168, 85, 247, 0.4);
+  filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.9));
+  animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
   z-index: 11;
+  border-radius: 50%;
 }
 
 .processing-grid {
@@ -627,6 +628,46 @@ input[type="range"]::-webkit-slider-thumb:hover {
   opacity: 0;
   cursor: pointer;
 }
+
+.demo-rooms-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.demo-rooms-label {
+  font-size: 0.85rem;
+  color: rgba(220, 216, 235, 0.8);
+  font-weight: 500;
+}
+
+.demo-rooms-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.demo-try-btn {
+  flex: 1;
+  background: rgba(168, 85, 247, 0.1);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 8px;
+  padding: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.demo-try-btn:hover {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: rgba(168, 85, 247, 0.6);
+  transform: translateY(-1px);
+}
+
 .secondary.ghost {
   border-style: dashed;
 }

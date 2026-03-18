@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import './App.css'
 import { useAuth } from './context/AuthContext'
 import Login from './pages/Login'
@@ -10,7 +11,7 @@ import VirtualTour3D from './pages/VirtualTour3D'
 import Workspace from './pages/Workspace'
 import NotFound from './pages/NotFound'
 import ErrorBoundary from './components/ErrorBoundary'
-import Sidebar from './components/Sidebar'
+import Navbar from './components/Navbar'
 import PageMotion from './components/PageMotion'
 
 const ProtectedRoute = ({ children }) => {
@@ -26,17 +27,19 @@ const ProtectedRoute = ({ children }) => {
   
   return (
     <div className="app-layout">
-      <Sidebar />
-      <div className="app-main-content">
+      <Navbar />
+      <main className="app-main-content">
         <PageMotion>
           {children}
         </PageMotion>
-      </div>
+      </main>
     </div>
   )
 }
 
 function App() {
+  const location = useLocation();
+
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches
@@ -120,45 +123,47 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <Routes>
-        <Route path="/login" element={<PageMotion><Login /></PageMotion>} />
-        <Route path="/about" element={<PageMotion><About /></PageMotion>} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/project/:id" 
-          element={
-            <ProtectedRoute>
-              <ProjectDetails />
-            </ProtectedRoute>
-          } 
-        />
-        <Route
-          path="/virtual-tour"
-          element={
-            <ProtectedRoute>
-              <VirtualTour3D />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/workspace"
-          element={
-            <ProtectedRoute>
-              <Workspace />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        {/* Catch-all route for undefined paths */}
-        <Route path="*" element={<PageMotion><NotFound /></PageMotion>} />
-      </Routes>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/login" element={<PageMotion><Login /></PageMotion>} />
+          <Route path="/about" element={<PageMotion><About /></PageMotion>} />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/project/:id" 
+            element={
+              <ProtectedRoute>
+                <ProjectDetails />
+              </ProtectedRoute>
+            } 
+          />
+          <Route
+            path="/virtual-tour"
+            element={
+              <ProtectedRoute>
+                <VirtualTour3D />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workspace"
+            element={
+              <ProtectedRoute>
+                <Workspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Catch-all route for undefined paths */}
+          <Route path="*" element={<PageMotion><NotFound /></PageMotion>} />
+        </Routes>
+      </AnimatePresence>
     </ErrorBoundary>
   )
 }

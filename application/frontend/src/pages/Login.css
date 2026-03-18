@@ -1,0 +1,220 @@
+.auth-split-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--color-primary-slate);
+  overflow: hidden;
+}
+
+.auth-hero {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 4rem;
+  color: white;
+  overflow: hidden;
+}
+
+.auth-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.4) 0%, rgba(15, 23, 42, 0.8) 100%), url('https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=2000') center/cover no-repeat;
+  z-index: 0;
+  transition: transform 10s ease-out;
+}
+
+.auth-hero:hover::before {
+  transform: scale(1.05);
+}
+
+.auth-hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-logo {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-quote {
+  max-width: 480px;
+}
+
+.auth-quote h2 {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.auth-quote p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.auth-form-container {
+  flex: 0 0 480px;
+  background: var(--color-primary-slate);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem;
+  position: relative;
+  z-index: 10;
+  box-shadow: -20px 0 40px rgba(0,0,0,0.5);
+}
+
+.auth-form-header {
+  margin-bottom: 3rem;
+}
+
+.auth-form-header h3 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.auth-form-header p {
+  color: var(--color-text-300);
+  font-size: 0.95rem;
+}
+
+.modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-floating {
+  position: relative;
+}
+
+.input-floating input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.2rem 1rem 0.6rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-floating input:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--color-primary-500);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+}
+
+.input-floating label {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-400);
+  font-size: 1rem;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.input-floating input:focus ~ label,
+.input-floating input:not(:placeholder-shown) ~ label {
+  top: 0.4rem;
+  transform: translateY(0);
+  font-size: 0.75rem;
+  color: var(--color-primary-400);
+}
+
+.btn-cinematic {
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-cinematic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(168, 85, 247, 0.5);
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+}
+
+.btn-cinematic:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-switch {
+  margin-top: 2rem;
+  text-align: center;
+  color: var(--color-text-300);
+  font-size: 0.9rem;
+}
+
+.auth-switch button {
+  background: none;
+  border: none;
+  color: var(--color-primary-400);
+  font-weight: 600;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.auth-switch button:hover {
+  color: var(--color-primary-300);
+  text-decoration: underline;
+}
+
+.auth-exploration {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.auth-exploration button {
+  background: none;
+  border: none;
+  color: var(--color-text-400);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.auth-exploration button:hover {
+  color: white;
+}
+
+@media (max-width: 968px) {
+  .auth-hero {
+    display: none;
+  }
+  .auth-form-container {
+    flex: 1;
+    max-width: 100%;
+  }
+}

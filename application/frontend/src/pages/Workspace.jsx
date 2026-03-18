@@ -62,6 +62,13 @@ const Workspace = () => {
     setPreviewState('before');
   }, [styleKey]);
 
+  const loadDemo = (url) => {
+    setRoomImage(url);
+    setGeneratedImage(null);
+    setPreviewState('before');
+    setStatus('AI Preview');
+  };
+
   const [processingText, setProcessingText] = useState('');
   const [processingLevel, setProcessingLevel] = useState(0);
 
@@ -347,6 +354,13 @@ const Workspace = () => {
           </div>
 
           <div className="control-group actions">
+            <div className="demo-rooms-section">
+              <span className="demo-rooms-label">Try a Demo Room</span>
+              <div className="demo-rooms-buttons">
+                <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-1598928506311-c55dd12966c4?auto=format&fit=crop&q=80&w=800')}>Living Room</button>
+                <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=800')}>Kitchen</button>
+              </div>
+            </div>
             <label className="secondary upload-btn">
               Upload My Room
               <input
