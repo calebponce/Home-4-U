@@ -147,6 +147,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | axios | ^1.6.7 | Dependency |
+| framer-motion | ^12.38.0 | Dependency |
 | lucide-react | ^0.577.0 | Dependency |
 | react | ^19.2.0 | UI framework |
 | react-dom | ^19.2.0 | UI framework |
@@ -317,5 +318,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-03-18 00:04:45*
+*Last Updated: 2026-03-18 01:15:37*
 *This document is maintained by the CI/CD pipeline*
