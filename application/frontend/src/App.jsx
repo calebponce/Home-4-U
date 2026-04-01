@@ -94,6 +94,11 @@ function App() {
       if (!activeEl) return
       pointerX = event.clientX
       pointerY = event.clientY
+      
+      // Update Global Spotlight Coordinates
+      document.documentElement.style.setProperty('--cursor-x', `${pointerX}px`);
+      document.documentElement.style.setProperty('--cursor-y', `${pointerY}px`);
+
       requestTick()
     }
 
@@ -123,6 +128,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <div className="spotlight-engine" aria-hidden="true" />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={<PageMotion><Login /></PageMotion>} />

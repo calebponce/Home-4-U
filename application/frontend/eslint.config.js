@@ -23,7 +23,8 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Framer Motion uses <motion.div /> — `motion` is used in JSX but not flagged without react/jsx-uses-vars
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$' }],
     },
   },
 ])

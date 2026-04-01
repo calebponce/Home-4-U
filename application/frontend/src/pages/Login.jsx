@@ -59,6 +59,7 @@ const Login = () => {
       {/* Left side: Cinematic Hero */}
       <div className="auth-hero">
         <motion.div 
+          layoutId="global-brand-logo"
           className="auth-hero-content auth-logo"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

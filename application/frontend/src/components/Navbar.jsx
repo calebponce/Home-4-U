@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Compass, Brush, Presentation, LogOut, Menu, X } from 'lucide-react';
 import './Navbar.css';
@@ -34,8 +35,10 @@ const Navbar = () => {
     <nav className={`navbar glass-morphism ${isScrolled ? 'shrunk' : ''}`}>
       <div className="navbar-container">
         <NavLink to="/dashboard" className="navbar-brand">
-          <div className="brand-logo">🏠</div>
-          <span className="brand-text">Home4U</span>
+          <motion.div layoutId="global-brand-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="brand-logo">🏠</div>
+            <span className="brand-text">Home4U</span>
+          </motion.div>
         </NavLink>
 
         {/* Desktop Nav */}

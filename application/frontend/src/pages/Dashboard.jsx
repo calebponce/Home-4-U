@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { DollarSign, FolderKanban, Home, Palette, PlayCircle } from 'lucide-react';
+import { DollarSign, FolderKanban, Home, Palette, PlayCircle, SearchX } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { projectsAPI, stylesAPI, searchAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
@@ -952,29 +953,59 @@ const Dashboard = () => {
             </div>
             {searchError && <p className="search-error">{searchError}</p>}
             {!searching && searchTerm && searchResults.length === 0 && !searchError && (
-              <p className="search-empty">No results yet. Try another term.</p>
+              <AnimatePresence>
+                <motion.div 
+                  className="search-empty-cinematic"
+                  initial={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <motion.div 
+                    className="empty-icon-glow"
+                    animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <SearchX size={48} strokeWidth={1.5} />
+                  </motion.div>
+                  <h3>No Visions Found</h3>
+                  <p>We couldn't find any styles matching "{searchTerm}". Try adjusting your keywords to discover new aesthetics.</p>
+                </motion.div>
+              </AnimatePresence>
             )}
             {searchResults.length > 0 && (
-              <div className="search-results">
-                {searchResults.map((r, idx) => (
-                  <div key={`${r.type}-${r.id}`} className="search-result-card" style={{ '--index': idx }}>
-                    <div className="result-head">
-                      <span className="result-rank">#{r.rank}</span>
-                      <span className="result-type">{r.type}</span>
-                      <span className="result-score">Score {r.score.toFixed(2)}</span>
-                    </div>
-                    <h4>{r.title}</h4>
-                    {r.snippet && <p className="result-snippet">{r.snippet}</p>}
-                    {r.tags?.length ? (
-                      <div className="result-tags">
-                        {r.tags.map((t) => (
-                          <span key={t} className="tag-pill">{t}</span>
-                        ))}
+              <div className="search-gallery-grid">
+                <AnimatePresence>
+                  {searchResults.map((r, idx) => (
+                    <motion.div 
+                      key={`${r.type}-${r.id}`} 
+                      className="search-gallery-card"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.4, delay: idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="gallery-card-backdrop" />
+                      <div className="gallery-card-content">
+                        <div className="result-head">
+                          <span className="result-rank">#{r.rank}</span>
+                          <span className="result-type">{r.type}</span>
+                          <span className="result-score">Score {r.score.toFixed(2)}</span>
+                        </div>
+                        <h4>{r.title}</h4>
+                        {r.snippet && <p className="result-snippet">{r.snippet}</p>}
+                        {r.tags?.length ? (
+                          <div className="result-tags">
+                            {r.tags.map((t) => (
+                              <span key={t} className="tag-pill">{t}</span>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                ))}
-                <div className="search-meta">
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                <div className="search-meta gallery-meta">
                   <span>{searchMeta.total} results</span>
                   {searchMeta.hasMore && <span>Showing first page</span>}
                 </div>

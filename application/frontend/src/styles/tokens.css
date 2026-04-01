@@ -42,13 +42,15 @@
   --focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.2);
   --focus-ring-strong: 0 0 0 4px rgba(16, 185, 129, 0.28);
 
-  /* Spacing (8pt) */
-  --space-1: 0.5rem;
-  --space-2: 0.75rem;
-  --space-3: 1rem;
-  --space-4: 1.25rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
+  /* Spatial Grid System (4px/8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --space-12: 64px;
 
   /* Modern Radius (Standardized to 8px where requested) */
   --radius-sm: 8px;
