@@ -6,7 +6,7 @@
   position: sticky;
   top: 0;
   left: 0;
-  background: rgba(12, 10, 20, 0.65);
+  background: rgb(var(--color-primary-slate-rgb) / 0.65);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -232,8 +232,8 @@
 }
 
 .ambience-pill.on {
-  background: rgba(168, 85, 247, 0.14);
-  border-color: rgba(168, 85, 247, 0.22);
+  background: rgb(var(--color-accent-soft-rgb) / 0.14);
+  border-color: rgb(var(--color-accent-soft-rgb) / 0.22);
   color: rgba(226, 208, 255, 0.95);
 }
 

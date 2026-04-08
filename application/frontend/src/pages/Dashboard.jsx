@@ -63,7 +63,7 @@ const defaultStyles = [
     description: 'Clean lines, minimal clutter, and functional design with neutral colors',
     emoji: '🪟',
     gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    palette: ['#0b0f1a', '#667eea', '#c7d2fe', '#ffffff'],
+    palette: ['#0b0f1a', '#667eea', '#c7d2fe', '#ffe6a7'],
     materials: ['Glass', 'Polished concrete'],
     signature: 'Statement lighting + negative space',
     previewEmojis: ['🛋️', '📐', '💡', '🪟'],
@@ -87,7 +87,7 @@ const defaultStyles = [
     description: 'Cozy minimalism with natural materials, light colors, and hygge atmosphere',
     emoji: '🪵',
     gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    palette: ['#0b1116', '#00f2fe', '#e5e7eb', '#ffffff'],
+    palette: ['#0b1116', '#00f2fe', '#e5e7eb', '#ffe6a7'],
     materials: ['Light oak', 'Linen'],
     signature: 'Warm neutrals + soft texture layers',
     previewEmojis: ['🌿', '🪵', '🧸', '🕯️'],
@@ -123,7 +123,7 @@ const defaultStyles = [
     description: 'Retro sophistication with bold colors, organic shapes, and timeless appeal',
     emoji: '🛋️',
     gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-    palette: ['#1a0f11', '#ff9a9e', '#f59e0b', '#fff7ed'],
+    palette: ['#1a0f11', '#ff9a9e', '#6f1d1b', '#fff7ed'],
     materials: ['Teak', 'Leather'],
     signature: 'Tapered legs + warm wood tones',
     previewEmojis: ['🪑', '📺', '🪵', '🌵'],
@@ -147,7 +147,7 @@ const defaultStyles = [
     description: 'Serene simplicity with natural materials, clean spaces, and zen harmony',
     emoji: '🎍',
     gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    palette: ['#070a0d', '#a8edea', '#e5e7eb', '#ffffff'],
+    palette: ['#070a0d', '#a8edea', '#e5e7eb', '#ffe6a7'],
     materials: ['Cedar', 'Rice paper'],
     signature: 'Low furniture + calm negative space',
     previewEmojis: ['🗿', '🎋', '🧘', '🍵'],
@@ -820,20 +820,28 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Recent Projects */}
-      <section className="recent-projects reveal-on-scroll">
+      <motion.section 
+        className="recent-projects reveal-on-scroll"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+      >
         <div className="section-intro">
-          <h2>Recent Projects</h2>
-          <p>Pick up where you left off.</p>
+          <h2>Recent Activity</h2>
+          <p>Resume your ongoing spatial transformations.</p>
         </div>
         {recentProjects.length ? (
           <div className="recent-projects-grid">
-            {recentProjects.map((project) => (
-              <button
+            {recentProjects.map((project, idx) => (
+              <motion.button
                 key={project.id}
                 type="button"
                 className="recent-project-card"
-                data-tilt
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                whileHover={{ y: -4, scale: 1.01 }}
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <div className="recent-project-top">
@@ -846,17 +854,17 @@ const Dashboard = () => {
                   <span className="recent-project-chip">
                     Budget {project.budget ? `$${Number(project.budget).toLocaleString()}` : '—'}
                   </span>
-                  <span className="recent-project-chip subtle">Open</span>
+                  <span className="recent-project-chip subtle">Active</span>
                 </div>
-              </button>
+              </motion.button>
             ))}
           </div>
         ) : (
           <div className="empty-state">
-            <p>No recent projects. Create one above to get started.</p>
+            <p>Your studio activity will appear here once you initiate a project.</p>
           </div>
         )}
-      </section>
+      </motion.section>
 
       <section className="stats-row-section reveal-on-scroll">
         <div className="stats-row" aria-label="Dashboard statistics">
@@ -887,52 +895,70 @@ const Dashboard = () => {
         </aside>
 
 	      <div className="dashboard-main">
-          <section className="house-tour-section reveal-on-scroll">
+          <motion.section 
+            className="house-tour-section reveal-on-scroll"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+          >
             <div className="section-intro">
-              <h2>Take a Virtual Tour</h2>
-              <p>Walk through a sample interior experience and preview how Home4U presents design direction.</p>
+              <h2>Spatial Walkthrough</h2>
+              <p>Experience Home4U’s design philosophy through an interactive 3D showcase.</p>
             </div>
 
-            <button
+            <motion.button
               type="button"
               className={`tour-media-card ${isEnteringTour ? 'entering' : ''}`}
               onClick={startTour}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              <span className="tour-media-scrim" aria-hidden="true" />
-              <span className="tour-media-play" aria-hidden="true">
-                <PlayCircle size={72} strokeWidth={1.65} />
-              </span>
-              <span className="tour-media-copy">
-                <span className="tour-media-kicker">Interactive walkthrough</span>
-                <span className="tour-media-title">Enter the Home4U showcase house</span>
-                <span className="tour-media-meta">{tourRooms.length} curated rooms ready to explore</span>
-              </span>
-            </button>
+              <div className="tour-media-scrim" aria-hidden="true" />
+              <div className="tour-media-play" aria-hidden="true">
+                <PlayCircle size={72} strokeWidth={1} />
+              </div>
+              <div className="tour-media-copy">
+                <span className="tour-media-kicker">Showcase House</span>
+                <span className="tour-media-title">Immersive Studio Experience</span>
+                <span className="tour-media-meta">{tourRooms.length} Curated Environments</span>
+              </div>
+            </motion.button>
 
             <div className="tour-preview-mini">
               {tourRooms.map((room, idx) => (
-                <span 
+                <motion.span 
                   key={idx} 
                   className="mini-room-dot"
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 + idx * 0.1 }}
                   style={{ background: room.color }}
                   title={room.name}
                 >
                   {room.emoji}
-                </span>
+                </motion.span>
               ))}
             </div>
 
-            <button className="tour-immersive-btn" onClick={() => navigate('/virtual-tour')}>
-              Launch Immersive 3D Tour
+            <button className="tour-immersive-btn" data-magnetic-button onClick={() => navigate('/virtual-tour')}>
+              Launch Experience
             </button>
-          </section>
+          </motion.section>
 
 	        {/* What We Do - Introduction Section */}
-	      <section className="search-section reveal-on-scroll" id="search-section">
-          <div className="section-intro">
-            <h2>Find Your Style</h2>
-            <p>Search our database of interior design aesthetics.</p>
-          </div>
+          <motion.section 
+            className="search-section reveal-on-scroll" 
+            id="search-section"
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+          >
+            <div className="section-intro">
+              <h2>Design Studio Explorer</h2>
+              <p>Search over 4,000 architectural motifs and curated design signatures.</p>
+            </div>
 
           {/* Search bar */}
           <div className="search-panel">
@@ -1013,10 +1039,16 @@ const Dashboard = () => {
             )}
           </div>
             
-          </section>
+          </motion.section>
 
           {/* Explore Design Styles with Hover Preview Cards */}
-          <section className="styles-section reveal-on-scroll" id="styles-section">
+          <motion.section 
+            className="styles-section reveal-on-scroll" 
+            id="styles-section"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-10% 0px' }}
+          >
             <div className="section-intro">
               <h2>Explore Design Styles</h2>
               <p>Select a style to preview palette, materials, and a tailored AI direction.</p>
@@ -1076,6 +1108,7 @@ const Dashboard = () => {
                   <div 
                     key={style.id} 
                     className="style-preview-card reveal-on-scroll"
+                    data-parallax-card
                     style={{ '--index': index, '--delay': `${0.05 + index * 0.04}s` }}
                   >
                   {/** resolve per-card emoji with unique fallback */} 
@@ -1084,7 +1117,7 @@ const Dashboard = () => {
                     const { key: styleKey, previewEmojis, previewFeatures } = resolveStyleElements(style);
                     const palette = Array.isArray(style.palette) && style.palette.length
                       ? style.palette.slice(0, 4)
-                      : [style.accent || '#b18bff', style.accentTwo || '#9273d8', style.base || '#0c0a14', '#ffffff'].slice(0, 4);
+                      : [style.accent || '#b18bff', style.accentTwo || '#9273d8', style.base || '#432818', '#ffe6a7'].slice(0, 4);
                     const materials = Array.isArray(style.materials) && style.materials.length ? style.materials.slice(0, 2) : [];
                     return (
                       <button
@@ -1095,9 +1128,9 @@ const Dashboard = () => {
                         onClick={(e) => handleStyleSelect(style, e.currentTarget)}
                         style={{ 
                           '--card-bg': style.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          '--style-accent': style.accent || (style.name === 'Scandinavian' ? '#c9b5ff' : style.name === 'Industrial' ? '#7a74ff' : style.name === 'Bohemian' ? '#d78bff' : '#b18bff'),
-                          '--style-accent-2': style.accentTwo || (style.name === 'Scandinavian' ? '#b39cf3' : style.name === 'Industrial' ? '#4c4a7a' : style.name === 'Bohemian' ? '#b66fd8' : '#9273d8'),
-                          '--style-base': style.base || '#0c0a14'
+                          '--style-accent': style.accent || (style.name === 'Scandinavian' ? '#ffe6a7' : style.name === 'Industrial' ? '#bb9457' : style.name === 'Bohemian' ? '#6f1d1b' : '#bb9457'),
+                          '--style-accent-2': style.accentTwo || (style.name === 'Scandinavian' ? '#bb9457' : style.name === 'Industrial' ? '#432818' : style.name === 'Bohemian' ? '#99582a' : '#6f1d1b'),
+                          '--style-base': style.base || '#432818'
                         }}
                       >
                         <div className="style-card-head">
@@ -1156,7 +1189,7 @@ const Dashboard = () => {
                 </div>
               )))}
             </div>
-          </section>
+          </motion.section>
 
           {isDrawerOpen && selectedStyleDrawer && (
             <div className="style-drawer-backdrop" role="presentation" onClick={closeDrawer}>
@@ -1341,58 +1374,119 @@ const Dashboard = () => {
                 ))}
               </div>
             ) : projects.length === 0 ? (
-              <div className="empty-state projects-empty-state zero-state-onboarding">
-                <div className="zero-state-header">
-                  <span className="projects-empty-icon" aria-hidden="true">
-                    <FolderKanban size={32} strokeWidth={1.5} />
-                  </span>
-                  <h3>Start Your First Project</h3>
-                  <p>Select a room template or create a custom space.</p>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="empty-state projects-empty-state zero-state-onboarding"
+              >
+                <div className="zero-state-grid">
+                  <div className="zero-state-header">
+                    <motion.div 
+                      initial={{ scale: 0.92, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.15 }}
+                      className="projects-empty-icon" 
+                      aria-hidden="true"
+                    >
+                      <FolderKanban size={32} strokeWidth={1.7} />
+                    </motion.div>
+                    <p className="zero-state-eyebrow">Project Setup</p>
+                    <h3>Start Your First Room Project</h3>
+                    <p>Pick a template to prefill your setup, then continue into budget and style planning.</p>
+                  </div>
+
+                  <ol className="zero-state-steps" aria-label="Project setup steps">
+                    <li className="zero-state-step">
+                      <span className="step-index">1</span>
+                      <span>Choose room type</span>
+                    </li>
+                    <li className="zero-state-step">
+                      <span className="step-index">2</span>
+                      <span>Set your plan</span>
+                    </li>
+                    <li className="zero-state-step">
+                      <span className="step-index">3</span>
+                      <span>Open design studio</span>
+                    </li>
+                  </ol>
+
+                  <div className="zero-state-templates">
+                    <motion.button 
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.99 }}
+                      className={`template-card ${newProjectType === 'Living Room' ? 'is-selected' : ''}`}
+                      aria-pressed={newProjectType === 'Living Room'}
+                      onClick={() => { setNewProjectType('Living Room'); setShowNewProject(true); }}
+                    >
+                      <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1774551351897-c64cd76a7c22?auto=format&fit=crop&q=80&w=600&h=400')" }}></div>
+                      <div className="template-copy">
+                        <span className="template-name">Living Room</span>
+                        <span className="template-meta">Best for social spaces, layout flow, and statement furniture planning.</span>
+                      </div>
+                    </motion.button>
+                    <motion.button 
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.99 }}
+                      className={`template-card ${newProjectType === 'Bedroom' ? 'is-selected' : ''}`}
+                      aria-pressed={newProjectType === 'Bedroom'}
+                      onClick={() => { setNewProjectType('Bedroom'); setShowNewProject(true); }}
+                    >
+                      <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=600')" }}></div>
+                      <div className="template-copy">
+                        <span className="template-name">Bedroom</span>
+                        <span className="template-meta">Best for comfort layering, lighting mood, and restful color systems.</span>
+                      </div>
+                    </motion.button>
+                  </div>
+
+                  <div className="zero-state-actions">
+                    <motion.button 
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="new-project-btn cta-primary" 
+                      onClick={() => setShowNewProject(true)}
+                    >
+                      {newProjectType ? `Continue with ${newProjectType}` : 'Create Custom Project'}
+                    </motion.button>
+                    <p className="zero-state-note">You can refine room details, budget, and style before launch.</p>
+                  </div>
                 </div>
-                <div className="zero-state-templates">
-                  <button className="template-card" onClick={() => { setNewProjectType('Living Room'); setShowNewProject(true); }}>
-                    <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1583847268964-b28ce8f52f30?auto=format&fit=crop&q=80&w=600')" }}></div>
-                    <span className="template-name">Living Room</span>
-                  </button>
-                  <button className="template-card" onClick={() => { setNewProjectType('Bedroom'); setShowNewProject(true); }}>
-                    <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&q=80&w=600')" }}></div>
-                    <span className="template-name">Bedroom</span>
-                  </button>
-                  <button className="template-card" onClick={() => { setNewProjectType('Kitchen'); setShowNewProject(true); }}>
-                    <div className="template-img" style={{ backgroundImage: "url('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=600')" }}></div>
-                    <span className="template-name">Kitchen</span>
-                  </button>
-                </div>
-                <button className="new-project-btn cta-primary" onClick={() => setShowNewProject(true)}>
-                  Create Custom Project
-                </button>
-              </div>
+              </motion.div>
             ) : (
               <div className="projects-grid">
-                {projects.map((project, index) => (
-                  <div key={project.id} className="project-card reveal-on-scroll" data-tilt style={{ '--delay': `${0.04 + (index % 6) * 0.04}s` }}>
-                    <div className="project-card-header">
-                      <h3>{project.room_type}</h3>
-                      <span className="status-badge">Open</span>
-                    </div>
-                    <div className="project-meta">
-                      <p><strong>Budget:</strong> ${project.budget ? Number(project.budget).toLocaleString() : 0}</p>
-                      <p><strong>Created:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <div className="project-actions">
-                      <button className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
-                        Open Project
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteProject(project.id)}
-                        className="delete-btn ghost-danger"
-                        disabled={deletingProjectId === project.id}
-                      >
-                        {deletingProjectId === project.id ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <AnimatePresence>
+                  {projects.map((project, index) => (
+                    <motion.div 
+                      key={project.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="project-card"
+                    >
+                      <div className="project-card-header">
+                        <h3>{project.room_type}</h3>
+                        <span className="status-badge">Live</span>
+                      </div>
+                      <div className="project-meta">
+                        <p><strong>Investment:</strong> ${project.budget ? Number(project.budget).toLocaleString() : 0}</p>
+                        <p><strong>Initiated:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <div className="project-actions">
+                        <button className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
+                          Open Studio
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteProject(project.id)}
+                          className="delete-btn ghost-danger"
+                          disabled={deletingProjectId === project.id}
+                        >
+                          {deletingProjectId === project.id ? 'Removing...' : 'Archive'}
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </section>

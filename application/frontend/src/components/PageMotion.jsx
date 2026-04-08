@@ -4,15 +4,16 @@ import { motion } from 'framer-motion';
 import { useAmbience } from '../context/AmbienceContext';
 
 const pageVariants = {
-  initial: { opacity: 0, y: 15, filter: 'blur(8px)' },
-  in: { opacity: 1, y: 0, filter: 'blur(0px)' },
-  out: { opacity: 0, scale: 0.98, filter: 'blur(4px)' }
+  initial: { opacity: 0, y: 28, scale: 0.985, filter: 'blur(10px)' },
+  in: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' },
+  out: { opacity: 0, y: -18, scale: 0.99, filter: 'blur(6px)' },
 };
 
 const pageTransition = {
-  type: 'tween',
-  ease: [0.22, 1, 0.36, 1],
-  duration: 0.5
+  type: 'spring',
+  stiffness: 118,
+  damping: 24,
+  mass: 0.72,
 };
 
 const PageMotion = ({ children, className = '' }) => {

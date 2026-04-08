@@ -2,9 +2,9 @@
    Uses fixed pseudo-elements so individual pages can keep their own backgrounds. */
 
 :root {
-  --atmo-a: rgba(168, 85, 247, 0.22);
-  --atmo-b: rgba(91, 107, 255, 0.18);
-  --atmo-c: rgba(236, 72, 153, 0.10);
+  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.22);
+  --atmo-b: rgb(var(--color-camel-400-rgb) / 0.18);
+  --atmo-c: rgb(var(--color-action-emerald-rgb) / 0.1);
   --atmo-strength: 0.85;
   --grain-strength: 0.06;
 }
@@ -63,34 +63,34 @@ body::after {
 
 /* Scene/style tinting (opt-in) */
 body[data-scene="about"] {
-  --atmo-a: rgba(107, 33, 168, 0.24);
-  --atmo-b: rgba(147, 51, 234, 0.16);
-  --atmo-c: rgba(126, 34, 206, 0.10);
+  --atmo-a: rgb(var(--color-wine-900-rgb) / 0.24);
+  --atmo-b: rgb(var(--color-chocolate-700-rgb) / 0.16);
+  --atmo-c: rgb(var(--color-camel-400-rgb) / 0.1);
 }
 
 body[data-scene="dashboard"] {
-  --atmo-a: rgba(168, 85, 247, 0.22);
-  --atmo-b: rgba(91, 107, 255, 0.18);
-  --atmo-c: rgba(236, 72, 153, 0.08);
+  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.22);
+  --atmo-b: rgb(var(--color-camel-400-rgb) / 0.18);
+  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.08);
   --grain-strength: 0.025;
 }
 
 body[data-scene="workspace"] {
-  --atmo-a: rgba(168, 85, 247, 0.20);
-  --atmo-b: rgba(91, 107, 255, 0.16);
-  --atmo-c: rgba(34, 197, 94, 0.06);
+  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.2);
+  --atmo-b: rgb(var(--color-chocolate-700-rgb) / 0.16);
+  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.06);
 }
 
 body[data-style="industrial"] {
-  --atmo-a: rgba(91, 107, 255, 0.16);
-  --atmo-b: rgba(148, 163, 184, 0.10);
-  --atmo-c: rgba(236, 72, 153, 0.05);
+  --atmo-a: rgb(var(--color-chocolate-700-rgb) / 0.16);
+  --atmo-b: rgb(var(--color-primary-slate-rgb) / 0.1);
+  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.05);
 }
 
 body[data-style="scandinavian"] {
-  --atmo-a: rgba(91, 107, 255, 0.14);
-  --atmo-b: rgba(34, 197, 94, 0.06);
-  --atmo-c: rgba(236, 72, 153, 0.05);
+  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.14);
+  --atmo-b: rgb(var(--color-camel-400-rgb) / 0.06);
+  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.05);
   --grain-strength: 0.045;
 }
 

@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, DollarSign, Palette, Lightbulb, CheckSquare, Smartphone } from 'lucide-react';
+import { Home, DollarSign, Palette, Lightbulb, CheckSquare, Smartphone, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './About.css';
 
 const About = () => {
@@ -42,22 +42,9 @@ const About = () => {
     updateBg();
     window.addEventListener('scroll', onScroll, { passive: true });
 
-    // Reveal scroll-animated elements without forcing React re-renders on every scroll.
-    const animatedEls = Array.from(document.querySelectorAll('.about-page .scroll-animate'));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
-        });
-      },
-      { threshold: 0.18 }
-    );
-    animatedEls.forEach((el) => observer.observe(el));
-
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (rafId) window.cancelAnimationFrame(rafId);
-      observer.disconnect();
       if (document.body.dataset.scene === 'about') {
         if (prevScene) document.body.dataset.scene = prevScene;
         else delete document.body.dataset.scene;
@@ -126,7 +113,7 @@ const About = () => {
       name: 'Caleb Ponce', 
       role: 'Team Lead / System Architecture', 
       emoji: '👨‍💼', 
-      color: '#4F46E5',
+      color: '#bb9457',
       bio: 'Computer Science student at SFSU with a passion for building scalable web applications. Leads the technical direction and architecture of Home4U.',
       skills: ['System Design', 'React', 'Node.js', 'Cloud Architecture'],
       linkedin: 'https://linkedin.com/in/calebponce',
@@ -136,7 +123,7 @@ const About = () => {
       name: 'Tyler Morris', 
       role: 'Backend Development', 
       emoji: '⚙️', 
-      color: '#10B981',
+      color: '#432818',
       bio: 'SFSU CS 3rd year,leetcode lover, backend specialist focused on API development.',
       skills: ['Python', 'FastAPI', 'Machine Learning', 'Database Design'],
       linkedin: 'https://linkedin.com/in/tylermorris',
@@ -146,7 +133,7 @@ const About = () => {
       name: 'Christopher Quach', 
       role: 'Frontend Development', 
       emoji: '🎨', 
-      color: '#F59E0B',
+      color: '#6f1d1b',
       bio: 'Creative developer who brings designs to life through beautiful, responsive interfaces and a deep passion for user experience',
       skills: ['React', 'CSS/SASS', 'UI/UX Design', 'Animation'],
       linkedin: 'https://linkedin.com/in/christopherquach',
@@ -156,7 +143,7 @@ const About = () => {
       name: 'Mason Lee', 
       role: 'Data Modeling & Scoring Engine', 
       emoji: '📊', 
-      color: '#EC4899',
+      color: '#99582a',
       bio: 'Data scientist designing the resemblance scoring algorithm. Working on accurate and meaningful sytle matching.',
       skills: ['Data Science', 'Python', 'Algorithms', 'Analytics'],
       linkedin: 'https://linkedin.com/in/masonlee',
@@ -166,7 +153,7 @@ const About = () => {
       name: 'Dias Almat', 
       role: 'Database Administrator', 
       emoji: '📝', 
-      color: '#8B5CF6',
+      color: '#ffe6a7',
       bio: 'Designs and maintains the database architecture. Ensures data integrity, manages migrations, and optimizes queries to keep the app fast and reliable.',
       skills: ['SQLAlchemy', 'PostgreSQL', 'SQLite', 'Database Design', 'Python'],
       linkedin: 'https://www.linkedin.com/in/dias-almat/',
@@ -192,6 +179,23 @@ const About = () => {
     element?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: 'spring', stiffness: 100, damping: 20 }
+    }
+  };
+
   return (
     <div className={`about-page ${isLoaded ? 'loaded' : ''}`}>
       <div className="bg-shapes" ref={bgShapesRef}>
@@ -203,7 +207,7 @@ const About = () => {
       <header className="about-header">
         <div className="header-content">
           <button type="button" className="logo" onClick={() => navigate('/dashboard')} aria-label="Go to dashboard">
-            <span>🏠</span> Home4U
+            <span>🏠</span> Home4U Studio
           </button>
           <nav className="header-nav">
             <button onClick={() => navigate('/dashboard')} className="nav-link">Dashboard</button>
@@ -212,47 +216,64 @@ const About = () => {
         </div>
       </header>
 
-      <section className="hero-section">
+      <motion.section 
+        className="hero-section"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
         <div className="hero-content">
-          <span className="hero-badge animate-fade-in">✨ Welcome to Home4U</span>
-          <h2 className="hero-title animate-fade-in delay-1">
-            Design Your <span>Dream Space</span>
-          </h2>
-          <p className="hero-description animate-fade-in delay-2">
-            Your personal interior design assistant. Create room projects, set budgets, explore styles, and get smart recommendations.
-          </p>
-          <div className="hero-buttons animate-fade-in delay-3">
-            <button onClick={() => navigate('/dashboard')} className="primary-btn">Get Started →</button>
-            <button onClick={() => scrollToSection('features')} className="secondary-btn">Learn More</button>
-          </div>
-          <div className="hero-stats animate-fade-in delay-4">
-            <div className="hero-stat"><span className="stat-number">6+</span><span className="stat-text">Room Types</span></div>
-            <div className="hero-stat"><span className="stat-number">5+</span><span className="stat-text">Styles</span></div>
-            <div className="hero-stat"><span className="stat-number">∞</span><span className="stat-text">Possibilities</span></div>
-          </div>
+          <motion.span variants={itemVariants} className="hero-badge">✨ Redefining Your Space</motion.span>
+          <motion.h2 variants={itemVariants} className="hero-title">
+            Design Your <span>Editorial Vision</span>
+          </motion.h2>
+          <motion.p variants={itemVariants} className="hero-description">
+            The world's first spatial design assistant. Leverage AI to curate, plan, and execute high-end interior transformations with professional precision.
+          </motion.p>
+          <motion.div variants={itemVariants} className="hero-buttons">
+            <button onClick={() => navigate('/dashboard')} className="primary-btn">Begin Journey <ArrowRight size={18} inline /></button>
+            <button onClick={() => scrollToSection('features')} className="secondary-btn">The Blueprint</button>
+          </motion.div>
+          <motion.div variants={itemVariants} className="hero-stats">
+            <div className="hero-stat"><span className="stat-number">6+</span><span className="stat-text">Spatial Archetypes</span></div>
+            <div className="hero-stat"><span className="stat-number">5+</span><span className="stat-text">Artistic Styles</span></div>
+            <div className="hero-stat"><span className="stat-number">∞</span><span className="stat-text">Configurations</span></div>
+          </motion.div>
         </div>
         
-        <div className="hero-visual animate-slide-in">
-          <div className="hero-card" data-tilt>
+        <motion.div 
+          className="hero-visual"
+          variants={{
+            hidden: { opacity: 0, scale: 0.9, x: 50 },
+            visible: { opacity: 1, scale: 1, x: 0, transition: { duration: 1, ease: [0.22, 1, 0.36, 1] } }
+          }}
+        >
+          <div className="hero-card" data-parallax-card>
             <div className="card-glow"></div>
             <div className="card-content">
               <div className="card-icon">🛋️</div>
-              <div className="card-text">Living Room Makeover</div>
+              <div className="card-text">Scandinavian Loft</div>
               <div className="card-progress"><div className="progress-fill"></div></div>
               <div className="card-meta">
-                <span>💰 $5,000</span>
-                <span>🎨 Modern</span>
+                <span>Invested: $12,400</span>
+                <span>Spatial: Nordic</span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
-      <section className="app-preview-section">
+      <motion.section 
+        className="app-preview-section"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8 }}
+      >
         <div className="section-header">
-          <h3>See It In Action</h3>
-          <h2>Your Design Journey Starts Here</h2>
-          <p className="section-subtitle">Experience the power of Home4U in your browser</p>
+          <h3>Interface</h3>
+          <h2>High-fidelity Studio</h2>
+          <p className="section-subtitle">A seamless workflow designed for professional precision.</p>
         </div>
         
         <div className="app-preview-wrapper">
@@ -317,79 +338,72 @@ const About = () => {
                 </div>
                 
                 <div className="preview-recommendations">
-                  <h4>💡 Recommended for You</h4>
+                  <h4>💡 Intelligence Feed</h4>
                   <div className="rec-items">
                     <div className="rec-item">
                       <span className="rec-img">🪑</span>
-                      <span className="rec-name">Modern Sofa</span>
-                      <span className="rec-price">$899</span>
-                    </div>
-                    <div className="rec-item">
-                      <span className="rec-img">🖼️</span>
-                      <span className="rec-name">Wall Art Set</span>
-                      <span className="rec-price">$149</span>
+                      <span className="rec-name">Vitra Chair</span>
+                      <span className="rec-price">$1,299</span>
                     </div>
                     <div className="rec-item">
                       <span className="rec-img">💡</span>
-                      <span className="rec-name">Floor Lamp</span>
-                      <span className="rec-price">$199</span>
+                      <span className="rec-name">Arco Lamp</span>
+                      <span className="rec-price">$2,149</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="preview-features">
-            <div className="preview-feature">
-              <span className="feature-icon">📱</span>
-              <span>Responsive Design</span>
-            </div>
-            <div className="preview-feature">
-              <span className="feature-icon">⚡</span>
-              <span>Real-time Updates</span>
-            </div>
-            <div className="preview-feature">
-              <span className="feature-icon">🎯</span>
-              <span>Smart Suggestions</span>
-            </div>
-          </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section id="features" className="features-section">
+      <motion.section 
+        id="features" 
+        className="features-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+      >
         <div className="section-header">
-          <h3>Features</h3>
-          <h2>Everything You Need</h2>
+          <h3>Capabilites</h3>
+          <h2>Professional Suite</h2>
         </div>
         <div className="features-grid">
           {features.map((feature, index) => (
-            <div 
+            <motion.div 
               key={index} 
-              className="feature-card scroll-animate"
-              style={{ transitionDelay: `${index * 0.1}s` }}
+              variants={itemVariants}
+              className="feature-card"
             >
               <div className="feature-icon-wrapper">
                 <span className="feature-icon">{feature.icon}</span>
               </div>
               <h4>{feature.title}</h4>
               <p>{feature.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="testimonials-section">
+      <motion.section 
+        className="testimonials-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+      >
         <div className="section-header">
           <h3>Testimonials</h3>
-          <h2>What Users Say</h2>
+          <h2>Professional Review</h2>
         </div>
         <div className="testimonials-grid">
           {testimonials.map((testimonial, index) => (
-            <div 
+            <motion.div 
               key={index} 
-              className="testimonial-card scroll-animate"
-              style={{ transitionDelay: `${index * 0.15}s` }}
+              variants={itemVariants}
+              className="testimonial-card"
             >
               <div className="testimonial-quote">"{testimonial.quote}"</div>
               <div className="testimonial-author">
@@ -399,10 +413,10 @@ const About = () => {
                   <div className="author-role">{testimonial.role}</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       <section className="counter-section">
         <div className="counter-grid">
@@ -421,28 +435,35 @@ const About = () => {
         </div>
       </section>
 
-      <section className="team-section">
+      <motion.section 
+        className="team-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+      >
         <div className="section-header">
-          <h3>Meet Our Team</h3>
-          <h2>The People Behind Home4U</h2>
+          <h3>The Curators</h3>
+          <h2>Engineering Excellence</h2>
         </div>
         <div className="team-grid">
           {teamMembers.map((member, index) => (
-            <button
-              type="button"
+            <motion.button
+              whileHover={{ y: -10, scale: 1.02 }}
+              variants={itemVariants}
               key={index} 
-              className="team-card scroll-animate"
-              style={{ '--member-color': member.color, transitionDelay: `${index * 0.1}s` }}
+              className="team-card"
+              style={{ '--member-color': member.color }}
               onClick={() => setSelectedMember(member)}
             >
               <div className="team-avatar">{member.emoji}</div>
               <h4>{member.name}</h4>
               <span className="team-role">{member.role}</span>
-              <span className="team-cta">Click to learn more →</span>
-            </button>
+              <span className="team-cta">Learn More →</span>
+            </motion.button>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Team Member Modal */}
       {selectedMember && (
@@ -479,67 +500,85 @@ const About = () => {
         </div>
       )}
 
-      <section className="company-section">
+      <motion.section 
+        className="company-section"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+      >
         <div className="company-content">
-          <div className="company-text">
-            <h3>About Our Company</h3>
-            <h2>Home4U</h2>
-            <p>Founded in February 2026, Home4U was born from a simple idea: everyone deserves to live in a space they love.</p>
+          <motion.div variants={containerVariants} initial="hidden" whileInView="visible" className="company-text">
+            <motion.h3 variants={itemVariants}>Legacy</motion.h3>
+            <motion.h2 variants={itemVariants}>Home4U Studio</motion.h2>
+            <motion.p variants={itemVariants}>Founded in February 2026, Home4U was born from a simple idea: professional-grade interior design should be an effortless extension of the creative mind.</motion.p>
             <div className="company-values">
-              <div className="value-item">
+              <motion.div variants={itemVariants} className="value-item">
                 <span className="value-icon">🎯</span>
-                <div><h4>Our Mission</h4><p>Make professional interior design accessible</p></div>
-              </div>
-              <div className="value-item">
+                <div><h4>The Mission</h4><p>Democratize professional spatial excellence.</p></div>
+              </motion.div>
+              <motion.div variants={itemVariants} className="value-item">
                 <span className="value-icon">💎</span>
-                <div><h4>Our Values</h4><p>Innovation, Accessibility, Creativity</p></div>
-              </div>
-              <div className="value-item">
-                <span className="value-icon">🌟</span>
-                <div><h4>Our Vision</h4><p>Everyone lives in their dream home</p></div>
-              </div>
+                <div><h4>The Values</h4><p>Precision, Aesthetics, Innovation.</p></div>
+              </motion.div>
             </div>
-          </div>
-          <div className="company-visual">
+          </motion.div>
+          <motion.div 
+            className="company-visual"
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', damping: 20 }}
+          >
             <div className="company-badge">
               <span className="badge-year">2026</span>
-              <span className="badge-text">Founded with ❤️</span>
+              <span className="badge-text">Est. SF Studio</span>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="how-it-works-section">
+      <motion.section 
+        className="how-it-works-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+      >
         <div className="section-header">
-          <h3>How It Works</h3>
-          <h2>Simple Process</h2>
+          <h3>Methodology</h3>
+          <h2>Effortless Evolution</h2>
         </div>
         <div className="steps-container">
           {steps.map((step, index) => (
-            <div 
+            <motion.div 
               key={index} 
-              className="step-card scroll-animate"
-              style={{ transitionDelay: `${index * 0.15}s` }}
+              variants={itemVariants}
+              className="step-card"
             >
               <span className="step-number">{step.number}</span>
               <h4>{step.title}</h4>
               <p>{step.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="faq-section">
+      <motion.section 
+        className="faq-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={containerVariants}
+      >
         <div className="section-header">
-          <h3>FAQ</h3>
-          <h2>Common Questions</h2>
+          <h3>Inquiry</h3>
+          <h2>Deep Intelligence</h2>
         </div>
         <div className="faq-grid">
           {faqs.map((faq, index) => (
-            <div 
+            <motion.div 
               key={index} 
-              className={`faq-item scroll-animate ${openFaq === index ? 'open' : ''}`}
-              style={{ transitionDelay: `${index * 0.1}s` }}
+              variants={itemVariants}
+              className={`faq-item ${openFaq === index ? 'open' : ''}`}
             >
               <button
                 type="button"
@@ -550,11 +589,22 @@ const About = () => {
                 <span>{faq.question}</span>
                 <span className="faq-toggle">{openFaq === index ? '−' : '+'}</span>
               </button>
-              <div className="faq-answer">{faq.answer}</div>
-            </div>
+              <AnimatePresence>
+                {openFaq === index && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="faq-answer"
+                  >
+                    {faq.answer}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       <section className="contact-section">
         <div className="section-header">

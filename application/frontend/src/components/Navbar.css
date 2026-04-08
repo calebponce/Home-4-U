@@ -1,24 +1,34 @@
 .navbar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
+  top: 1.25rem !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: calc(100% - (2 * var(--layout-edge-gap, 1rem))) !important;
+  max-width: var(--layout-shell-max, 1720px) !important;
+  height: 72px;
   z-index: 1000;
-  padding: 0 1.5rem;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.05) !important;
+  padding: 0 clamp(0.85rem, 1.8vw, 2rem);
+  border-radius: 999px !important;
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  background: rgb(var(--color-secondary-arctic-rgb) / 0.72) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 16px 32px -12px rgba(2, 6, 23, 0.2);
 }
 
 .navbar.shrunk {
-  height: 64px;
-  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+  height: 60px;
+  width: calc(100% - (2 * var(--layout-edge-gap, 1rem))) !important;
+  top: 0.75rem !important;
+  background: rgb(var(--color-secondary-arctic-rgb) / 0.85) !important;
+  box-shadow: 0 12px 28px -8px rgb(var(--color-primary-slate-rgb) / 0.2);
 }
 
 .navbar-container {
-  max-width: 1400px;
+  max-width: var(--layout-shell-max, 1720px);
   width: 100%;
   margin: 0 auto;
   display: flex;
@@ -40,14 +50,14 @@
 
 .brand-logo {
   font-size: 1.5rem;
-  background: white;
+  background: var(--color-primary-slate);
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 12px rgb(var(--color-accent-soft-rgb) / 0.2);
 }
 
 .brand-text {
@@ -55,7 +65,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.05em;
-  color: var(--color-primary-slate);
+  color: var(--color-secondary-arctic);
 }
 
 .navbar-desktop {
@@ -85,12 +95,12 @@
 }
 
 .nav-link:hover {
-  background: rgba(16, 185, 129, 0.05);
+  background: rgb(var(--color-accent-soft-rgb) / 0.05);
   color: var(--color-action-emerald);
 }
 
 .nav-link.active {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgb(var(--color-accent-soft-rgb) / 0.1);
   color: var(--color-action-emerald);
   font-weight: 600;
 }
@@ -103,7 +113,7 @@
 .navbar-divider {
   width: 1px;
   height: 24px;
-  background: rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .navbar-user {
@@ -121,13 +131,13 @@
 .user-name {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--color-primary-600);
+  color: var(--color-secondary-arctic);
 }
 
 .user-avatar {
   width: 32px;
   height: 32px;
-  background: var(--color-action-emerald);
+  background: var(--color-primary-slate);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -135,8 +145,8 @@
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 700;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .logout-btn {
@@ -161,24 +171,33 @@
   box-shadow: none;
 }
 
-/* Mobile Nav */
+/* Mobile Nav (Floating Drawer) */
 .navbar-mobile {
   position: fixed;
-  top: 80px;
-  left: 0;
-  right: 0;
+  top: 5.5rem;
+  left: 1.25rem;
+  right: 1.25rem;
   padding: 1.5rem;
-  transform: translateY(-120%);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-lg) !important;
+  background: rgb(var(--color-secondary-arctic-rgb) / 0.8) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 999;
 }
 
 .navbar.shrunk + .navbar-mobile {
-  top: 64px;
+  top: 5rem;
 }
 
 .navbar-mobile.open {
   transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
 }
 
 .mobile-nav-links {
@@ -200,13 +219,13 @@
 }
 
 .mobile-nav-link.active {
-  background: rgba(16, 185, 129, 0.1);
+  background: rgb(var(--color-accent-soft-rgb) / 0.1);
   color: var(--color-action-emerald);
 }
 
 .mobile-divider {
   height: 1px;
-  background: rgba(15, 23, 42, 0.05);
+  background: rgb(var(--color-primary-slate-rgb) / 0.05);
   margin: 0.5rem 0;
 }
 

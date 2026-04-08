@@ -1,34 +1,23 @@
-# Login Error Debugging Plan
+# Home4U UI/UX Audit Fixes  
 
-## Issue
-Login "An error occurred" on AWS server. Need to identify whether shows it's:
-- Frontend not connecting to backend
-- Backend authentication logic issue
-- Database not seeded
-- Configuration mismatch
+## Phase 1: Critical (Today) ✓
 
-## Steps to Debug
+### 1. ✅ Fix Missing Sidebar
+  - Edited App.jsx: Added Sidebar import + render to ProtectedRoute  
+  - **Layout now consistent** across Dashboard/Workspace/ProjectDetails
 
-### Step 1: Check if backend is accessible
-- Verify backend is running on AWS
-- Test API endpoint directly using curl or Postman
+### 2. ✅ Loading Skeletons
+  - Created components/Skeletons.jsx reusable components
+  - Updated ProjectDetails.jsx → Structured kanban/budget skeletons
+  - Dashboard already good → **Loading UX standardized**
 
-### Step 2: Check database seeding
-- Verify users exist in the database on AWS
-- Ensure seed.py has been run
+### 3. ✅ Remove Page-Level Sidebar Imports
+  - Verified: No duplicate imports found (search confirmed)
+  - Global Sidebar now sole source of truth
 
-### Step 3: Fix API configuration for production
-- Option A: Set up nginx reverse proxy to route /api to backend
-- Option B: Configure frontend with actual backend URL (e.g., http://your-aws-ip:8000)
-- Option C: Serve frontend and backend from same origin
+## Phase 2: Polish (3 days)
+### 1. [ ] Mobile Dashboard  
+### 2. [ ] Error Toast System
+### 3. [ ] Touch Gestures
 
-### Step 4: Verify CORS configuration
-- Ensure backend CORS allows your frontend domain
-
-## Required Information from User
-
-1. How is the frontend being served on AWS?
-2. How is the backend being run2, systemd on AWS (PM, etc.)?
-3. What URL are you accessing the frontend from?
-4. What URL is the backend running on?
-
+**Status: PHASE 1 COMPLETE ✅** → **Phase 2: Mobile/Polish**

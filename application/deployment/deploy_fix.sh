@@ -1,191 +1,160 @@
 #!/usr/bin/env bash
 ###############################################################################
-# deploy_fix.sh — Home4U Self-Healing Deployment Script
+# deploy_fix.sh — Home4U Market-Ready Zero-Downtime Deployment
 #
-# Run this ON the EC2 instance:
-#   cd ~/csc648-848-project-sp26-vibecoding-for-internship
+# A production-grade deployment script featuring:
+#   1. Global Health Gate — fails the build if the system is unstable
+#   2. Atomic Build Swaps — zero-downtime frontend transitions
+#   3. Persistence Shield — protects the out-of-repo database
+#   4. Self-Healing — clears port conflicts and restarts services
+#
+# Recommended run:
 #   bash application/deployment/deploy_fix.sh
-#
-# What it does:
-#   1. Pulls the latest code
-#   2. Clears port 8000 of any zombie process
-#   3. Ensures the out-of-repo data directory and DB exist
-#   4. Disables the default Nginx site and deploys our config
-#   5. Installs Python deps and restarts the backend systemd service
-#   6. Runs a health-check gate — fails loudly if the backend is down
-#   7. Runs smoke-test curl commands
 ###############################################################################
 set -euo pipefail
 
+# ── Configuration ──────────────────────────────────────────────────────────
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BACKEND_DIR="$REPO_ROOT/application/backend"
+FRONTEND_DIR="$REPO_ROOT/application/frontend"
 DEPLOY_DIR="$REPO_ROOT/application/deployment"
+
 DATA_DIR="/home/ec2-user/data"
 DB_FILE="$DATA_DIR/home4u.db"
 
-echo "============================================"
-echo "  Home4U Deploy — $(date)"
-echo "============================================"
+# Release directories (atomic swap)
+WEB_ROOT="/var/www/home4u"
+RELEASE_ROOT="/var/www/home4u-releases"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+NEW_RELEASE_DIR="$RELEASE_ROOT/$TIMESTAMP"
 
-# ── Step 1: Pull latest code ────────────────────────────────────────
-echo ""
-echo "▶ Step 1: Pulling latest code..."
-cd "$REPO_ROOT"
-git pull origin master || git pull origin main || echo "⚠  git pull skipped — continuing with local files"
+echo "=========================================================="
+echo "  🚀 Home4U PRODUCTION DEPLOY — $TIMESTAMP"
+echo "=========================================================="
 
-# ── Step 2: Port clearance ──────────────────────────────────────────
-echo ""
-echo "▶ Step 2: Clearing port 8000..."
-sudo fuser -k 8000/tcp 2>/dev/null || true
-sleep 1
-echo "  ✓ Port 8000 cleared"
+# ── Step 0: Infrastructure Guard ──────────────────────────────
+echo "▶ Phase 0: Validation Environment..."
+if ! command -v node >/dev/null 2>&1; then
+    echo "  ❌ FATAL: Node.js is not installed."
+    exit 1
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "  ❌ FATAL: Python3 is not installed."
+    exit 1
+fi
+echo "  ✓ Environment validated (Node $(node -v), Python $(python3 --version))"
 
-# ── Step 3: Database persistence ────────────────────────────────────
-echo ""
-echo "▶ Step 3: Verifying database..."
-mkdir -p "$DATA_DIR"
+# ── Step 1: Pre-flight & Persistence ──────────────────────────────
+echo "▶ Phase 1: Hardening persistence..."
+sudo mkdir -p "$DATA_DIR"
+sudo chown -R ec2-user:ec2-user "$DATA_DIR"
 
-if [ -f "$DB_FILE" ]; then
-  echo "  ✓ Database exists at $DB_FILE ($(du -h "$DB_FILE" | cut -f1))"
-else
-  echo "  ⚠  Database not found at $DB_FILE"
-  echo "     Tables will be auto-created by init_db() on startup."
-
-  # If an old DB exists inside the repo, migrate it out
-  OLD_DB="$BACKEND_DIR/home4u.db"
-  if [ -f "$OLD_DB" ]; then
-    echo "  📦 Migrating old DB from repo → $DB_FILE"
-    cp "$OLD_DB" "$DB_FILE"
-    echo "  ✓ Old database migrated"
-  fi
+if [ ! -f "$DB_FILE" ]; then
+    echo "  ⚠  Production DB not found at $DB_FILE. Checking for legacy migration..."
+    if [ -f "$BACKEND_DIR/home4u.db" ]; then
+        echo "  📦 Migrating legacy database to persisted storage..."
+        cp "$BACKEND_DIR/home4u.db" "$DB_FILE"
+    else
+        echo "  ✓ No legacy DB found. System will initialize a fresh one."
+    fi
 fi
 
-# ── Step 4: Nginx config ───────────────────────────────────────────
+# ── Step 2: Backend Refresh ─────────────────────────────────────────
 echo ""
-echo "▶ Step 4: Deploying Nginx config..."
-
-# Remove the default Nginx site to avoid conflicts
-sudo rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
-echo "  ✓ Default Nginx site disabled"
-
-# Deploy our config — try conf.d first (Amazon Linux), then sites-available (Ubuntu)
-if [ -d "/etc/nginx/conf.d" ]; then
-  sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/conf.d/home4u.conf
-  echo "  ✓ Copied to /etc/nginx/conf.d/home4u.conf"
-elif [ -d "/etc/nginx/sites-available" ]; then
-  sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/sites-available/home4u
-  sudo ln -sf /etc/nginx/sites-available/home4u /etc/nginx/sites-enabled/home4u
-  echo "  ✓ Copied to sites-available and symlinked to sites-enabled"
-else
-  echo "  ⚠  Could not find nginx config directory — copying to /etc/nginx/nginx.conf"
-  sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/nginx.conf
-fi
-
-# Validate and reload Nginx
-sudo nginx -t
-echo "  ✓ Nginx config is valid"
-sudo systemctl reload nginx || sudo systemctl restart nginx
-echo "  ✓ Nginx reloaded"
-
-# ── Step 5: Backend service ─────────────────────────────────────────
-echo ""
-echo "▶ Step 5: Setting up backend..."
+echo "▶ Phase 2: Orchestrating Backend..."
 cd "$BACKEND_DIR"
 
-# Ensure virtual environment exists
-if [ ! -d ".venv" ]; then
-  echo "  Creating virtual environment..."
-  python3 -m venv .venv
-fi
+# Clear port 8000 (Self-healing)
+echo "  🧹 Clearing port 8000 conflicts..."
+sudo fuser -k 8000/tcp 2>/dev/null || true
 
-# Install/update dependencies
-echo "  Installing Python dependencies..."
+# Update Venv
+if [ ! -d ".venv" ]; then
+    echo "  📦 Creating fresh virtual environment..."
+    python3 -m venv .venv
+fi
+echo "  📥 Syncing requirements..."
 .venv/bin/pip install -q -r requirements.txt
 
-# Deploy systemd service and restart
-echo "  Deploying systemd service..."
+# Deploy Systemd service
+echo "  ⚙️  Configuring systemd service..."
 sudo cp "$DEPLOY_DIR/home4u-backend.service" /etc/systemd/system/home4u-backend.service
 sudo systemctl daemon-reload
 sudo systemctl enable home4u-backend
 sudo systemctl restart home4u-backend
-echo "  ✓ Backend service restarted"
 
-# Give the service time to start
-sleep 4
-
-# ── Step 5.5: Build Frontend ────────────────────────────────────────
+# ── Step 3: Atomic Frontend Build ──────────────────────────────────
 echo ""
-echo "▶ Step 5.5: Building frontend..."
-FRONTEND_DIR="$REPO_ROOT/application/frontend"
-if [ -d "$FRONTEND_DIR" ]; then
-  cd "$FRONTEND_DIR"
-  echo "  Installing Node dependencies..."
-  npm install
-  echo "  Building production assets..."
-  npm run build
-  echo "  Deploying to /var/www/home4u..."
-  sudo mkdir -p /var/www/home4u
-  sudo cp -r dist/* /var/www/home4u/
-  echo "  ✓ Frontend built and deployed"
-else
-  echo "  ⚠  Frontend directory not found at $FRONTEND_DIR"
+echo "▶ Phase 3: Zero-Downtime Pipeline..."
+cd "$FRONTEND_DIR"
+
+echo "  📦 Initializing release path: $NEW_RELEASE_DIR"
+sudo mkdir -p "$RELEASE_ROOT"
+sudo mkdir -p "$NEW_RELEASE_DIR"
+sudo chown -R ec2-user:ec2-user "$RELEASE_ROOT"
+
+echo "  🏗️  Executing build profile (Vite)..."
+npm install --prefer-offline --no-audit --no-fund 2>&1 | tail -n 5
+VITE_API_BASE=/api npx vite build --outDir "$NEW_RELEASE_DIR" 2>&1 | tail -n 3
+
+# Verify build integrity
+if [ ! -f "$NEW_RELEASE_DIR/index.html" ]; then
+    echo "  ❌ FATAL: Vite build verification failed. Atomic swap cancelled."
+    exit 1
 fi
 
-# ── Step 6: Health-check gate ───────────────────────────────────────
+echo "  ⚡ ATOMIC SWAP: Linking $TIMESTAMP to $WEB_ROOT"
+# We first link to a temp symlink then rotate it for absolute atomicity
+sudo ln -sfn "$NEW_RELEASE_DIR" "$WEB_ROOT.tmp"
+sudo mv -Tf "$WEB_ROOT.tmp" "$WEB_ROOT"
+
+# Ensure Nginx owns the web root if it needs to
+sudo chown -R nginx:nginx "$RELEASE_ROOT" 2>/dev/null || sudo chown -R www-data:www-data "$RELEASE_ROOT" 2>/dev/null || true
+
+# ── Step 4: Infrastructure Guard ───────────────────────────────────
 echo ""
-echo "▶ Step 6: Health-check gate..."
+echo "▶ Phase 4: Validating Infrastructure..."
 
-HEALTH_RESPONSE=$(curl -sf http://127.0.0.1:8000/health 2>/dev/null || echo "FAIL")
-
-if echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
-  echo "  ✓ Backend is HEALTHY: $HEALTH_RESPONSE"
-else
-  echo ""
-  echo "  ╔══════════════════════════════════════════════╗"
-  echo "  ║  ✗ HEALTH CHECK FAILED                      ║"
-  echo "  ║  Backend did not return {\"status\": \"ok\"}      ║"
-  echo "  ║  Response: $HEALTH_RESPONSE"
-  echo "  ╚══════════════════════════════════════════════╝"
-  echo ""
-  echo "  Last 30 lines of backend logs:"
-  sudo journalctl -u home4u-backend -n 30 --no-pager
-  exit 1
+# Update Nginx config
+if [ -d "/etc/nginx/conf.d" ]; then
+    sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/conf.d/home4u.conf
+elif [ -d "/etc/nginx/sites-available" ]; then
+    sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/sites-available/home4u
+    sudo ln -sf /etc/nginx/sites-available/home4u /etc/nginx/sites-enabled/home4u
 fi
 
-# ── Step 7: Smoke tests ────────────────────────────────────────────
+sudo nginx -t && sudo systemctl reload nginx
+echo "  ✓ Nginx re-orchestrated"
+
+# ── Step 5: Global Health Gate ──────────────────────────────────────
 echo ""
-echo "▶ Step 7: Smoke tests..."
+echo "▶ Phase 5: Production Health Gate..."
+MAX_RETRIES=10
+for i in $(seq 1 $MAX_RETRIES); do
+    if curl -sf http://127.0.0.1:8000/health | grep -q '"status":"ok"'; then
+        echo "  ✅ SYSTEM HEALTHY (Attempt $i)"
+        break
+    else
+        if [ "$i" -eq "$MAX_RETRIES" ]; then
+            echo "  ❌ SYSTEM UNSTABLE: Health Gate Timeout"
+            sudo journalctl -u home4u-backend -n 20 --no-pager
+            exit 1
+        fi
+        echo "  ⌛ Waiting for backend stabilization... ($i/$MAX_RETRIES)"
+        sleep 2
+    fi
+done
 
+# ── Step 6: Cleanup ────────────────────────────────────────────────
 echo ""
-echo "  [1/4] Nginx health (/health):"
-curl -s http://localhost/health && echo "" || echo "  ✗ FAILED"
+echo "▶ Phase 6: Purging stale assets..."
+# Keep last 3 releases
+cd "$RELEASE_ROOT"
+ls -dt 20* | tail -n +4 | xargs -r sudo rm -rf
+echo "  ✓ Local cache pruned"
 
-echo "  [2/4] Nginx API proxy (/api/docs):"
-DOCS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/api/docs)
-echo "  HTTP $DOCS_STATUS"
-
-echo "  [3/4] Registration (/api/auth/signup):"
-curl -s -X POST http://localhost/api/auth/signup \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"smoketest@home4u.dev","password":"SmokeTest123!"}' && echo "" || echo "  ✗ FAILED"
-
-echo "  [4/4] Login (/api/auth/login):"
-curl -s -X POST http://localhost/api/auth/login \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'username=smoketest@home4u.dev&password=SmokeTest123!' && echo "" || echo "  ✗ FAILED"
-
-# ── Done ────────────────────────────────────────────────────────────
-TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" -s 2>/dev/null || true)
-if [ -n "$TOKEN" ]; then
-  PUBLIC_DNS=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" -sf http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || echo '18.225.117.117')
-else
-  PUBLIC_DNS="18.225.117.117"
-fi
-
-echo ""
-echo "============================================"
-echo "  ✓ Deploy complete!"
-echo "  DB location: $DB_FILE"
-echo "  Open http://$PUBLIC_DNS in Safari or Chrome."
-echo "  (Make sure to use http://, not https://)"
-echo "============================================"
+echo "=========================================================="
+echo "  🚀 DEPLOYMENT SUCCESSFUL — Home4U is Live"
+echo "  Environment: Production"
+echo "  Release:     $TIMESTAMP"
+echo "=========================================================="

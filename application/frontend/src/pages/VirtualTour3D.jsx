@@ -1,30 +1,41 @@
 /**
  * A high-fidelity spatial narrative engine using Spline camera waypoints and React state-driven context.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './VirtualTour3D.css';
 
-const BRAND_PURPLE = '#A855F7';
+const BRAND_AMBER = '#bb9457';
+const BRAND_WINE = '#6f1d1b';
+const BRAND_CHOCOLATE = '#99582a';
+const BRAND_COFFEE = '#432818';
+const TONE_WARM = '#2b1a12';
+const TONE_DEEP = '#140a07';
+const TONE_WINE = '#25130f';
 
 const storyRooms = [
   {
     id: 'atrium',
     name: 'Bedroom Studio',
-    title: 'Scan Your Bedroom, Get A Style Plan',
+    title: 'Scan Your Bedroom. Get a Plan Built for It.',
     emoji: '🏛️',
     icon: 'bed',
-    promise: 'Point your camera at your bedroom and instantly receive style directions tailored to your layout.',
-    proof: 'Room scanning captures structure and lighting so recommendations are grounded in your real space.',
-    problem: 'Most bedroom makeovers start with random inspiration and no fit for the actual room.',
-    method: 'We scan dimensions and surfaces, then generate matched design themes and furniture placement ideas.',
-    nextStep: 'Scan your bedroom and save your first recommended style board.',
+    promise: 'Capture your bedroom once and receive a plan that already fits.',
+    proof: 'The scan captures scale, openings, and light for room-true suggestions.',
+    problem: 'Bedroom inspiration rarely matches real dimensions.',
+    method: 'We map the room, then generate layout and style options for your footprint.',
+    nextStep: 'Scan your bedroom and save your first tailored board.',
+    summary: {
+      purpose: 'Capture your bedroom once and get a plan that already fits.',
+      features: ['Wall + floor mapping', 'Light + opening detection', 'Auto-fit layout proposals'],
+      takeaway: 'You start with confidence before moving a single piece.',
+    },
     metric: { label: 'Client Clarity', before: 42, after: 89, suffix: '%' },
     cta: 'Scan Bedroom',
-    accent: BRAND_PURPLE,
-    toneA: '#2b1d46',
-    toneB: '#171028',
-    glow: 'rgba(168, 85, 247, 0.16)',
+    accent: BRAND_AMBER,
+    toneA: TONE_WARM,
+    toneB: TONE_DEEP,
+    glow: 'rgba(255, 230, 167, 0.16)',
     plan: { x: 22, y: 28, w: 20, h: 16 },
     scene: [
       { id: 'a-1', kind: 'panel', x: '22%', y: '42%', z: 42, r: -6, s: 1.1, px: 10, py: 7, w: 86, h: 46 },
@@ -35,20 +46,25 @@ const storyRooms = [
   {
     id: 'pain',
     name: 'Living Room Explorer',
-    title: 'Scroll Through AI Ideas In Your Living Room',
+    title: 'Compare Living Room Concepts in Minutes',
     emoji: '⚠️',
     icon: 'sofa',
-    promise: 'After scanning, you can browse living room concepts and compare layout directions instantly.',
-    proof: 'A swipeable feed previews furniture, color palettes, and mood options over your scanned room.',
-    problem: 'Users usually waste time jumping between apps and screenshots to compare living room ideas.',
-    method: 'We keep everything in one room feed so you can test and shortlist directions quickly.',
-    nextStep: 'Open your living room feed and shortlist your top three concepts.',
+    promise: 'Compare living room concepts directly on your scanned space.',
+    proof: 'A swipeable feed applies each idea to your real layout.',
+    problem: 'People bounce between apps and screenshots just to compare ideas.',
+    method: 'We keep every option in one room-true feed.',
+    nextStep: 'Open the feed and pin three directions.',
+    summary: {
+      purpose: 'Compare living room ideas fast in your exact space.',
+      features: ['Swipeable concept feed', 'Side-by-side pinning', 'Room-true scale previews'],
+      takeaway: 'You pick a direction without second-guessing.',
+    },
     metric: { label: 'Project Delay Risk', before: 61, after: 18, suffix: '%' },
     cta: 'Open Idea Feed',
-    accent: BRAND_PURPLE,
-    toneA: '#2b1d46',
-    toneB: '#171028',
-    glow: 'rgba(168, 85, 247, 0.16)',
+    accent: BRAND_CHOCOLATE,
+    toneA: TONE_WARM,
+    toneB: TONE_DEEP,
+    glow: 'rgba(187, 148, 87, 0.18)',
     plan: { x: 48, y: 28, w: 20, h: 16 },
     scene: [
       { id: 'p-1', kind: 'panel', x: '24%', y: '38%', z: 44, r: -7, s: 1.08, px: 11, py: 7, w: 92, h: 44 },
@@ -59,20 +75,25 @@ const storyRooms = [
   {
     id: 'solution',
     name: 'Kitchen Planner',
-    title: 'Plan Kitchen Upgrades With Smart Suggestions',
+    title: 'Plan a Kitchen That Works as Good as It Looks',
     emoji: '🧠',
     icon: 'kitchen',
-    promise: 'Scan your kitchen to receive layout-friendly upgrade options based on circulation and storage.',
-    proof: 'Recommendations align with cabinet zones, work triangle flow, and your selected style preferences.',
-    problem: 'Kitchen ideas often look great online but fail when applied to real dimensions.',
-    method: 'The app maps key zones and proposes upgrades that match function, style, and budget intent.',
-    nextStep: 'Generate a kitchen concept set and compare functionality scores.',
+    promise: 'Get upgrade ideas that respect workflow, storage, and circulation.',
+    proof: 'Suggestions align with zones and the work‑triangle flow.',
+    problem: 'Great-looking kitchens can fail in daily use.',
+    method: 'We score upgrades by function, style, and budget.',
+    nextStep: 'Generate a plan and compare scores.',
+    summary: {
+      purpose: 'Balance beauty with workflow in a usable kitchen plan.',
+      features: ['Zone mapping', 'Work‑triangle scoring', 'Budget-aware upgrades'],
+      takeaway: 'Every choice feels practical and premium.',
+    },
     metric: { label: 'Revision Rounds', before: 7, after: 3, suffix: ' rounds' },
     cta: 'Generate Kitchen Plan',
-    accent: '#7e22ce',
-    toneA: '#27173a',
-    toneB: '#130b22',
-    glow: 'rgba(126, 34, 206, 0.14)',
+    accent: BRAND_WINE,
+    toneA: TONE_WINE,
+    toneB: TONE_DEEP,
+    glow: 'rgba(111, 29, 27, 0.2)',
     plan: { x: 74, y: 28, w: 20, h: 16 },
     scene: [
       { id: 's-1', kind: 'panel', x: '20%', y: '40%', z: 42, r: -6, s: 1.08, px: 10, py: 6, w: 88, h: 44 },
@@ -83,20 +104,25 @@ const storyRooms = [
   {
     id: 'transform',
     name: 'Bathroom Refresh',
-    title: 'Preview Bathroom Before/After Instantly',
+    title: 'See Your Bathroom Upgrade Before You Commit',
     emoji: '🖼️',
     icon: 'bath',
-    promise: 'Use live before/after previews to evaluate tile, vanity, lighting, and fixture upgrades.',
-    proof: 'Overlay comparisons show exactly how selected materials change your current bathroom.',
-    problem: 'Bathroom choices are hard to approve when changes are only described, not visualized.',
-    method: 'We render side-by-side comparisons so decisions are based on visible impact.',
-    nextStep: 'Adjust the before/after slider and save your preferred bathroom concept.',
+    promise: 'Preview finishes, vanity, and lighting as a live before/after.',
+    proof: 'You see exactly how each material shifts the room.',
+    problem: 'Bathroom decisions feel risky when changes are only described.',
+    method: 'We render side‑by‑side comparisons for confident choices.',
+    nextStep: 'Drag the slider and save your preferred concept.',
+    summary: {
+      purpose: 'See the before/after impact before you commit.',
+      features: ['Live finish overlays', 'Material confidence cues', 'One-click saves'],
+      takeaway: 'You decide with clarity, not risk.',
+    },
     metric: { label: 'Design Confidence', before: 48, after: 93, suffix: '%' },
     cta: 'Open Before/After',
-    accent: '#c084fc',
-    toneA: '#32214f',
-    toneB: '#17122a',
-    glow: 'rgba(192, 132, 252, 0.16)',
+    accent: BRAND_AMBER,
+    toneA: TONE_WARM,
+    toneB: TONE_DEEP,
+    glow: 'rgba(153, 88, 42, 0.2)',
     plan: { x: 22, y: 55, w: 20, h: 16 },
     scene: [
       { id: 't-1', kind: 'panel', x: '25%', y: '39%', z: 44, r: -5, s: 1.1, px: 10, py: 7, w: 92, h: 48 },
@@ -107,20 +133,25 @@ const storyRooms = [
   {
     id: 'proof',
     name: 'Home Office Setup',
-    title: 'Build A Productive Home Office Layout',
+    title: 'Build a Home Office That Improves Focus',
     emoji: '📈',
     icon: 'desk',
-    promise: 'Design your office with productivity-first suggestions based on space and workflow.',
-    proof: 'Desk placement, lighting angle, and storage recommendations are tuned to your room scan.',
-    problem: 'Home office ideas often ignore real work habits and end up looking good but functioning poorly.',
-    method: 'We pair visual style with usability metrics to improve focus and comfort.',
-    nextStep: 'Review office layout options and select your productivity-ready setup.',
+    promise: 'Design an office layout tuned to workflow, light, and space.',
+    proof: 'Desk placement and lighting angles are optimized for the scan.',
+    problem: 'Office inspiration looks good but underperforms in daily use.',
+    method: 'We pair visual style with productivity metrics.',
+    nextStep: 'Review layouts and select your focus-ready setup.',
+    summary: {
+      purpose: 'Design a workspace that improves focus.',
+      features: ['Ergonomic layout checks', 'Light-angle guidance', 'Focus scoring'],
+      takeaway: 'Work feels easier on day one.',
+    },
     metric: { label: 'Sign-off Speed', before: 11, after: 4, suffix: ' days' },
     cta: 'Review Office Setup',
-    accent: '#a78bfa',
-    toneA: '#2f2148',
-    toneB: '#17112a',
-    glow: 'rgba(167, 139, 250, 0.14)',
+    accent: BRAND_CHOCOLATE,
+    toneA: TONE_WARM,
+    toneB: TONE_DEEP,
+    glow: 'rgba(187, 148, 87, 0.18)',
     plan: { x: 48, y: 55, w: 20, h: 16 },
     scene: [
       { id: 'r-1', kind: 'panel', x: '23%', y: '38%', z: 42, r: -4, s: 1.06, px: 10, py: 6, w: 90, h: 42 },
@@ -131,20 +162,25 @@ const storyRooms = [
   {
     id: 'action',
     name: 'Whole Home Plan',
-    title: 'Connect Every Room Into One Home Style Plan',
+    title: 'Unify Every Room Into One Cohesive Plan',
     emoji: '🚀',
     icon: 'home',
-    promise: 'Unify bedroom, living room, kitchen, bathroom, and office ideas into one cohesive plan.',
-    proof: 'The app compiles saved concepts into a full-home style roadmap with phased actions.',
-    problem: 'Even good room designs can clash when there is no whole-home direction.',
-    method: 'We stitch room-level decisions into a single visual and execution plan.',
-    nextStep: 'Book a consultation to finalize your complete home transformation roadmap.',
+    promise: 'Combine all room decisions into a single style roadmap.',
+    proof: 'The app compiles your choices into phases and next steps.',
+    problem: 'Room‑by‑room designs clash without a whole‑home plan.',
+    method: 'We stitch your selections into one cohesive direction.',
+    nextStep: 'Book a consultation to finalize your roadmap.',
+    summary: {
+      purpose: 'Unify every room into one cohesive plan.',
+      features: ['Cross-room palette alignment', 'Phased rollout steps', 'Consult-ready roadmap'],
+      takeaway: 'Your home feels intentional end-to-end.',
+    },
     metric: { label: 'Launch Readiness', before: 36, after: 95, suffix: '%' },
     cta: 'Book Whole-Home Consult',
-    accent: BRAND_PURPLE,
-    toneA: '#2b1b41',
-    toneB: '#130d22',
-    glow: 'rgba(168, 85, 247, 0.16)',
+    accent: BRAND_WINE,
+    toneA: TONE_WINE,
+    toneB: TONE_DEEP,
+    glow: 'rgba(255, 230, 167, 0.16)',
     plan: { x: 74, y: 55, w: 20, h: 16 },
     scene: [
       { id: 'c-1', kind: 'panel', x: '24%', y: '38%', z: 44, r: -5, s: 1.08, px: 10, py: 7, w: 92, h: 44 },
@@ -155,15 +191,15 @@ const storyRooms = [
 ];
 
 const themePresets = {
-  story: { bgA: '#08060f', bgB: '#181127', panel: '#141022' },
-  minimal: { bgA: '#0a0a0c', bgB: '#151520', panel: '#13131a' },
-  editorial: { bgA: '#0b0612', bgB: '#241236', panel: '#1b1028' },
+  story: { bgA: '#120a07', bgB: '#1b100b', panel: '#1a0f0b' },
+  minimal: { bgA: '#0f0906', bgB: '#1a0f0b', panel: '#160c09' },
+  editorial: { bgA: '#140b08', bgB: '#22140d', panel: '#1b100b' },
 };
 
 const materialPresets = {
-  walnut: { floor: '#3a274f', wall: '#2a1c42', roof: '#8b5cf6' },
-  stone: { floor: '#44465a', wall: '#303244', roof: '#8a6fb2' },
-  soft: { floor: '#51445d', wall: '#3d3350', roof: '#a879ff' },
+  walnut: { floor: BRAND_COFFEE, wall: '#2f1b12', roof: BRAND_AMBER },
+  stone: { floor: '#3a2418', wall: '#26160f', roof: BRAND_CHOCOLATE },
+  soft: { floor: '#4a2f21', wall: '#2b1a12', roof: BRAND_WINE },
 };
 
 const storyHotspots = {
@@ -530,9 +566,7 @@ const VirtualTour3D = () => {
   const [selectedHotspotId, setSelectedHotspotId] = useState(null);
   const [visitedHotspots, setVisitedHotspots] = useState({});
   const [focusCue, setFocusCue] = useState(0);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [smoothTilt, setSmoothTilt] = useState({ x: 0, y: 0 });
-  const [nudge, setNudge] = useState({ x: 0, y: 0 });
+  const [showFullDetails, setShowFullDetails] = useState(false);
   const [hotspotTransitioning, setHotspotTransitioning] = useState(false);
   const [doorZooming, setDoorZooming] = useState(false);
   const [isEnteringHome, setIsEnteringHome] = useState(false);
@@ -551,8 +585,6 @@ const VirtualTour3D = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [ambientMotion, setAmbientMotion] = useState(true);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
-  const [cameraDolly, setCameraDolly] = useState(initialStageCamera.cameraDolly);
-  const [lookAtOffset, setLookAtOffset] = useState(initialStageCamera.lookAtOffset);
   const [transformSweepTick, setTransformSweepTick] = useState(0);
   const [visitedRooms, setVisitedRooms] = useState(() => new Set());
   const [showProControls, setShowProControls] = useState(false);
@@ -569,8 +601,15 @@ const VirtualTour3D = () => {
   const [activeSection, setActiveSection] = useState('problem');
   const [chapterChangeKey, setChapterChangeKey] = useState(0);
   const [autoOpenedSection, setAutoOpenedSection] = useState(null);
+  const [showOrbitHint, setShowOrbitHint] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const tiltStartRef = useRef({ x: 0, y: 0 });
+  const tiltTargetRef = useRef({ x: 0, y: 0 });
+  const tiltCurrentRef = useRef({ x: 0, y: 0 });
+  const nudgeRef = useRef({ x: 0, y: 0 });
+  const lookAtOffsetRef = useRef(initialStageCamera.lookAtOffset);
+  const cameraDollyRef = useRef(initialStageCamera.cameraDolly);
   const audioCtxRef = useRef(null);
   const introAudioTimersRef = useRef([]);
   const detailScrollRef = useRef(null);
@@ -579,6 +618,9 @@ const VirtualTour3D = () => {
   const detailScrollYRef = useRef(0);
   const detailRafRef = useRef(null);
   const hotspotFocusTimerRef = useRef(null);
+  const orbitHintTimerRef = useRef(null);
+  const roomShellRef = useRef(null);
+  const roomAtmoRef = useRef(null);
   const enterHomeTimersRef = useRef([]);
   const cameraAnimationFrameRef = useRef(null);
   const cameraPositionRef = useRef(initialStageCamera.position);
@@ -596,12 +638,39 @@ const VirtualTour3D = () => {
     proof: activeRoom.proof,
     nextStep: activeRoom.nextStep,
   };
+  const roomSummary = activeRoom.summary || {
+    purpose: activeRoom.promise,
+    features: [],
+    takeaway: activeRoom.proof,
+  };
   const hotspots = storyHotspots[activeRoom.id] || [];
   const selectedHotspot = hotspots.find((spot) => spot.id === selectedHotspotId) || null;
   const visitedCount = visitedHotspots[activeRoom.id]?.size || 0;
   const roomComplete = hotspots.length > 0 && visitedCount === hotspots.length;
-  const phaseSteps = ['outside', 'blueprint', 'room'];
-  const currentPhaseStep = phaseSteps.indexOf(phase);
+  const phaseSteps = [
+    { id: 'outside', label: 'Arrival' },
+    { id: 'blueprint', label: 'Blueprint' },
+    { id: 'room', label: 'Room' },
+  ];
+  const currentPhaseStep = phaseSteps.findIndex((step) => step.id === phase);
+  const currentPhaseLabel = phaseSteps[currentPhaseStep]?.label || 'Arrival';
+  const hasPrevRoom = activeIndex > 0;
+  const hasNextRoom = activeIndex < storyRooms.length - 1;
+  const dockBackLabel = phase === 'room' ? 'Prev Room' : phase === 'blueprint' ? 'Back Outside' : 'Back to Dashboard';
+  const dockPrimaryLabel = phase === 'room' ? 'Next Room' : phase === 'blueprint' ? 'Enter Selected Room' : 'Begin Guided Story';
+  const dockBackDisabled = phase === 'room' ? !hasPrevRoom : phaseTransitioning || isEnteringHome;
+  const dockPrimaryDisabled = phase === 'room'
+    ? !hasNextRoom
+    : phase === 'blueprint'
+      ? phaseTransitioning
+      : isEnteringHome || phaseTransitioning;
+  const dockOverviewDisabled = phase === 'blueprint' || phaseTransitioning || isEnteringHome;
+  const insightsTotal = hotspots.length;
+  const insightsValue = Math.min(visitedCount, Math.max(insightsTotal, 1));
+  const insightsLabel = insightsTotal
+    ? `${visitedCount}/${insightsTotal} insights viewed`
+    : 'No insights available';
+  const roomIllustration = useMemo(() => renderRoomIllustration(activeRoom.id), [activeRoom.id]);
   const particles = useMemo(
     () =>
       Array.from({ length: 12 }, (_, i) => ({
@@ -612,14 +681,6 @@ const VirtualTour3D = () => {
       })),
     [],
   );
-
-  const chamberTransform = useMemo(() => {
-    const rotateX = (-6 + smoothTilt.y * 8 + nudge.y + lookAtOffset.y).toFixed(2);
-    const rotateY = (14 + smoothTilt.x * 14 + nudge.x + lookAtOffset.x).toFixed(2);
-    const dolly = (cameraDolly + Math.abs(smoothTilt.x) * 5 + Math.abs(smoothTilt.y) * 4).toFixed(2);
-    const perspectiveScale = 1 + (50 - cameraDolly) / 500;
-    return `translateZ(${dolly}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${perspectiveScale})`;
-  }, [smoothTilt, nudge, cameraDolly, lookAtOffset]);
 
   const pathMetrics = useMemo(() => {
     const dx = pathTarget.x - 50;
@@ -709,9 +770,9 @@ const VirtualTour3D = () => {
   const applySplinePoseToStage = (pose) => {
     const stagePose = mapSplinePoseToStage(pose);
     cameraPositionRef.current = stagePose.position;
-    setCameraDolly(stagePose.cameraDolly);
-    setLookAtOffset(stagePose.lookAtOffset);
-    setNudge(stagePose.nudge);
+    cameraDollyRef.current = stagePose.cameraDolly;
+    lookAtOffsetRef.current = stagePose.lookAtOffset;
+    nudgeRef.current = stagePose.nudge;
   };
 
   const syncActiveSectionFromProgress = (progress) => {
@@ -758,6 +819,16 @@ const VirtualTour3D = () => {
     }, 10000);
   };
 
+  const goToPrevRoom = useCallback(() => {
+    if (phase !== 'room') return;
+    setActiveIndex((prev) => Math.max(prev - 1, 0));
+  }, [phase]);
+
+  const goToNextRoom = useCallback(() => {
+    if (phase !== 'room') return;
+    setActiveIndex((prev) => Math.min(prev + 1, storyRooms.length - 1));
+  }, [phase]);
+
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
@@ -798,29 +869,106 @@ const VirtualTour3D = () => {
   }, [currentChapter]);
 
   useEffect(() => {
+    if (phase !== 'room') {
+      setShowOrbitHint(false);
+      return;
+    }
+    setShowOrbitHint(true);
+    if (orbitHintTimerRef.current) {
+      window.clearTimeout(orbitHintTimerRef.current);
+    }
+    orbitHintTimerRef.current = window.setTimeout(() => {
+      setShowOrbitHint(false);
+      orbitHintTimerRef.current = null;
+    }, 4800);
+    return () => {
+      if (orbitHintTimerRef.current) {
+        window.clearTimeout(orbitHintTimerRef.current);
+        orbitHintTimerRef.current = null;
+      }
+    };
+  }, [phase, activeRoom.id]);
+
+  useEffect(() => {
     const onKeyDown = (event) => {
+      const activeTag = document.activeElement?.tagName;
+      const isTypingTarget = ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag || '') || document.activeElement?.isContentEditable;
+
+      if (showBookingModal) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setShowBookingModal(false);
+        }
+        return;
+      }
+
+      if (isTypingTarget) return;
+      setHasInteracted(true);
+
       if (event.key === 'Escape') {
         if (phase === 'room') {
+          event.preventDefault();
           setPhase('blueprint');
           setSelectedHotspotId(null);
           return;
         }
         if (phase === 'blueprint') {
+          event.preventDefault();
           setPhase('outside');
           return;
         }
         navigate('/dashboard');
+        return;
+      }
+
+      if (phase === 'room' && !phaseTransitioning) {
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          goToNextRoom();
+          return;
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          goToPrevRoom();
+          return;
+        }
+        if (event.key.toLowerCase() === 'm') {
+          event.preventDefault();
+          setPhase('blueprint');
+          setSelectedHotspotId(null);
+          return;
+        }
+      }
+
+      if (phase === 'blueprint' && event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        setPhase('outside');
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [phase, navigate]);
+  }, [phase, navigate, showBookingModal, phaseTransitioning, goToNextRoom, goToPrevRoom]);
 
   useEffect(() => {
     setSelectedHotspotId(null);
     setHotspotTransitioning(false);
-    setNudge({ x: 0, y: 0 });
+    nudgeRef.current = { x: 0, y: 0 };
   }, [activeIndex, phase]);
+
+  useEffect(() => {
+    if (phase !== 'room') return;
+    setVisitedRooms((prev) => new Set(prev).add(activeRoom.id));
+  }, [phase, activeRoom.id]);
+
+  useEffect(() => {
+    if (phase === 'room') return;
+    tiltTargetRef.current = { x: 0, y: 0 };
+    tiltCurrentRef.current = { x: 0, y: 0 };
+  }, [phase]);
+
+  useEffect(() => {
+    setShowFullDetails(false);
+  }, [activeRoom.id]);
 
   useEffect(() => () => {
     if (hotspotFocusTimerRef.current) window.clearTimeout(hotspotFocusTimerRef.current);
@@ -873,17 +1021,36 @@ const VirtualTour3D = () => {
   }, [phase, introRevealing, soundEnabled]);
 
   useEffect(() => {
+    if (phase !== 'room') return undefined;
     let frameId;
     const tick = () => {
-      setSmoothTilt((prev) => ({
-        x: prev.x + (tilt.x - prev.x) * 0.18,
-        y: prev.y + (tilt.y - prev.y) * 0.18,
-      }));
+      const target = tiltTargetRef.current;
+      const current = tiltCurrentRef.current;
+      const nextX = current.x + (target.x - current.x) * 0.18;
+      const nextY = current.y + (target.y - current.y) * 0.18;
+      tiltCurrentRef.current = { x: nextX, y: nextY };
+
+      const nudge = nudgeRef.current;
+      const lookAt = lookAtOffsetRef.current;
+      const cameraDolly = cameraDollyRef.current;
+      const rotateX = -6 + nextY * 8 + nudge.y + lookAt.y;
+      const rotateY = 14 + nextX * 14 + nudge.x + lookAt.x;
+      const dolly = cameraDolly + Math.abs(nextX) * 5 + Math.abs(nextY) * 4;
+      const perspectiveScale = 1 + (50 - cameraDolly) / 500;
+
+      if (roomShellRef.current) {
+        roomShellRef.current.style.transform = `translateZ(${dolly.toFixed(2)}px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${perspectiveScale})`;
+      }
+      if (roomAtmoRef.current) {
+        roomAtmoRef.current.style.setProperty('--atmo-x', `${(nextX * 14).toFixed(2)}px`);
+        roomAtmoRef.current.style.setProperty('--atmo-y', `${(nextY * 10).toFixed(2)}px`);
+      }
+
       frameId = requestAnimationFrame(tick);
     };
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
-  }, [tilt]);
+  }, [phase]);
 
   // AI-Driven Neural Sync: Maps spatial waypoints to narrative state.
   useEffect(() => {
@@ -926,6 +1093,7 @@ const VirtualTour3D = () => {
     setPhaseTransitioning(true);
     playUiTone(360, 0.09);
     setIsEnteringHome(true);
+    setHasInteracted(true);
     setCurrentChapter(0);
 
     const midFlightTimer = window.setTimeout(() => {
@@ -943,9 +1111,86 @@ const VirtualTour3D = () => {
     enterHomeTimersRef.current = [midFlightTimer, finishTimer];
   };
 
+  const goToOverview = () => {
+    setHasInteracted(true);
+    if (phase === 'blueprint') return;
+    setSelectedHotspotId(null);
+    setPhase('blueprint');
+    setBlueprintIntroTick((prev) => prev + 1);
+  };
+
+  const resetTour = () => {
+    clearEnterHomeTimers();
+    clearUserInterruptedTimer();
+    if (introTimerRef.current) {
+      clearTimeout(introTimerRef.current);
+      introTimerRef.current = null;
+    }
+    introAudioTimersRef.current.forEach((timer) => clearTimeout(timer));
+    introAudioTimersRef.current = [];
+    if (detailRafRef.current) cancelAnimationFrame(detailRafRef.current);
+    stopCameraAnimation();
+    setPhase('outside');
+    setPhaseTransitioning(false);
+    setDoorZooming(false);
+    setRoomZooming(false);
+    setIsEnteringHome(false);
+    setActiveIndex(0);
+    setCurrentChapter(0);
+    setSelectedHotspotId(null);
+    setVisitedHotspots({});
+    setVisitedRooms(new Set());
+    setShowFullDetails(false);
+    setStoryProgress(52);
+    setIsGeneratingPlan(false);
+    setTransformSweepTick(0);
+    setShowBookingModal(false);
+    setBookingSubmitted(false);
+    setBookingForm({ name: '', email: '', date: '', notes: '' });
+    setIntroPassed(false);
+    setIntroRevealing(false);
+    setActiveSection('problem');
+    setAutoOpenedSection(null);
+    setShowOrbitHint(false);
+    setIsDragging(false);
+    setUserInterrupted(false);
+    setShowProControls(false);
+    setBlueprintEntered(false);
+    setHoveredRoomId(null);
+    setPathTarget({ x: 50, y: 50 });
+    setHasInteracted(false);
+  };
+
+  const handleDockBack = () => {
+    setHasInteracted(true);
+    if (phase === 'room') {
+      goToPrevRoom();
+      return;
+    }
+    if (phase === 'blueprint') {
+      setPhase('outside');
+      return;
+    }
+    navigate('/dashboard');
+  };
+
+  const handleDockPrimary = () => {
+    setHasInteracted(true);
+    if (phase === 'room') {
+      goToNextRoom();
+      return;
+    }
+    if (phase === 'blueprint') {
+      openRoomFromBlueprint(activeIndex);
+      return;
+    }
+    enterHouse();
+  };
+
   const openRoomFromBlueprint = (index) => {
     setPhaseTransitioning(true);
     playUiTone(520, 0.07);
+    setHasInteracted(true);
     const plan = storyRooms[index].plan;
     setPathTarget({ x: plan.x + plan.w / 2, y: plan.y + plan.h / 2 });
     setRoomZooming(true);
@@ -964,9 +1209,11 @@ const VirtualTour3D = () => {
   const onPointerDown = (event) => {
     if (phase !== 'room') return;
     stopCameraAnimation();
+    setHasInteracted(true);
     setIsDragging(true);
+    setShowOrbitHint(false);
     dragStartRef.current = { x: event.clientX, y: event.clientY };
-    tiltStartRef.current = { ...tilt };
+    tiltStartRef.current = { ...tiltTargetRef.current };
   };
 
   const onPointerMove = (event) => {
@@ -975,15 +1222,15 @@ const VirtualTour3D = () => {
       const rect = event.currentTarget.getBoundingClientRect();
       const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
       const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-      setTilt({ x, y });
+      tiltTargetRef.current = { x, y };
       return;
     }
     const deltaX = (event.clientX - dragStartRef.current.x) / 180;
     const deltaY = (event.clientY - dragStartRef.current.y) / 180;
-    setTilt({
+    tiltTargetRef.current = {
       x: Math.max(-1.1, Math.min(1.1, tiltStartRef.current.x + deltaX)),
       y: Math.max(-1.1, Math.min(1.1, tiltStartRef.current.y + deltaY)),
-    });
+    };
   };
 
   const onPointerUp = () => setIsDragging(false);
@@ -992,6 +1239,8 @@ const VirtualTour3D = () => {
     const hotspot = hotspots.find((spot) => spot.id === hotspotId);
     stopCameraAnimation();
     playUiTone(660, 0.05);
+    setHasInteracted(true);
+    setShowOrbitHint(false);
     setSelectedHotspotId(hotspotId);
     setFocusCue((prev) => prev + 1);
     setVisitedHotspots((prev) => {
@@ -1003,12 +1252,12 @@ const VirtualTour3D = () => {
       const xBias = (hotspot.x - 50) / 50;
       const yBias = (hotspot.y - 50) / 50;
       setHotspotTransitioning(true);
-      setLookAtOffset({ x: xBias * 6, y: yBias * 4.2 });
-      setNudge({ x: xBias * 1.25, y: yBias * 0.8 });
+      lookAtOffsetRef.current = { x: xBias * 6, y: yBias * 4.2 };
+      nudgeRef.current = { x: xBias * 1.25, y: yBias * 0.8 };
       if (hotspotFocusTimerRef.current) window.clearTimeout(hotspotFocusTimerRef.current);
       hotspotFocusTimerRef.current = window.setTimeout(() => {
         setHotspotTransitioning(false);
-        setNudge({ x: 0, y: 0 });
+        nudgeRef.current = { x: 0, y: 0 };
       }, 600);
     }
 
@@ -1044,6 +1293,7 @@ const VirtualTour3D = () => {
   };
 
   const handleRoomCta = () => {
+    setHasInteracted(true);
     switch (activeRoom.id) {
       case 'atrium':
         setPhase('blueprint');
@@ -1072,6 +1322,7 @@ const VirtualTour3D = () => {
 
   const handleGeneratePlan = () => {
     if (isGeneratingPlan) return;
+    setHasInteracted(true);
     setIsGeneratingPlan(true);
     setTransformSweepTick(0);
     setTimeout(() => {
@@ -1092,7 +1343,7 @@ const VirtualTour3D = () => {
 
   return (
     <div
-      className="virtual-tour-page"
+      className={`virtual-tour-page ${hasInteracted ? 'has-interaction' : 'no-interaction'}`}
       style={{
         '--room-accent-global': activeRoom.accent,
         '--room-tone-a': activeRoom.toneA,
@@ -1115,7 +1366,7 @@ const VirtualTour3D = () => {
 
       <main className={`virtual-tour-layout ${phase === 'room' ? 'phase-room-layout' : ''}`}>
         <section
-          className={`virtual-stage phase-${phase} ${doorZooming ? 'door-zoom' : ''} ${roomZooming ? 'room-zoom' : ''} ${phaseTransitioning ? 'phase-transitioning' : ''} ${ambientMotion ? 'ambient-on' : ''} ${phase === 'room' && introRevealing ? 'intro-cam-active' : ''}`}
+          className={`virtual-stage phase-${phase} ${doorZooming ? 'door-zoom' : ''} ${roomZooming ? 'room-zoom' : ''} ${phaseTransitioning ? 'phase-transitioning' : ''} ${ambientMotion ? 'ambient-on' : ''} ${phase === 'room' && introRevealing ? 'intro-cam-active' : ''} ${isDragging ? 'is-dragging' : ''}`}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -1124,9 +1375,9 @@ const VirtualTour3D = () => {
           <div className="virtual-grid" />
           <div className="stage-progress">
             {phaseSteps.map((step, index) => (
-              <div key={step} className={`stage-step ${index <= currentPhaseStep ? 'active' : ''} ${index === currentPhaseStep ? 'current' : ''}`}>
+              <div key={step.id} className={`stage-step ${index <= currentPhaseStep ? 'active' : ''} ${index === currentPhaseStep ? 'current' : ''}`}>
                 <span className="stage-dot">{index + 1}</span>
-                <span className="stage-label">{step}</span>
+                <span className="stage-label">{step.label}</span>
               </div>
             ))}
           </div>
@@ -1136,7 +1387,7 @@ const VirtualTour3D = () => {
           <div className="phase-transition-veil" />
           <div className="cinema-vignette" />
           <div className="virtual-particles" aria-hidden="true">
-            {particles.map((p) => (
+            {ambientMotion && particles.map((p) => (
               <span key={p.id} className="particle-dot" style={{ left: `${p.x}%`, top: `${p.y}%`, animationDuration: `${p.d}s` }} />
             ))}
           </div>
@@ -1151,10 +1402,12 @@ const VirtualTour3D = () => {
                 <div className="house-roof" />
                 <div className="house-window house-window-a" />
                 <div className="house-window house-window-b" />
-                <button type="button" className="house-door-btn" onClick={enterHouse}>
-                  Enter Story Home
-                </button>
               </div>
+            </div>
+            <div className={`outside-entry-cta ${isEnteringHome ? 'is-hidden' : ''}`}>
+              <button type="button" className="house-door-btn" onClick={enterHouse} disabled={isEnteringHome || phaseTransitioning}>
+                Enter Story Home
+              </button>
             </div>
           </div>
 
@@ -1200,6 +1453,7 @@ const VirtualTour3D = () => {
                         style={{ transitionDelay: blueprintMounted ? `${index * 80}ms` : '0ms' }}
                         onMouseEnter={() => setHoveredRoomId(room.id)}
                         onMouseLeave={() => setHoveredRoomId(null)}
+                        aria-current={index === activeIndex ? 'true' : undefined}
                       >
                         <span className="bp-node-main">
                           <span className="bp-node-name blueprint-room-node__label">{blueprintNodeLabels[room.id] || room.name}</span>
@@ -1222,14 +1476,15 @@ const VirtualTour3D = () => {
                 onClick={() => openHotspot(spot.id)}
                 style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
                 aria-label={spot.title}
+                aria-pressed={selectedHotspotId === spot.id}
               >
                 <span className="virtual-hotspot-pulse" />
                 <span className="virtual-hotspot-core" />
                 <span className="virtual-hotspot-tag">{spot.title}</span>
               </button>
             ))}
-            <div className={`room-shell room-shell-${activeRoom.id} ${hotspotTransitioning ? 'hotspot-transitioning' : ''}`} style={{ transform: chamberTransform }}>
-              <div className="room-depth-atmo" style={{ '--atmo-x': `${(smoothTilt.x * 14).toFixed(2)}px`, '--atmo-y': `${(smoothTilt.y * 10).toFixed(2)}px` }} />
+            <div ref={roomShellRef} className={`room-shell room-shell-${activeRoom.id} ${hotspotTransitioning ? 'hotspot-transitioning' : ''}`}>
+              <div ref={roomAtmoRef} className="room-depth-atmo" />
               <div className="room-depth-shadow" />
               <div className="room-depth-foreground" />
               <div className="room-architect-lines" aria-hidden="true">
@@ -1257,7 +1512,7 @@ const VirtualTour3D = () => {
                 className={`room-illustration room-illustration-${activeRoom.id}`}
                 aria-hidden="true"
               >
-                {renderRoomIllustration(activeRoom.id)}
+                {roomIllustration}
               </div>
               <div className="room-chamber">
                 <RoomIcon name={activeRoom.icon} className="room-icon room-icon-lg" />
@@ -1270,8 +1525,13 @@ const VirtualTour3D = () => {
           <div className="virtual-caption">
             {phase === 'outside' && 'Click the door to begin the story.'}
             {phase === 'blueprint' && 'Choose a room to enter.'}
-            {phase === 'room' && 'Explore room insights and app-powered design ideas.'}
+            {phase === 'room' && 'Drag to rotate. Click hotspots for evidence.'}
           </div>
+          {phase === 'room' && showOrbitHint && (
+            <div className="orbit-hint" aria-live="polite">
+              Drag to rotate · Click hotspots to reveal evidence
+            </div>
+          )}
           {phase === 'room' && (
             <div className="room-bottom-dock">
               <div className="dock-room-tabs">
@@ -1286,21 +1546,16 @@ const VirtualTour3D = () => {
           )}
 
           <nav className={`virtual-sticky-dock ${phaseTransitioning ? 'hidden' : ''}`}>
-            {phase === 'room' && (
-              <>
-                <button className="dock-btn ghost" onClick={() => setPhase('blueprint')}>Open Story Map</button>
-                <button className="dock-btn primary" onClick={() => setActiveIndex((prev) => (prev + 1) % storyRooms.length)}>Next Room →</button>
-              </>
-            )}
-            {phase === 'blueprint' && (
-              <button className="dock-btn" onClick={() => setPhase('outside')}>← Back Outside</button>
-            )}
+            <button className="dock-btn ghost" onClick={handleDockBack} disabled={dockBackDisabled}>← {dockBackLabel}</button>
+            <button className="dock-btn ghost" onClick={goToOverview} disabled={dockOverviewDisabled}>Tour Overview</button>
+            <button className="dock-btn primary" onClick={handleDockPrimary} disabled={dockPrimaryDisabled}>{dockPrimaryLabel} →</button>
           </nav>
         </section>
 
         <aside className={`virtual-info ${phase === 'room' ? 'room-info-mode' : ''}`}>
           {phase === 'outside' && (
             <section className="experience-panel">
+              <p className="tour-progress">Phase {currentPhaseStep + 1} of {phaseSteps.length} · {currentPhaseLabel}</p>
               <p className="virtual-eyebrow">Story Start</p>
               <h2 className="experience-title">Welcome To Home4U</h2>
               <p className="experience-lead">Walk through the complete client journey from uncertainty to measurable transformation.</p>
@@ -1309,15 +1564,17 @@ const VirtualTour3D = () => {
                 <span>Immersive 3D Tour</span>
                 <span>Live Story Metrics</span>
               </div>
-              <button type="button" className="virtual-nav-btn" onClick={enterHouse}>Begin Guided Story</button>
+              <button type="button" className="virtual-nav-btn ghost-nav-btn" onClick={enterHouse} disabled={isEnteringHome || phaseTransitioning}>Begin Guided Story</button>
             </section>
           )}
 
           {phase === 'blueprint' && (
             <section className="experience-panel">
+                  <p className="tour-progress">Phase {currentPhaseStep + 1} of {phaseSteps.length} · {currentPhaseLabel}</p>
                   <p className="virtual-eyebrow room-chooser-kicker">Choose Room</p>
                   <h2 className="experience-title room-chooser-title">Story Map</h2>
                   <p className="experience-lead">Select any room to see how Home4U scanning and AI ideas guide your design choices.</p>
+                  <p className="blueprint-current">Current focus: {activeRoom.name}</p>
               <div className="virtual-room-grid">
                 {storyRooms.map((room, index) => (
                   <button
@@ -1325,6 +1582,7 @@ const VirtualTour3D = () => {
                     key={room.id}
                     className={`virtual-room-btn ${index === activeIndex ? 'active' : ''}`}
                     onClick={() => openRoomFromBlueprint(index)}
+                    aria-pressed={index === activeIndex}
                   >
                     <RoomIcon name={room.icon} className="room-icon room-icon-xs" />
                     <span>{room.name}</span>
@@ -1344,9 +1602,43 @@ const VirtualTour3D = () => {
                   '--room-tone-b': activeRoom.toneB,
                 }}
               >
-                <p className="virtual-eyebrow section-kicker">Chapter Insight</p>
+                <div className="room-header-meta">
+                  <p className="virtual-eyebrow section-kicker">Chapter Insight</p>
+                  <span className="room-chapter-index">Chapter {activeIndex + 1} of {storyRooms.length}</span>
+                </div>
+                <p className="room-breadcrumb">You are here · {activeRoom.name}</p>
                 <h2 className="section-title">{activeRoom.title}</h2>
                 <p className="section-lead">{activeStoryChapter.narrationText.replace(/^Narration:\s*/, '')}</p>
+                <div className="room-header-actions">
+                  <button
+                    type="button"
+                    className="room-view-toggle"
+                    onClick={() => setShowFullDetails((prev) => !prev)}
+                    aria-pressed={showFullDetails}
+                  >
+                    {showFullDetails ? 'Collapse Details' : 'Expand Details'}
+                  </button>
+                </div>
+              </section>
+
+              <section className="room-summary-panel">
+                <p className="virtual-eyebrow">Summary</p>
+                <div className="summary-item">
+                  <span className="summary-label">Purpose</span>
+                  <p className="summary-text">{roomSummary.purpose}</p>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">Key Features</span>
+                  <div className="summary-tags">
+                    {roomSummary.features.map((feature) => (
+                      <span key={feature} className="summary-tag">{feature}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">Takeaway</span>
+                  <p className="summary-text">{roomSummary.takeaway}</p>
+                </div>
               </section>
 
               <div ref={detailScrollRef} className={`room-detail-scroll ${introRevealing ? 'locked' : ''}`} onScroll={onDetailScroll}>
@@ -1363,7 +1655,7 @@ const VirtualTour3D = () => {
                   aria-hidden="true"
                 />
                 <div className="room-scroll-mask" aria-hidden="true" />
-                <div key={chapterChangeKey} className={`room-detail-content ${introPassed ? 'intro-passed' : ''}`}>
+                <div key={chapterChangeKey} className={`room-detail-content ${introPassed ? 'intro-passed' : ''} ${introRevealing || phaseTransitioning ? 'is-loading' : ''}`}>
                   <section
                     key={activeRoom.id}
                     className={`room-intro-showcase sidebar-item-animate ${introRevealing ? 'reveal-active' : ''}`}
@@ -1381,150 +1673,192 @@ const VirtualTour3D = () => {
                       <span className="meta-label">{activeRoom.metric.label}</span>
                       <strong>{activeRoom.metric.after}{activeRoom.metric.suffix}</strong>
                     </div>
-                    <button type="button" className="room-intro-cta shimmer-shine" onClick={jumpToDetails}>Explore Details ↓</button>
+                    <button type="button" className="room-intro-cta" onClick={jumpToDetails}>View Details ↓</button>
                     <span className="room-intro-scrollhint">Scroll to move deeper into this chapter</span>
                     {introRevealing && <span className="room-intro-lock">Revealing room...</span>}
                   </section>
 
                   <div ref={detailBodyRef} className="room-detail-body">
-                  <section className="story-framework sidebar-item-animate">
-                    <p className="virtual-eyebrow">Story Framework</p>
-                    <div key={activeStoryChapter.id} className="framework-accordion">
-                      {frameworkPanels.map((panel) => {
-                        const isOpen = activeSection === panel.key;
-                        const buttonId = `framework-${activeStoryChapter.id}-${panel.key}`;
-                        const panelId = `${buttonId}-panel`;
-                        return (
-                          <article key={panel.key} className={`framework-step ${isOpen ? 'is-open' : ''}`}>
-                            <button
-                              type="button"
-                              id={buttonId}
-                              className={`framework-trigger accordion-header ${isOpen ? 'active shimmer-shine' : ''} ${autoOpenedSection === panel.key ? 'sync-highlight' : ''}`}
-                              aria-expanded={isOpen}
-                              aria-controls={panelId}
-                              onClick={() => {
-                                setAutoOpenedSection(null);
-                                handleManualSectionChange(panel.key);
-                              }}
-                            >
-                              <span>{panel.label}</span>
-                              <span className="framework-chevron" aria-hidden="true">+</span>
-                            </button>
-                            <div
-                              id={panelId}
-                              className={`framework-panel ${isOpen ? 'is-open' : ''}`}
-                              role="region"
-                              aria-labelledby={buttonId}
-                            >
-                              <div className="framework-panel-inner">
-                                <p>{panel.content}</p>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                    <button type="button" className="story-framework-cta shimmer-shine" onClick={handleRoomCta}>{activeRoom.cta}</button>
-                  </section>
-                {revealEvidence ? (
-                  <>
-                    <div className="virtual-room-progress sidebar-item-animate">
-                      <span>{visitedCount}/{hotspots.length} insights viewed</span>
-                      <span className={`virtual-complete-pill ${roomComplete ? 'complete' : ''}`}>{roomComplete ? 'Room Complete' : 'In Progress'}</span>
-                    </div>
-                    <section className="virtual-hotspot-panel section-parallax section-parallax-fast sidebar-item-animate">
-                      <p className="virtual-eyebrow">Evidence Detail</p>
-                      {selectedHotspot ? (
-                        <div key={`${selectedHotspot.id}-${focusCue}`} className="hotspot-panel-inner">
-                          <h3>{selectedHotspot.title}</h3>
-                          <p>{selectedHotspot.description}</p>
-                          <button type="button" className="virtual-hotspot-cta" onClick={handleRoomCta}>{activeRoom.cta}</button>
-                        </div>
-                      ) : (
-                        <p>Click a hotspot in the room to reveal a specific evidence point.</p>
-                      )}
-                    </section>
-                  </>
-                ) : (
-                  <p className="chapter-hint">Start with the story promise first. Evidence layers unlock in the next chapter.</p>
-                )}
-
-                {revealOutcome && (
-                  <section className="before-after-panel section-parallax section-parallax-mid sidebar-item-animate">
-                    <div className={`transform-panel ${isGeneratingPlan ? 'is-processing' : ''} ${transformSweepTick ? 'sweep-once' : ''}`}>
-                      <div className="transform-header">
-                        <p className="virtual-eyebrow">Outcome Progress</p>
+                    {!showFullDetails && (
+                      <section className="room-detail-preview sidebar-item-animate">
+                        <p className="virtual-eyebrow">Details</p>
+                        <p className="section-lead">Expand to review the framework, evidence, and outcome metrics for this room.</p>
                         <button
                           type="button"
-                          className="transform-cta"
-                          onClick={handleGeneratePlan}
-                          disabled={isGeneratingPlan}
+                          className="room-summary-cta"
+                          onClick={() => setShowFullDetails(true)}
                         >
-                          {isGeneratingPlan ? 'Generating…' : 'Generate Design Plan'}
+                          Expand Details
                         </button>
-                      </div>
-                      <div className="before-after-meta">
-                        <span>{activeRoom.metric.label}</span>
-                        <strong>{storyMetric}{activeRoom.metric.suffix}</strong>
-                      </div>
-                      <div className="transform-canvas">
-                        <div className="before-after-stage">
-                          <div className="before-layer">Baseline {activeRoom.metric.before}{activeRoom.metric.suffix}</div>
-                          <div className="after-layer" style={{ width: `${storyProgress}%` }}>Current {storyMetric}{activeRoom.metric.suffix}</div>
-                          <span className="split-line" style={{ left: `${storyProgress}%` }}><span className="split-handle">↔</span></span>
+                      </section>
+                    )}
+                    {showFullDetails && (
+                      <section className="story-framework sidebar-item-animate">
+                        <p className="virtual-eyebrow">Story Framework</p>
+                        <div key={activeStoryChapter.id} className="framework-accordion">
+                          {frameworkPanels.map((panel) => {
+                            const isOpen = activeSection === panel.key;
+                            const buttonId = `framework-${activeStoryChapter.id}-${panel.key}`;
+                            const panelId = `${buttonId}-panel`;
+                            return (
+                              <article key={panel.key} className={`framework-step ${isOpen ? 'is-open' : ''}`}>
+                                <button
+                                  type="button"
+                                  id={buttonId}
+                                  className={`framework-trigger accordion-header ${isOpen ? 'active shimmer-shine' : ''} ${autoOpenedSection === panel.key ? 'sync-highlight' : ''}`}
+                                  aria-expanded={isOpen}
+                                  aria-controls={panelId}
+                                  onClick={() => {
+                                    setAutoOpenedSection(null);
+                                    handleManualSectionChange(panel.key);
+                                  }}
+                                >
+                                  <span>{panel.label}</span>
+                                  <span className="framework-chevron" aria-hidden="true">+</span>
+                                </button>
+                                <div
+                                  id={panelId}
+                                  className={`framework-panel ${isOpen ? 'is-open' : ''}`}
+                                  role="region"
+                                  aria-labelledby={buttonId}
+                                >
+                                  <div className="framework-panel-inner">
+                                    <p>{panel.content}</p>
+                                  </div>
+                                </div>
+                              </article>
+                            );
+                          })}
                         </div>
+                      </section>
+                    )}
+                    {showFullDetails && (revealEvidence ? (
+                      <>
+                        <div
+                          className="virtual-room-progress sidebar-item-animate"
+                          role="progressbar"
+                          aria-valuemin={0}
+                          aria-valuemax={Math.max(insightsTotal, 1)}
+                          aria-valuenow={insightsValue}
+                          aria-valuetext={insightsLabel}
+                        >
+                          <span>{insightsLabel}</span>
+                          <span className={`virtual-complete-pill ${roomComplete ? 'complete' : ''}`}>{roomComplete ? 'Room Complete' : 'In Progress'}</span>
+                        </div>
+                        <section className="virtual-hotspot-panel section-parallax section-parallax-fast sidebar-item-animate">
+                          <p className="virtual-eyebrow">Evidence Detail</p>
+                          {selectedHotspot ? (
+                            <div key={`${selectedHotspot.id}-${focusCue}`} className="hotspot-panel-inner">
+                              <h3>{selectedHotspot.title}</h3>
+                              <p>{selectedHotspot.description}</p>
+                              <button type="button" className="virtual-hotspot-cta" onClick={handleRoomCta}>{activeRoom.cta}</button>
+                            </div>
+                          ) : (
+                            <p>Click a hotspot in the room to reveal a specific evidence point.</p>
+                          )}
+                          {hotspots.length > 0 && (
+                            <div className="hotspot-chip-row" aria-label="Room insights">
+                              {hotspots.map((spot) => (
+                                <button
+                                  key={spot.id}
+                                  type="button"
+                                  className={`hotspot-chip ${selectedHotspotId === spot.id ? 'active' : ''}`}
+                                  onClick={() => openHotspot(spot.id)}
+                                  aria-pressed={selectedHotspotId === spot.id}
+                                >
+                                  {spot.title}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </section>
+                      </>
+                    ) : (
+                      <p className="chapter-hint">Start with the story promise first. Evidence layers unlock in the next chapter.</p>
+                    ))}
 
-                        {isGeneratingPlan && (
-                          <div className="transform-overlay">
-                            <div className="transform-grid" />
-                            <div className="transform-scan-line" />
-                            <p className="transform-status">Analyzing spatial geometry…</p>
+                    {showFullDetails && revealOutcome && (
+                      <section className="before-after-panel section-parallax section-parallax-mid sidebar-item-animate">
+                        <div className={`transform-panel ${isGeneratingPlan ? 'is-processing' : ''} ${transformSweepTick ? 'sweep-once' : ''}`}>
+                          <div className="transform-header">
+                            <p className="virtual-eyebrow">Outcome Progress</p>
+                            <button
+                              type="button"
+                              className="transform-cta"
+                              onClick={handleGeneratePlan}
+                              disabled={isGeneratingPlan}
+                            >
+                              {isGeneratingPlan ? 'Generating…' : 'Generate Design Plan'}
+                            </button>
                           </div>
-                        )}
-                        {!isGeneratingPlan && transformSweepTick > 0 && (
-                          <div key={transformSweepTick} className="transform-sweep" aria-hidden="true" />
-                        )}
-                      </div>
+                          <div className="before-after-meta">
+                            <span>{activeRoom.metric.label}</span>
+                            <strong>{storyMetric}{activeRoom.metric.suffix}</strong>
+                          </div>
+                          <div className="transform-canvas">
+                            <div className="before-after-stage">
+                              <div className="before-layer">Baseline {activeRoom.metric.before}{activeRoom.metric.suffix}</div>
+                              <div className="after-layer" style={{ width: `${storyProgress}%` }}>Current {storyMetric}{activeRoom.metric.suffix}</div>
+                              <span className="split-line" style={{ left: `${storyProgress}%` }}><span className="split-handle">↔</span></span>
+                            </div>
 
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={storyProgress}
-                        onChange={(e) => setStoryProgress(Number(e.target.value))}
-                        className="before-after-slider"
-                      />
-                      <div className="before-after-presets">
-                        {[25, 50, 75, 100].map((value) => (
-                          <button key={value} type="button" className="tiny-chip" onClick={() => setStoryProgress(value)}>{value}%</button>
+                            {isGeneratingPlan && (
+                              <div className="transform-overlay">
+                                <div className="transform-grid" />
+                                <div className="transform-scan-line" />
+                                <p className="transform-status">Analyzing spatial geometry…</p>
+                              </div>
+                            )}
+                            {!isGeneratingPlan && transformSweepTick > 0 && (
+                              <div key={transformSweepTick} className="transform-sweep" aria-hidden="true" />
+                            )}
+                          </div>
+
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={storyProgress}
+                            onChange={(e) => setStoryProgress(Number(e.target.value))}
+                            className="before-after-slider"
+                            aria-label="Outcome progress"
+                            aria-valuetext={`Current ${storyMetric}${activeRoom.metric.suffix} of ${activeRoom.metric.after}${activeRoom.metric.suffix}`}
+                          />
+                          <div className="before-after-presets">
+                            {[25, 50, 75, 100].map((value) => (
+                              <button key={value} type="button" className="tiny-chip" onClick={() => setStoryProgress(value)}>{value}%</button>
+                            ))}
+                          </div>
+                        </div>
+                      </section>
+                    )}
+
+                    {showFullDetails && revealDeepControls && (
+                      <div className="virtual-minimap">
+                        {storyRooms.map((room, idx) => (
+                          <span key={room.id} className={`virtual-minidot ${idx === activeIndex ? 'active' : ''} ${visitedRooms.has(room.id) ? 'visited' : ''}`} style={idx === activeIndex ? { backgroundColor: room.accent } : undefined} />
                         ))}
                       </div>
-                    </div>
-                  </section>
-                )}
-
-
-                {revealDeepControls && (
-                  <div className="virtual-minimap">
-                    {storyRooms.map((room, idx) => (
-                      <span key={room.id} className={`virtual-minidot ${idx === activeIndex ? 'active' : ''} ${visitedRooms.has(room.id) ? 'visited' : ''}`} style={idx === activeIndex ? { backgroundColor: room.accent } : undefined} />
-                    ))}
-                  </div>
-                )}
+                    )}
                   </div>
                 </div>
               </div>
+
+              <section className="room-actions-panel">
+                <p className="virtual-eyebrow">Actions</p>
+                <div className="room-action-row">
+                  <button type="button" className="room-summary-cta" onClick={handleRoomCta}>{activeRoom.cta}</button>
+                </div>
+                <details className="room-more-actions">
+                  <summary>More actions</summary>
+                  <div className="room-more-actions-body">
+                    <button type="button" className="room-secondary-link" onClick={goToOverview}>Back to Tour Overview</button>
+                    <button type="button" className="room-secondary-link" onClick={resetTour}>Restart Tour</button>
+                  </div>
+                </details>
+              </section>
             </>
           )}
-
-          {phase !== 'room' && (
-            <>
-              <div className="virtual-controls hero-cta-row">
-                <button type="button" className="virtual-nav-btn ghost-nav-btn" onClick={() => setPhase('blueprint')}>Open Story Map</button>
-              </div>
-            </>
-          )}
-
 
           {showProControls && (
             <>
@@ -1563,7 +1897,11 @@ const VirtualTour3D = () => {
             </>
           )}
 
-          {narrativeLine && <p key={activeStoryChapter.id} className="narrative-line">{narrativeLine}</p>}
+          {narrativeLine && (
+            <p key={activeStoryChapter.id} className="narrative-line" role="status" aria-live="polite">
+              {narrativeLine}
+            </p>
+          )}
           <button type="button" className="pro-controls-link" onClick={() => setShowProControls((v) => !v)}>
             {showProControls ? 'Hide Pro Controls' : 'Show Pro Controls'}
           </button>
