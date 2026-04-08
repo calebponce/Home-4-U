@@ -1,78 +1,51 @@
 # Manual Fix Instructions for AWS Server
 
 Since I cannot connect to your AWS server remotely, please follow these steps manually.
-Replace `<CURRENT_PUBLIC_DNS>` with the instance's current Public IPv4 DNS from AWS EC2:
+Current DNS in these commands: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`.
+If your host changes after a restart, replace it with the current Public IPv4 DNS from AWS EC2.
 
 ---
 
 ## Step 1: SSH into your server
 ```bash
-ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_DNS>
+ssh -i home4u-key.pem ec2-user@ec2-18-223-158-116.us-east-2.compute.amazonaws.com
 ```
 
 ---
 
 ## Step 2: Check if backend is running
 ```bash
-ps aux | grep uvicorn
-curl http://localhost:8000/
+sudo systemctl status home4u-backend --no-pager
+curl -s http://127.0.0.1:8000/health
 ```
 
 If not running, start it:
 ```bash
-cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
-source .venv/bin/activate
-nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
+sudo systemctl restart home4u-backend
+sudo journalctl -u home4u-backend -n 80 --no-pager
 ```
 
 ---
 
 ## Step 3: Check if database is seeded
 ```bash
-cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
-sqlite3 home4u.db "SELECT * FROM users;"
+sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"
 ```
 
 If empty, run seed:
 ```bash
+cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
 source .venv/bin/activate
-python seed.py
+HOME4U_ENV=production HOME4U_DATA_DIR=/home/ec2-user/data python seed.py
+sudo systemctl restart home4u-backend
 ```
 
 ---
 
 ## Step 4: Fix nginx configuration
 ```bash
-sudo nano /etc/nginx/conf.d/home4u.conf
-```
-
-Replace the entire file content with:
-```nginx
-server {
-    listen 80;
-    server_name _;
-
-    root /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/dist;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /api/v1/ {
-        proxy_pass http://127.0.0.1:8000/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /uploads/ {
-        proxy_pass http://127.0.0.1:8000/;
-        proxy_set_header Host $host;
-    }
-}
+cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
+sudo cp application/deployment/nginx.conf /etc/nginx/conf.d/home4u.conf
 ```
 
 ---
@@ -87,9 +60,9 @@ sudo systemctl restart nginx
 
 ## Step 6: Test login
 ```bash
-curl -X POST http://localhost/api/v1/auth/login \
+curl -X POST http://localhost/api/auth/login \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=test@example.com&password=test123"
+  -d "username=calebmusic10@gmail.com&password=TempPass123!"
 ```
 
 Expected response should contain `"access_token"`

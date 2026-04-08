@@ -2,8 +2,12 @@
 
 > **IMPORTANT**: This folder contains all credentials and files needed to access the Home4U cloud infrastructure. Follow the steps below exactly as written.
 >
-> Replace `<CURRENT_PUBLIC_IP>` / `<CURRENT_PUBLIC_DNS>` with the current values from
-> AWS Console → EC2 → Instance details. These change after stop/start unless an Elastic IP is attached.
+> Current host values:
+> - IP: `18.223.158.116`
+> - DNS: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`
+>
+> If the instance is stopped/started without an Elastic IP, update these values
+> from AWS Console → EC2 → Instance details.
 >
 > On the EC2 box, get the current DNS with:
 > `curl -s http://169.254.169.254/latest/meta-data/public-hostname`
@@ -28,13 +32,13 @@ chmod 400 home4u-key.pem
 
 ### Step 3: Connect to Server
 ```bash
-ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
+ssh -i home4u-key.pem ec2-user@18.223.158.116
 ```
 
 ### Step 4: Access Database
 ```bash
 # After connecting, run:
-sudo -u postgres psql -d home4u
+sqlite3 /home/ec2-user/data/home4u.db
 ```
 
 ---
@@ -68,8 +72,8 @@ sudo -u postgres psql -d home4u
 | **Instance ID** | i-048b1547e5254509c |
 | **Instance Name** | Home4U |
 | **Instance Type** | t3.micro |
-| **Public IP Address** | <CURRENT_PUBLIC_IP> |
-| **Public DNS** | <CURRENT_PUBLIC_DNS> |
+| **Public IP Address** | 18.223.158.116 |
+| **Public DNS** | ec2-18-223-158-116.us-east-2.compute.amazonaws.com |
 | **SSH Username** | ec2-user |
 | **SSH Port** | 22 |
 
@@ -83,7 +87,7 @@ sudo -u postgres psql -d home4u
 2. **Convert PEM to PPK** using PuTTYgen:
    - Open PuTTYgen → Load → Select home4u-key.pem → Save private key
 3. **Connect with PuTTY**:
-   - Host: `ec2-user@<CURRENT_PUBLIC_IP>`
+   - Host: `ec2-user@18.223.158.116`
    - Port: 22
    - SSH → Auth → Browse for your PPK file
 
@@ -107,15 +111,15 @@ chmod 400 home4u-key.pem
 Run this command in Terminal:
 
 ```bash
-ssh -i ~/Downloads/home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
+ssh -i ~/Downloads/home4u-key.pem ec2-user@18.223.158.116
 ```
 
 **Expected Result:**
 ```
-The authenticity of host '<CURRENT_PUBLIC_IP> (<CURRENT_PUBLIC_IP>)' can't be established.
+The authenticity of host '18.223.158.116 (18.223.158.116)' can't be established.
 ECDSA key fingerprint is SHA256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
 Are you sure you (yes/no)? want to continue connecting yes
-Warning: Permanently added '<CURRENT_PUBLIC_IP>' (ECDSA) to the list of known hosts.
+Warning: Permanently added '18.223.158.116' (ECDSA) to the list of known hosts.
 ```
 
 #### Step 4: Verify Connection
@@ -128,38 +132,31 @@ Once connected, you should see the command prompt change to:
 
 ## Database Access Instructions
 
-### Important: No Password Required
+### Current Production Database
 
-The database uses **peer authentication**, meaning you access it without a password when logged in as the `ec2-user`.
+Home4U production currently uses **SQLite**, stored at:
+`/home/ec2-user/data/home4u.db`
 
 ### After SSH Connection:
 
-#### Option 1: Access PostgreSQL (Recommended)
+#### Option 1: Check users
 
 Run this command on the EC2 server:
 
 ```bash
-sudo -u postgres psql -d home4u
+sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"
 ```
 
-**Expected Result:**
-```
-psql (14.9)
-Type "help" for help.
-
-home4u=#
-```
-
-#### Option 2: List All Databases
+#### Option 2: Check project count
 
 ```bash
-sudo -u postgres psql -l
+sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"
 ```
 
-#### Option 3: List Tables in home4u Database
+#### Option 3: Open interactive SQLite shell
 
 ```bash
-sudo -u postgres psql -d home4u -c "\dt"
+sqlite3 /home/ec2-user/data/home4u.db
 ```
 
 ---
@@ -176,7 +173,7 @@ cd ~/Downloads
 chmod 400 home4u-key.pem
 
 # Test SSH connection
-ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
+ssh -i home4u-key.pem ec2-user@18.223.158.116
 ```
 
 ### For Windows (PowerShell)
@@ -191,7 +188,7 @@ icacls home4u-key.pem /grant:r "$($env:USERNAME):(R)"
 
 ```bash
 chmod 400 home4u-key.pem
-ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
+ssh -i home4u-key.pem ec2-user@18.223.158.116
 ```
 
 ---
@@ -226,38 +223,35 @@ chmod 400 home4u-key.pem
 
 **Solution:**
 ```bash
-ssh-keygen -R <CURRENT_PUBLIC_IP>
-ssh-keygen -R <CURRENT_PUBLIC_DNS>
+ssh-keygen -R 18.223.158.116
+ssh-keygen -R ec2-18-223-158-116.us-east-2.compute.amazonaws.com
 ```
 
 ---
 
-### Problem: "Database connection refused"
+### Problem: "Database file missing"
 
-**Cause:** PostgreSQL may not be running
+**Cause:** Deployment did not initialize the production data path yet.
 
 **Solution:**
 ```bash
-# Check PostgreSQL status
-sudo systemctl status postgresql
+# Check expected production DB path
+ls -lah /home/ec2-user/data/home4u.db
 
-# Start PostgreSQL if not running
-sudo systemctl start postgresql
+# Re-run deploy if missing
+cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
+bash application/deployment/deploy_fix.sh
 ```
 
 ---
 
-### Problem: "psql: could not connect to server"
+### Problem: "sqlite3: command not found"
 
-**Cause:** PostgreSQL not installed or not started
+**Cause:** SQLite CLI package is not installed on the instance.
 
 **Solution:**
 ```bash
-# Check if PostgreSQL is installed
-which psql
-
-# Install PostgreSQL if needed
-sudo yum install postgresql postgresql-server
+sudo yum install -y sqlite
 ```
 
 ---
@@ -266,21 +260,21 @@ sudo yum install postgresql postgresql-server
 
 | Task | Command |
 |------|---------|
-| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>` |
-| **List Databases** | `sudo -u postgres psql -l` |
-| **Connect to home4u** | `sudo -u postgres psql -d home4u` |
-| **List Tables** | `sudo -u postgres psql -d home4u -c "\dt"` |
-| **Exit Database** | `\q` |
+| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@18.223.158.116` |
+| **List users** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"` |
+| **Count projects** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"` |
+| **Open DB shell** | `sqlite3 /home/ec2-user/data/home4u.db` |
+| **Exit DB shell** | `.quit` |
 | **Exit SSH** | `exit` |
 
 ---
 
 ## What to Do If Still Having Issues
 
-1. **Double-check the IP address**: Make sure you're using `<CURRENT_PUBLIC_IP>`
+1. **Double-check the IP address**: Make sure you're using `18.223.158.116`
 2. **Verify PEM file location**: Use the full path like `~/Downloads/home4u-key.pem`
 3. **Check permissions**: Run `ls -la home4u-key.pem` - should show `-r--------`
-4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>`
+4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@18.223.158.116`
 
 ---
 
