@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { AmbienceProvider } from './context/AmbienceContext'
+import { ApiHealthProvider } from './context/ApiHealthContext'
 import './styles/tokens.css'
 import './styles/atmosphere.css'
 import './styles/skeletons.css'
@@ -15,7 +16,9 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <AuthProvider>
         <AmbienceProvider>
-          <App />
+          <ApiHealthProvider>
+            <App />
+          </ApiHealthProvider>
         </AmbienceProvider>
       </AuthProvider>
     </BrowserRouter>

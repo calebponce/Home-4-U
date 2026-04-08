@@ -100,7 +100,7 @@ const Login = () => {
 
             {error && (
               <motion.div 
-                className="error-message" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                className="error-message"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
               >
@@ -133,7 +133,7 @@ const Login = () => {
                 <label htmlFor="password">Password</label>
               </div>
 
-              <button type="submit" className="btn-cinematic" disabled={loading}>
+              <button type="submit" className="btn-cinematic" data-magnetic-button disabled={loading}>
                 {loading ? (
                   <><Loader2 size={18} className="spin" /> Authenticating...</>
                 ) : (

@@ -1,3 +1,5 @@
+import logging
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -6,8 +8,16 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-# Configuration - In production, use environment variables!
-SECRET_KEY = "your-super-secret-key-change-in-production"
+_logger = logging.getLogger(__name__)
+
+# Configuration — reads from env, falls back to a dev-only default.
+_DEFAULT_SECRET = "home4u-dev-only-secret-CHANGE-ME"
+SECRET_KEY = os.getenv("HOME4U_SECRET_KEY", _DEFAULT_SECRET)
+
+if SECRET_KEY == _DEFAULT_SECRET:
+    _logger.warning(
+        "⚠️  Using default SECRET_KEY. Set HOME4U_SECRET_KEY env var in production!"
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

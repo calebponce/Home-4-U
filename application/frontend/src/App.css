@@ -1,3 +1,11 @@
+/* Fluid layout tokens shared across protected pages */
+:root {
+  --layout-shell-max: clamp(320px, 96vw, 1720px);
+  --layout-edge-gap: clamp(0.65rem, 1.8vw, 1.5rem);
+  --layout-shell-pad-x: clamp(0.75rem, 2.2vw, 2rem);
+  --layout-shell-pad-y: clamp(1rem, 2.8vw, 2rem);
+}
+
 /* App CSS Defaults */
 #root {
   width: 100%;
@@ -8,51 +16,71 @@
   flex-direction: column;
 }
 
+@layer base, utilities;
+
+@layer base {
+  /* FORCE TOKEN ENFORCEMENT */
+  h1, h2, h3, h4, h5, h6 { 
+    font-family: var(--font-display, serif); 
+    line-height: var(--leading-snug);
+  }
+  h1 { font-size: var(--text-3xl); font-weight: 800; letter-spacing: -0.02em; }
+  h2 { font-size: var(--text-2xl); font-weight: 750; letter-spacing: -0.01em; }
+  p, li { 
+    font-size: var(--text-base); 
+    line-height: var(--leading-relaxed); 
+    max-width: 65ch; 
+  }
+  button, [role="button"] { 
+    padding: calc(var(--space-4) * 0.75) var(--space-5); 
+    border-radius: var(--radius-md);
+  }
+  .page-shell { 
+    padding: var(--layout-shell-pad-y) var(--layout-shell-pad-x);
+    max-width: var(--layout-shell-max);
+    margin: 0 auto; 
+  }
+}
+
 /* Global Layout */
 .app-layout {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: 
+    "navbar"
+    "main";
   min-height: 100vh;
   width: 100%;
+  gap: 0;
 }
 
 .app-main-content {
-  flex: 1;
-  width: 100%;
-  padding-top: 80px; /* Base height of Navbar */
+  grid-area: main;
+  padding-top: var(--space-12); /* Navbar height */
+  padding-left: var(--layout-edge-gap);
+  padding-right: var(--layout-edge-gap);
   position: relative;
-  display: flex;
-  flex-direction: column;
-  transition: padding-top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  transition: padding-top var(--motion-mid) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* When navbar is shrunk, reduce padding */
+/* Navbar shrink spacing */
 .app-layout:has(.navbar.shrunk) .app-main-content {
-  padding-top: 64px;
+  padding-top: var(--space-10);
 }
+
 
 .page-shell {
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--layout-shell-max);
   margin: 0 auto;
-  padding: 2rem;
+  padding: var(--layout-shell-pad-y) var(--layout-shell-pad-x);
 }
 
 .page-motion {
   width: 100%;
   min-height: 100%;
-  animation: pageIn 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-@keyframes pageIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -66,4 +66,9 @@ export const recommendationsAPI = {
   generate: (projectId) => api.post(`/recommendations/generate/${projectId}`),
 };
 
+/** Lightweight health probe — backend exposes GET /health (proxied as /api/health in dev). */
+export const healthAPI = {
+  check: () => api.get('/health'),
+};
+
 export default api;

@@ -1,21 +1,40 @@
 :root {
-  /* High-End Spatial Palette */
-  --color-primary-slate: #020617; /* Slate 950 for deeper contrast */
-  --color-secondary-arctic: #F8FAFC;
-  --color-action-emerald: #10B981;
+  /* Merlot & Desert Neutrals Palette */
+  --color-wine-900: #6f1d1b; /* Dark Wine */
+  --color-camel-400: #bb9457; /* Camel */
+  --color-chocolate-700: #99582a; /* Chocolate Brown */
+  --color-coffee-900: #432818; /* Dark Coffee */
+  --color-apricot-100: #ffe6a7; /* Light Apricot */
+
+  --color-wine-900-rgb: 111 29 27;
+  --color-camel-400-rgb: 187 148 87;
+  --color-chocolate-700-rgb: 153 88 42;
+  --color-coffee-900-rgb: 67 40 24;
+  --color-apricot-100-rgb: 255 230 167;
+
+  /* Core Brand Tokens */
+  --color-primary-slate: var(--color-coffee-900); /* Dark Coffee */
+  --color-secondary-arctic: var(--color-apricot-100); /* Light Apricot */
+  --color-action-emerald: var(--color-wine-900); /* Dark Wine */
+
+  --color-primary-slate-rgb: var(--color-coffee-900-rgb);
+  --color-secondary-arctic-rgb: var(--color-apricot-100-rgb);
+  --color-action-emerald-rgb: var(--color-wine-900-rgb);
+  --color-accent-soft: var(--color-apricot-100);
+  --color-accent-soft-rgb: var(--color-apricot-100-rgb);
   
   /* Brand Alias */
-  --color-brand-400: #34d399; /* Emerald 400 fallback */
+  --color-brand-400: var(--color-camel-400); /* Camel */
   --color-brand-500: var(--color-action-emerald);
-  --color-brand-600: #059669; /* Emerald 600 fallback */
-  --color-brand-700: #047857; /* Emerald 700 fallback */
+  --color-brand-600: var(--color-chocolate-700); /* Chocolate Brown */
+  --color-brand-700: var(--color-coffee-900); /* Dark Coffee */
 
   /* Alias: Primary (used across newer UI) */
-  --color-primary-200: #e2e8f0;
-  --color-primary-300: #cbd5e1;
-  --color-primary-400: #94a3b8;
-  --color-primary-500: #64748b;
-  --color-primary-600: #475569;
+  --color-primary-200: var(--color-apricot-100); /* Light Apricot */
+  --color-primary-300: var(--color-camel-400); /* Camel */
+  --color-primary-400: var(--color-chocolate-700); /* Chocolate Brown */
+  --color-primary-500: var(--color-camel-400);
+  --color-primary-600: var(--color-coffee-900); /* Dark Coffee */
   --color-primary-700: var(--color-primary-slate);
 
   /* Feedback Colors */
@@ -23,24 +42,53 @@
 
   /* Surface & Text (Spatial Aesthetic) */
   --color-bg-950: var(--color-secondary-arctic);
-  --color-surface-900: #ffffff;
-  --color-surface-850: #f1f5f9;
-  --color-border-700: rgba(15, 23, 42, 0.1);
+  --color-surface-900: var(--color-apricot-100); /* Light Apricot */
+  --color-surface-850: var(--color-camel-400); /* Camel */
+  --color-border-700: rgb(var(--color-primary-slate-rgb) / 0.1);
   --color-text-100: var(--color-primary-slate);
-  --color-text-300: #334155; /* Darker for better contrast */
-  --color-text-50: #000000;
-  --color-text-200: #0f172a; /* Darker */
-  --color-text-400: #475569; /* Darker */
+  --color-text-300: var(--color-chocolate-700); /* Chocolate Brown */
+  --color-text-50: var(--color-coffee-900); /* Dark Coffee base */
+  --color-text-200: var(--color-coffee-900); 
+  --color-text-400: var(--color-chocolate-700); /* Darker */
 
-  /* Typography */
+  /* Typography — Inter (UI/data) + Playfair Display (display) */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  --font-serif: 'Outfit', Georgia, Cambria, 'Times New Roman', serif;
-  /* Alias used by some pages/components */
-  --font-display: var(--font-serif);
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-serif: var(--font-display);
+
+  /* Modular type scale (major third ~1.25) */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5625rem;
+  --text-2xl: 1.953125rem;
+  --text-3xl: 2.44140625rem;
+  --text-display: clamp(2rem, 4.5vw, 3.05rem);
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* Atmospheric layered shadows (3D stack) */
+  --shadow-layer-1: 0 1px 2px rgb(var(--color-primary-slate-rgb) / 0.05);
+  --shadow-layer-2: 0 4px 12px rgb(var(--color-primary-slate-rgb) / 0.07);
+  --shadow-layer-3: 0 12px 28px rgb(var(--color-primary-slate-rgb) / 0.09);
+  --shadow-layer-4: 0 28px 56px rgb(var(--color-primary-slate-rgb) / 0.12);
+  --shadow-elevated: var(--shadow-layer-1), var(--shadow-layer-2), var(--shadow-layer-3), var(--shadow-layer-4);
+
+  --shadow-glass-atmosphere:
+    0 1px 0 rgba(255, 255, 255, 0.4) inset,
+    0 -1px 0 rgb(var(--color-primary-slate-rgb) / 0.06) inset,
+    0 8px 32px rgb(var(--color-primary-slate-rgb) / 0.09),
+    0 2px 8px rgb(var(--color-primary-slate-rgb) / 0.05),
+    0 24px 48px rgb(var(--color-primary-slate-rgb) / 0.08);
 
   /* Focus ring */
-  --focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.2);
-  --focus-ring-strong: 0 0 0 4px rgba(16, 185, 129, 0.28);
+  --focus-ring: 0 0 0 3px rgb(var(--color-action-emerald-rgb) / 0.2);
+  --focus-ring-strong: 0 0 0 4px rgb(var(--color-action-emerald-rgb) / 0.28);
 
   /* Spatial Grid System (4px/8px base) */
   --space-1: 4px;
@@ -54,8 +102,8 @@
 
   /* Modern Radius (Standardized to 8px where requested) */
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
 
   /* Motion */
   --motion-fast: 180ms;
