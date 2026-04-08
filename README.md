@@ -123,15 +123,25 @@ If the URL does not work at the time of testing, the team will receive **no cred
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
-| Vibecoding for Internship | Home4U | ec2-18-225-117-117.us-east-2.compute.amazonaws.com | Consensus |
+| Vibecoding for Internship | Home4U | ec2-18-223-158-116.us-east-2.compute.amazonaws.com | Consensus |
+
+Current production host:
+- Public IP: `18.223.158.116`
+- Public DNS: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`
+
+If the instance is stopped/started without an Elastic IP, these values can change.
+Current hostname can be checked on EC2 with:
+```bash
+curl -s http://169.254.169.254/latest/meta-data/public-hostname
+```
 
 ## Deployment Info
 
-- API URL: http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com
+- API URL: http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com
 - Test login (returns JWT):
   ```bash
   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-    http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com/auth/login
+    http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/auth/login
   ```
 
 Frontend → Nginx → FastAPI → Database → JWT token
@@ -140,21 +150,23 @@ Frontend → Nginx → FastAPI → Database → JWT token
 
 1. Pull latest code and restart the service
    ```bash
-   cd /home/ec2-user/backend
-   git pull
-   sudo systemctl restart home4u
+   cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
+   git fetch origin
+   git switch main
+   git pull origin main
+   bash application/deployment/deploy_fix.sh
    ```
 2. Smoke test the API (auth expects form fields)
    ```bash
    curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-     http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com/auth/login
+     http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/auth/login
    ```
 3. Keep code/DB in sync
    - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
    - If a user exists locally but not on AWS, add/reset once in the AWS DB.
 4. Service management
-   - Managed by systemd unit `home4u` (uvicorn :8000, proxied by Nginx).
-   - Logs: `journalctl -u home4u -n 200 --no-pager`.
+   - Managed by systemd unit `home4u-backend` (uvicorn :8000, proxied by Nginx).
+   - Logs: `journalctl -u home4u-backend -n 200 --no-pager`.
 
 ---
 
@@ -263,5 +275,3 @@ No part of this repository may be reproduced, distributed, or transmitted withou
 ---
 
 *This document may be updated during the semester. Students are responsible for reviewing the latest version.*
-
-

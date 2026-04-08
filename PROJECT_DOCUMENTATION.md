@@ -62,6 +62,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── __init__.py
 │   │   │   ├── main.py
 │   │   │   └── tests_search_smoke.py
+│   │   ├── package-lock.json
 │   │   ├── requirements.txt
 │   │   ├── seed.py
 │   │   └── start_backend.sh
@@ -320,5 +321,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-04-08 03:08:23*
+*Last Updated: 2026-04-08 06:40:38*
 *This document is maintained by the CI/CD pipeline*
