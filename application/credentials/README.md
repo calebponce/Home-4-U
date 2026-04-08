@@ -1,6 +1,12 @@
 # Home4U Cloud Credentials
 
 > **IMPORTANT**: This folder contains all credentials and files needed to access the Home4U cloud infrastructure. Follow the steps below exactly as written.
+>
+> Replace `<CURRENT_PUBLIC_IP>` / `<CURRENT_PUBLIC_DNS>` with the current values from
+> AWS Console → EC2 → Instance details. These change after stop/start unless an Elastic IP is attached.
+>
+> On the EC2 box, get the current DNS with:
+> `curl -s http://169.254.169.254/latest/meta-data/public-hostname`
 
 ---
 
@@ -22,7 +28,7 @@ chmod 400 home4u-key.pem
 
 ### Step 3: Connect to Server
 ```bash
-ssh -i home4u-key.pem ec2-user@18.225.117.117
+ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
 ```
 
 ### Step 4: Access Database
@@ -62,8 +68,8 @@ sudo -u postgres psql -d home4u
 | **Instance ID** | i-048b1547e5254509c |
 | **Instance Name** | Home4U |
 | **Instance Type** | t3.micro |
-| **Public IP Address** | 18.225.117.117 |
-| **Public DNS** | ec2-18-225-117-117.us-east-2.compute.amazonaws.com |
+| **Public IP Address** | <CURRENT_PUBLIC_IP> |
+| **Public DNS** | <CURRENT_PUBLIC_DNS> |
 | **SSH Username** | ec2-user |
 | **SSH Port** | 22 |
 
@@ -77,7 +83,7 @@ sudo -u postgres psql -d home4u
 2. **Convert PEM to PPK** using PuTTYgen:
    - Open PuTTYgen → Load → Select home4u-key.pem → Save private key
 3. **Connect with PuTTY**:
-   - Host: `ec2-user@18.225.117.117`
+   - Host: `ec2-user@<CURRENT_PUBLIC_IP>`
    - Port: 22
    - SSH → Auth → Browse for your PPK file
 
@@ -101,15 +107,15 @@ chmod 400 home4u-key.pem
 Run this command in Terminal:
 
 ```bash
-ssh -i ~/Downloads/home4u-key.pem ec2-user@18.225.117.117
+ssh -i ~/Downloads/home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
 ```
 
 **Expected Result:**
 ```
-The authenticity of host '18.225.117.117 (18.225.117.117)' can't be established.
+The authenticity of host '<CURRENT_PUBLIC_IP> (<CURRENT_PUBLIC_IP>)' can't be established.
 ECDSA key fingerprint is SHA256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
 Are you sure you (yes/no)? want to continue connecting yes
-Warning: Permanently added '18.225.117.117' (ECDSA) to the list of known hosts.
+Warning: Permanently added '<CURRENT_PUBLIC_IP>' (ECDSA) to the list of known hosts.
 ```
 
 #### Step 4: Verify Connection
@@ -170,7 +176,7 @@ cd ~/Downloads
 chmod 400 home4u-key.pem
 
 # Test SSH connection
-ssh -i home4u-key.pem ec2-user@18.225.117.117
+ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
 ```
 
 ### For Windows (PowerShell)
@@ -185,7 +191,7 @@ icacls home4u-key.pem /grant:r "$($env:USERNAME):(R)"
 
 ```bash
 chmod 400 home4u-key.pem
-ssh -i home4u-key.pem ec2-user@18.225.117.117
+ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>
 ```
 
 ---
@@ -220,8 +226,8 @@ chmod 400 home4u-key.pem
 
 **Solution:**
 ```bash
-ssh-keygen -R 18.225.117.117
-ssh-keygen -R ec2-18-225-117-117.us-east-2.compute.amazonaws.com
+ssh-keygen -R <CURRENT_PUBLIC_IP>
+ssh-keygen -R <CURRENT_PUBLIC_DNS>
 ```
 
 ---
@@ -260,7 +266,7 @@ sudo yum install postgresql postgresql-server
 
 | Task | Command |
 |------|---------|
-| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@18.225.117.117` |
+| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>` |
 | **List Databases** | `sudo -u postgres psql -l` |
 | **Connect to home4u** | `sudo -u postgres psql -d home4u` |
 | **List Tables** | `sudo -u postgres psql -d home4u -c "\dt"` |
@@ -271,10 +277,10 @@ sudo yum install postgresql postgresql-server
 
 ## What to Do If Still Having Issues
 
-1. **Double-check the IP address**: Make sure you're using `18.225.117.117`
+1. **Double-check the IP address**: Make sure you're using `<CURRENT_PUBLIC_IP>`
 2. **Verify PEM file location**: Use the full path like `~/Downloads/home4u-key.pem`
 3. **Check permissions**: Run `ls -la home4u-key.pem` - should show `-r--------`
-4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@18.225.117.117`
+4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_IP>`
 
 ---
 
@@ -296,6 +302,5 @@ If you have followed all steps exactly and still cannot connect:
 
 ---
 
-*Last Updated: 2026-02-25*
+*Last Updated: 2026-04-08*
 *Follow steps exactly in order - do not skip any step*
-

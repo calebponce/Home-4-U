@@ -1,12 +1,13 @@
 # Manual Fix Instructions for AWS Server
 
-Since I cannot connect to your AWS server remotely, please follow these steps manually:
+Since I cannot connect to your AWS server remotely, please follow these steps manually.
+Replace `<CURRENT_PUBLIC_DNS>` with the instance's current Public IPv4 DNS from AWS EC2:
 
 ---
 
 ## Step 1: SSH into your server
 ```bash
-ssh -i home4u-key.pem ec2-user@ec2-18-225-117-117.us-east-2.compute.amazonaws.com
+ssh -i home4u-key.pem ec2-user@<CURRENT_PUBLIC_DNS>
 ```
 
 ---

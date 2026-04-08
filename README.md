@@ -123,15 +123,22 @@ If the URL does not work at the time of testing, the team will receive **no cred
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
-| Vibecoding for Internship | Home4U | ec2-18-225-117-117.us-east-2.compute.amazonaws.com | Consensus |
+| Vibecoding for Internship | Home4U | <CURRENT_PUBLIC_DNS> | Consensus |
+
+`<CURRENT_PUBLIC_DNS>` = the instance's current **Public IPv4 DNS** from the EC2 console.
+If you stop/start the instance, this value may change unless you attach an Elastic IP.
+You can also get it on the instance with:
+```bash
+curl -s http://169.254.169.254/latest/meta-data/public-hostname
+```
 
 ## Deployment Info
 
-- API URL: http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com
+- API URL: http://<CURRENT_PUBLIC_DNS>
 - Test login (returns JWT):
   ```bash
   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-    http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com/auth/login
+    http://<CURRENT_PUBLIC_DNS>/auth/login
   ```
 
 Frontend → Nginx → FastAPI → Database → JWT token
@@ -147,7 +154,7 @@ Frontend → Nginx → FastAPI → Database → JWT token
 2. Smoke test the API (auth expects form fields)
    ```bash
    curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-     http://ec2-18-225-117-117.us-east-2.compute.amazonaws.com/auth/login
+     http://<CURRENT_PUBLIC_DNS>/auth/login
    ```
 3. Keep code/DB in sync
    - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
@@ -263,5 +270,3 @@ No part of this repository may be reproduced, distributed, or transmitted withou
 ---
 
 *This document may be updated during the semester. Students are responsible for reviewing the latest version.*
-
-
