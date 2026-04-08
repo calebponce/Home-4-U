@@ -45,7 +45,17 @@ sudo systemctl restart home4u-backend
 ## Step 4: Fix nginx configuration
 ```bash
 cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
-sudo cp application/deployment/nginx.conf /etc/nginx/conf.d/home4u.conf
+PUBLIC_DNS="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
+PUBLIC_IP="$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
+SERVER_NAMES="$PUBLIC_DNS $PUBLIC_IP"
+
+# Prevent `server_name _` conflicts with distro defaults.
+if [ -f /etc/nginx/conf.d/default.conf ]; then
+  sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled
+fi
+
+sed "s/__SERVER_NAMES__/$SERVER_NAMES/g" application/deployment/nginx.conf | \
+  sudo tee /etc/nginx/conf.d/home4u.conf >/dev/null
 ```
 
 ---

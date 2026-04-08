@@ -152,8 +152,8 @@ Frontend → Nginx → FastAPI → Database → JWT token
    ```bash
    cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
    git fetch origin
-   git switch main
-   git pull origin main
+   git switch master
+   git pull origin master
    bash application/deployment/deploy_fix.sh
    ```
 2. Smoke test the API (auth expects form fields)

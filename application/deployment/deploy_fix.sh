@@ -28,6 +28,18 @@ RELEASE_ROOT="/var/www/home4u-releases"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 NEW_RELEASE_DIR="$RELEASE_ROOT/$TIMESTAMP"
 
+# Resolve current public host metadata for nginx server_name.
+PUBLIC_DNS="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || true)"
+PUBLIC_IP="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)"
+SERVER_NAMES="_"
+if [ -n "$PUBLIC_DNS" ] && [ -n "$PUBLIC_IP" ]; then
+    SERVER_NAMES="$PUBLIC_DNS $PUBLIC_IP"
+elif [ -n "$PUBLIC_DNS" ]; then
+    SERVER_NAMES="$PUBLIC_DNS"
+elif [ -n "$PUBLIC_IP" ]; then
+    SERVER_NAMES="$PUBLIC_IP"
+fi
+
 echo "=========================================================="
 echo "  🚀 Home4U PRODUCTION DEPLOY — $TIMESTAMP"
 echo "=========================================================="
@@ -116,15 +128,23 @@ echo ""
 echo "▶ Phase 4: Validating Infrastructure..."
 
 # Update Nginx config
+TMP_NGINX_CONF="$(mktemp)"
+sed "s/__SERVER_NAMES__/$SERVER_NAMES/g" "$DEPLOY_DIR/nginx.conf" > "$TMP_NGINX_CONF"
+
 if [ -d "/etc/nginx/conf.d" ]; then
-    sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/conf.d/home4u.conf
+    # Disable distro default site to avoid `server_name _` conflicts.
+    if [ -f "/etc/nginx/conf.d/default.conf" ]; then
+        sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled
+    fi
+    sudo cp "$TMP_NGINX_CONF" /etc/nginx/conf.d/home4u.conf
 elif [ -d "/etc/nginx/sites-available" ]; then
-    sudo cp "$DEPLOY_DIR/nginx.conf" /etc/nginx/sites-available/home4u
+    sudo cp "$TMP_NGINX_CONF" /etc/nginx/sites-available/home4u
     sudo ln -sf /etc/nginx/sites-available/home4u /etc/nginx/sites-enabled/home4u
 fi
+rm -f "$TMP_NGINX_CONF"
 
 sudo nginx -t && sudo systemctl reload nginx
-echo "  ✓ Nginx re-orchestrated"
+echo "  ✓ Nginx re-orchestrated (server_name: $SERVER_NAMES)"
 
 # ── Step 5: Global Health Gate ──────────────────────────────────────
 echo ""

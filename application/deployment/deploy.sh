@@ -6,8 +6,14 @@
 set -e
 
 PUBLIC_DNS="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || true)"
-if [ -z "$PUBLIC_DNS" ]; then
-  PUBLIC_DNS="_"
+PUBLIC_IP="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)"
+SERVER_NAMES="_"
+if [ -n "$PUBLIC_DNS" ] && [ -n "$PUBLIC_IP" ]; then
+  SERVER_NAMES="$PUBLIC_DNS $PUBLIC_IP"
+elif [ -n "$PUBLIC_DNS" ]; then
+  SERVER_NAMES="$PUBLIC_DNS"
+elif [ -n "$PUBLIC_IP" ]; then
+  SERVER_NAMES="$PUBLIC_IP"
 fi
 
 echo "=== Home4U Deployment Script ==="
@@ -56,11 +62,17 @@ echo "[7/8] Configuring nginx..."
 cat > /tmp/home4u_nginx.conf << 'EOF'
 server {
     listen 80;
-    server_name _;
+    server_name __SERVER_NAMES__;
 
     # Frontend static files (from /var/www/home4u)
     root /var/www/home4u;
     index index.html;
+
+    # Do not cache HTML documents so clients pick up new deployments quickly.
+    location ~* \.html$ {
+        expires -1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+    }
 
     # Serve React app static files - try files first, fallback to index.html
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
@@ -74,44 +86,9 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # Proxy API requests to backend (all /auth/, /projects/, /styles/, etc.)
-    location /auth/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /projects/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /styles/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /search/ {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /recommendations/ {
+    # /api/* -> strip /api and forward to FastAPI backend.
+    location /api/ {
+        rewrite ^/api(/.*)$ $1 break;
         proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -139,6 +116,9 @@ server {
     }
 }
 EOF
+
+# Render dynamic server_name values
+sed -i "s/__SERVER_NAMES__/$SERVER_NAMES/g" /tmp/home4u_nginx.conf
 
 # Copy nginx config (Amazon Linux path)
 cp /tmp/home4u_nginx.conf /etc/nginx/conf.d/home4u.conf
@@ -176,7 +156,7 @@ systemctl start home4u-backend
 systemctl status home4u-backend
 
 echo "=== Deployment Complete! ==="
-if [ "$PUBLIC_DNS" = "_" ]; then
+if [ -z "$PUBLIC_DNS" ]; then
   echo "Frontend should be available at your current EC2 public DNS or IP"
   echo "API is available at your current EC2 public DNS or IP"
 else

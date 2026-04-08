@@ -6,8 +6,14 @@
 set -e
 
 PUBLIC_DNS="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || true)"
-if [ -z "$PUBLIC_DNS" ]; then
-    PUBLIC_DNS="your-current-ec2-public-dns-or-ip"
+PUBLIC_IP="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)"
+SERVER_NAMES="_"
+if [ -n "$PUBLIC_DNS" ] && [ -n "$PUBLIC_IP" ]; then
+    SERVER_NAMES="$PUBLIC_DNS $PUBLIC_IP"
+elif [ -n "$PUBLIC_DNS" ]; then
+    SERVER_NAMES="$PUBLIC_DNS"
+elif [ -n "$PUBLIC_IP" ]; then
+    SERVER_NAMES="$PUBLIC_IP"
 fi
 
 echo "=== Home4U Quick Fix Script ==="
@@ -71,11 +77,17 @@ fi
 cat > /etc/nginx/conf.d/home4u.conf << 'EOF'
 server {
     listen 80;
-    server_name _;
+    server_name __SERVER_NAMES__;
 
     # Frontend static files
-    root /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/dist;
+    root /var/www/home4u;
     index index.html;
+
+    # Do not cache HTML documents so clients pick up new deployments quickly.
+    location ~* \.html$ {
+        expires -1;
+        add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+    }
 
     # Serve static files (React app)
     location / {
@@ -83,8 +95,9 @@ server {
     }
 
     # Proxy API requests to backend
-    location /api/v1/ {
-        proxy_pass http://127.0.0.1:8000/;
+    location /api/ {
+        rewrite ^/api(/.*)$ $1 break;
+        proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -94,11 +107,17 @@ server {
 
     # Proxy uploads
     location /uploads/ {
-        proxy_pass http://127.0.0.1:8000/;
+        proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
     }
 }
 EOF
+
+# Render dynamic server_name values and disable distro default site.
+sed -i "s/__SERVER_NAMES__/$SERVER_NAMES/g" /etc/nginx/conf.d/home4u.conf
+if [ -f /etc/nginx/conf.d/default.conf ]; then
+    mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled
+fi
 
 # Test nginx config
 nginx -t
@@ -110,7 +129,7 @@ echo "Nginx restarted"
 # Step 5: Test the full flow
 echo ""
 echo "[5/5] Testing login endpoint..."
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost/api/v1/auth/login \
+LOGIN_RESPONSE=$(curl -s -X POST http://localhost/api/auth/login \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "username=test@example.com&password=test123")
 
@@ -119,7 +138,11 @@ echo "Login response: $LOGIN_RESPONSE"
 echo ""
 echo "=== Fix Complete! ==="
 echo ""
-echo "Try accessing your site at: http://$PUBLIC_DNS"
+if [ -n "$PUBLIC_DNS" ]; then
+    echo "Try accessing your site at: http://$PUBLIC_DNS"
+else
+    echo "Try accessing your site at your current EC2 public IP or DNS"
+fi
 echo ""
-echo "If login still fails, run this command to check logs:"
-echo "  curl http://localhost/api/v1/auth/login -v"
+echo "If login still fails, inspect logs:"
+echo "  journalctl -u home4u-backend -n 120 --no-pager"
