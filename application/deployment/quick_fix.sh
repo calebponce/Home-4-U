@@ -5,8 +5,23 @@
 
 set -e
 
-PUBLIC_DNS="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-hostname 2>/dev/null || true)"
-PUBLIC_IP="$(curl -fsS --connect-timeout 2 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || true)"
+get_imds_meta() {
+    local path="$1"
+    local token=""
+    token="$(curl -fsS --connect-timeout 2 -X PUT \
+      "http://169.254.169.254/latest/api/token" \
+      -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null || true)"
+    if [ -n "$token" ]; then
+        curl -fsS --connect-timeout 2 \
+          -H "X-aws-ec2-metadata-token: $token" \
+          "http://169.254.169.254/latest/meta-data/$path" 2>/dev/null || true
+        return
+    fi
+    curl -fsS --connect-timeout 2 "http://169.254.169.254/latest/meta-data/$path" 2>/dev/null || true
+}
+
+PUBLIC_DNS="$(get_imds_meta public-hostname)"
+PUBLIC_IP="$(get_imds_meta public-ipv4)"
 SERVER_NAMES="_"
 if [ -n "$PUBLIC_DNS" ] && [ -n "$PUBLIC_IP" ]; then
     SERVER_NAMES="$PUBLIC_DNS $PUBLIC_IP"
