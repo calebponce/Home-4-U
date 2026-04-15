@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Upload, Wand2, CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import './Workspace.css';
@@ -39,6 +39,13 @@ const Workspace = () => {
   const [revealPct, setRevealPct] = useState(0); // 0=before fully, 100=after fully
   const [showSuccessGlow, setShowSuccessGlow] = useState(false);
   const generateBtnRef = useRef(null);
+  const isMountedRef = useRef(false);
+  const generationTimersRef = useRef({
+    textInterval: null,
+    completionTimeout: null,
+    glowTimeout: null,
+    revealRaf: null,
+  });
 
   const steps = useMemo(() => {
     const uploadDone = !!roomImage;
@@ -57,12 +64,50 @@ const Workspace = () => {
     return firstIncomplete === -1 ? steps.length - 1 : firstIncomplete;
   }, [steps]);
 
+  const clearGenerationTimers = useCallback(() => {
+    const timers = generationTimersRef.current;
+    if (timers.textInterval) {
+      window.clearInterval(timers.textInterval);
+      timers.textInterval = null;
+    }
+    if (timers.completionTimeout) {
+      window.clearTimeout(timers.completionTimeout);
+      timers.completionTimeout = null;
+    }
+    if (timers.glowTimeout) {
+      window.clearTimeout(timers.glowTimeout);
+      timers.glowTimeout = null;
+    }
+    if (timers.revealRaf) {
+      window.cancelAnimationFrame(timers.revealRaf);
+      timers.revealRaf = null;
+    }
+  }, []);
+
   useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      clearGenerationTimers();
+    };
+  }, [clearGenerationTimers]);
+
+  useEffect(() => {
+    clearGenerationTimers();
+    setIsGenerating(false);
+    setShowSuccessGlow(false);
+    setProcessingText('');
+    setProcessingLevel(0);
     setStatus('AI Preview');
     setPreviewState('before');
-  }, [styleKey]);
+  }, [styleKey, clearGenerationTimers]);
 
   const loadDemo = (url) => {
+    clearGenerationTimers();
+    setIsGenerating(false);
+    setShowSuccessGlow(false);
+    setProcessingText('');
+    setProcessingLevel(0);
     setRoomImage(url);
     setGeneratedImage(null);
     setPreviewState('before');
@@ -93,6 +138,7 @@ const Workspace = () => {
   const handleGenerate = () => {
     if (isGenerating) return;
     if (!roomImage) return;
+    clearGenerationTimers();
     setIsGenerating(true);
     setStatus(`Analyzing layout…`);
     setPreviewState('processing');
@@ -110,7 +156,8 @@ const Workspace = () => {
     let i = 0;
     setProcessingText(texts[0]);
     setProcessingLevel(0);
-    const textInterval = setInterval(() => {
+    generationTimersRef.current.textInterval = window.setInterval(() => {
+      if (!isMountedRef.current) return;
       i++;
       if (i < texts.length) {
         setProcessingText(texts[i]);
@@ -118,8 +165,13 @@ const Workspace = () => {
       }
     }, 450);
 
-    setTimeout(() => {
-      clearInterval(textInterval);
+    generationTimersRef.current.completionTimeout = window.setTimeout(() => {
+      generationTimersRef.current.completionTimeout = null;
+      if (!isMountedRef.current) return;
+      if (generationTimersRef.current.textInterval) {
+        window.clearInterval(generationTimersRef.current.textInterval);
+        generationTimersRef.current.textInterval = null;
+      }
       setGeneratedImage(roomImage);
       setRevealPct(0);
       setStatus('AI Preview');
@@ -130,20 +182,29 @@ const Workspace = () => {
         const start = performance.now();
         const duration = 800;
         const animate = (now) => {
+          if (!isMountedRef.current) return;
           const t = Math.min(1, (now - start) / duration);
           // Easing function for smooth slide
           const easeOutQuart = 1 - Math.pow(1 - t, 4);
           setRevealPct(60 * easeOutQuart);
-          if (t < 1) requestAnimationFrame(animate);
+          if (t < 1) {
+            generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
+          } else {
+            generationTimersRef.current.revealRaf = null;
+          }
         };
-        requestAnimationFrame(animate);
+        generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
       } else {
         setRevealPct(60);
       }
 
       // Trigger Success Glow
       setShowSuccessGlow(true);
-      setTimeout(() => setShowSuccessGlow(false), 2000);
+      generationTimersRef.current.glowTimeout = window.setTimeout(() => {
+        generationTimersRef.current.glowTimeout = null;
+        if (!isMountedRef.current) return;
+        setShowSuccessGlow(false);
+      }, 2000);
     }, 3000); // Tripled the fake wait time for better drama
   };
 
@@ -369,8 +430,14 @@ const Workspace = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
+                  clearGenerationTimers();
+                  setIsGenerating(false);
+                  setShowSuccessGlow(false);
+                  setProcessingText('');
+                  setProcessingLevel(0);
                   const reader = new FileReader();
                   reader.onload = (ev) => {
+                    if (!isMountedRef.current) return;
                     setRoomImage(ev.target?.result || null);
                     setGeneratedImage(null);
                     setPreviewState('before');

@@ -19,6 +19,11 @@ const About = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   
   const bgShapesRef = useRef(null);
+  const memberModalRef = useRef(null);
+  const memberModalCloseRef = useRef(null);
+  const previousFocusedRef = useRef(null);
+
+  const closeMemberModal = () => setSelectedMember(null);
 
   useEffect(() => {
     const prevScene = document.body.dataset.scene;
@@ -195,6 +200,63 @@ const About = () => {
       transition: { type: 'spring', stiffness: 100, damping: 20 }
     }
   };
+
+  useEffect(() => {
+    if (!selectedMember) return;
+
+    previousFocusedRef.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusableSelector =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    const focusFirstInDialog = () => {
+      const root = memberModalRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll(focusableSelector);
+      const firstFocusable = focusables[0] || memberModalCloseRef.current || root;
+      if (firstFocusable?.focus) firstFocusable.focus();
+    };
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMemberModal();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const root = memberModalRef.current;
+      if (!root) return;
+      const focusables = Array.from(root.querySelectorAll(focusableSelector)).filter(
+        (el) => !el.hasAttribute('disabled')
+      );
+      if (!focusables.length) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.requestAnimationFrame(focusFirstInDialog);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow || '';
+      const previous = previousFocusedRef.current;
+      if (previous?.focus) previous.focus();
+    };
+  }, [selectedMember]);
 
   return (
     <div className={`about-page ${isLoaded ? 'loaded' : ''}`}>
@@ -455,6 +517,7 @@ const About = () => {
               className="team-card"
               style={{ '--member-color': member.color }}
               onClick={() => setSelectedMember(member)}
+              aria-haspopup="dialog"
             >
               <div className="team-avatar">{member.emoji}</div>
               <h4>{member.name}</h4>
@@ -467,18 +530,26 @@ const About = () => {
 
       {/* Team Member Modal */}
       {selectedMember && (
-        <div className="member-modal-overlay" onClick={() => setSelectedMember(null)}>
-          <div className="member-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedMember(null)}>×</button>
+        <div className="member-modal-overlay" role="presentation" onClick={closeMemberModal}>
+          <div
+            ref={memberModalRef}
+            className="member-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="member-modal-title"
+            aria-describedby="member-modal-description"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button ref={memberModalCloseRef} className="modal-close" onClick={closeMemberModal} aria-label="Close profile dialog">×</button>
             <div className="modal-header">
               <div className="modal-avatar" style={{ background: selectedMember.color }}>
                 {selectedMember.emoji}
               </div>
-              <h2>{selectedMember.name}</h2>
+              <h2 id="member-modal-title">{selectedMember.name}</h2>
               <p className="modal-role">{selectedMember.role}</p>
             </div>
             <div className="modal-body">
-              <p className="modal-bio">{selectedMember.bio}</p>
+              <p className="modal-bio" id="member-modal-description">{selectedMember.bio}</p>
               <div className="modal-skills">
                 <h4>Skills</h4>
                 <div className="skills-list">
@@ -614,14 +685,18 @@ const About = () => {
         <form className="contact-form" onSubmit={handleContactSubmit}>
           {formNotice && <div className="form-notice">{formNotice}</div>}
           <div className="form-row">
+            <label className="sr-only" htmlFor="contact-name">Your Name</label>
             <input 
+              id="contact-name"
               type="text" 
               placeholder="Your Name" 
               value={contactForm.name}
               onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
               required 
             />
+            <label className="sr-only" htmlFor="contact-email">Your Email</label>
             <input 
+              id="contact-email"
               type="email" 
               placeholder="Your Email" 
               value={contactForm.email}
@@ -629,7 +704,9 @@ const About = () => {
               required 
             />
           </div>
+          <label className="sr-only" htmlFor="contact-message">Your Message</label>
           <textarea 
+            id="contact-message"
             placeholder="Your Message"
             value={contactForm.message}
             onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
@@ -646,7 +723,9 @@ const About = () => {
           <h2>Stay Updated</h2>
           <p>Subscribe to our newsletter for design tips and product updates.</p>
           <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
+            <label className="sr-only" htmlFor="newsletter-email">Email Address</label>
             <input 
+              id="newsletter-email"
               type="email" 
               placeholder="Enter your email" 
               value={newsletterEmail}

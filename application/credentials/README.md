@@ -4,7 +4,7 @@
 >
 > Current host values:
 > - IP: `18.223.158.116`
-> - DNS: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`
+> - DNS: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`
 >
 > If the instance is stopped/started without an Elastic IP, update these values
 > from AWS Console → EC2 → Instance details.
@@ -73,7 +73,7 @@ sqlite3 /home/ec2-user/data/home4u.db
 | **Instance Name** | Home4U |
 | **Instance Type** | t3.micro |
 | **Public IP Address** | 18.223.158.116 |
-| **Public DNS** | ec2-18-223-158-116.us-east-2.compute.amazonaws.com |
+| **Public DNS** | ec2-3-16-81-84.us-east-2.compute.amazonaws.com |
 | **SSH Username** | ec2-user |
 | **SSH Port** | 22 |
 
@@ -224,7 +224,7 @@ chmod 400 home4u-key.pem
 **Solution:**
 ```bash
 ssh-keygen -R 18.223.158.116
-ssh-keygen -R ec2-18-223-158-116.us-east-2.compute.amazonaws.com
+ssh-keygen -R ec2-3-16-81-84.us-east-2.compute.amazonaws.com
 ```
 
 ---

@@ -1,20 +1,28 @@
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import './App.css'
 import { useAuth } from './context/AuthContext'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import ProjectDetails from './pages/ProjectDetails'
-import About from './pages/About'
-import VirtualTour3D from './pages/VirtualTour3D'
-import Workspace from './pages/Workspace'
 import NotFound from './pages/NotFound'
 import ErrorBoundary from './components/ErrorBoundary'
 import Navbar from './components/Navbar'
 import PageMotion from './components/PageMotion'
 import ApiStatusBanner from './components/ApiStatusBanner'
 import SessionLoadingGate from './components/SessionLoadingGate'
+
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ProjectDetails = lazy(() => import('./pages/ProjectDetails'))
+const About = lazy(() => import('./pages/About'))
+const VirtualTour3D = lazy(() => import('./pages/VirtualTour3D'))
+const Workspace = lazy(() => import('./pages/Workspace'))
+
+const RouteChunkFallback = () => (
+  <div className="page-shell route-loading-state" role="status" aria-live="polite">
+    <div className="route-loading-state__dot" aria-hidden="true" />
+    <p>Loading page…</p>
+  </div>
+)
 
 const ProtectedRoute = ({ children }) => {
   const { token, loading } = useAuth()
@@ -219,12 +227,23 @@ function App() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={<PageMotion><Login /></PageMotion>} />
-          <Route path="/about" element={<PageMotion><About /></PageMotion>} />
+          <Route
+            path="/about"
+            element={
+              <PageMotion>
+                <Suspense fallback={<RouteChunkFallback />}>
+                  <About />
+                </Suspense>
+              </PageMotion>
+            }
+          />
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Suspense fallback={<RouteChunkFallback />}>
+                  <Dashboard />
+                </Suspense>
               </ProtectedRoute>
             } 
           />
@@ -232,7 +251,9 @@ function App() {
             path="/project/:id" 
             element={
               <ProtectedRoute>
-                <ProjectDetails />
+                <Suspense fallback={<RouteChunkFallback />}>
+                  <ProjectDetails />
+                </Suspense>
               </ProtectedRoute>
             } 
           />
@@ -240,7 +261,9 @@ function App() {
             path="/virtual-tour"
             element={
               <ProtectedRoute>
-                <VirtualTour3D />
+                <Suspense fallback={<RouteChunkFallback />}>
+                  <VirtualTour3D />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -248,7 +271,9 @@ function App() {
             path="/workspace"
             element={
               <ProtectedRoute>
-                <Workspace />
+                <Suspense fallback={<RouteChunkFallback />}>
+                  <Workspace />
+                </Suspense>
               </ProtectedRoute>
             }
           />

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Compass, Brush, Presentation, LogOut, Menu, X, ChevronDown } from 'lucide-react';
 import './Navbar.css';
+
+const MotionNavLink = motion(NavLink);
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -11,6 +13,9 @@ const Navbar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const mobileMenuRef = useRef(null);
+  const mobileToggleRef = useRef(null);
+  const previousMobileFocusRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -24,6 +29,8 @@ const Navbar = () => {
     logout();
     navigate('/login');
   };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -48,6 +55,67 @@ const Navbar = () => {
     hidden: { opacity: 0, x: -20 },
     visible: { opacity: 1, x: 0 }
   };
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    previousMobileFocusRef.current = document.activeElement;
+    const toggleEl = mobileToggleRef.current;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusableSelector =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+    const focusFirst = () => {
+      const root = mobileMenuRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll(focusableSelector);
+      const first = focusables[0] || root;
+      if (first?.focus) first.focus();
+    };
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMobileMenu();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const root = mobileMenuRef.current;
+      if (!root) return;
+      const focusables = Array.from(root.querySelectorAll(focusableSelector)).filter(
+        (el) => !el.hasAttribute('disabled')
+      );
+      if (!focusables.length) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.requestAnimationFrame(focusFirst);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow || '';
+      if (toggleEl?.focus) {
+        toggleEl.focus();
+      } else if (previousMobileFocusRef.current?.focus) {
+        previousMobileFocusRef.current.focus();
+      }
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <motion.nav 
@@ -82,17 +150,16 @@ const Navbar = () => {
         <AnimatePresence mode="wait">
           <motion.ul 
             key="desktop-nav"
-            className="navbar-desktop-nav"
+            className="navbar-desktop navbar-desktop-nav"
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="navbar-desktop"
           >
-            {navItems.map((item, index) => {
+            {navItems.map((item) => {
               const Icon = item.icon;
               return (
                 <motion.li key={item.path} variants={itemVariants}>
-                  <NavLink 
+                  <MotionNavLink 
                     to={item.path} 
                     className={({ isActive }) => 
                       `nav-item ${isActive ? 'active' : ''}`
@@ -119,7 +186,7 @@ const Navbar = () => {
                       whileHover={{ scale: 1, opacity: 1 }}
                       transition={{ delay: 0.1 }}
                     />
-                  </NavLink>
+                  </MotionNavLink>
                 </motion.li>
               );
             })}
@@ -167,12 +234,15 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <motion.button 
+          ref={mobileToggleRef}
           className="mobile-toggle"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.05 }}
           aria-label="Toggle navigation menu"
           aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav-dialog"
+          aria-haspopup="dialog"
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </motion.button>
@@ -186,14 +256,22 @@ const Navbar = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={closeMobileMenu}
+            role="presentation"
           >
             <motion.div 
+              ref={mobileMenuRef}
+              id="mobile-nav-dialog"
               className="navbar-mobile glassmorphism-elevated"
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Primary navigation menu"
+              tabIndex={-1}
+              onClick={(e) => e.stopPropagation()}
             >
               <ul className="mobile-nav-links">
                 {navItems.map((item) => {
@@ -203,7 +281,7 @@ const Navbar = () => {
                       <NavLink 
                         to={item.path} 
                         className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
+                        onClick={closeMobileMenu}
                       >
                         <Icon size={20} />
                         <span>{item.name}</span>
@@ -213,7 +291,7 @@ const Navbar = () => {
                 })}
                 <li className="mobile-divider" />
                 <li>
-                  <button className="mobile-nav-link logout" onClick={handleLogout}>
+                  <button type="button" className="mobile-nav-link logout" onClick={handleLogout}>
                     <LogOut size={20} />
                     <span>Sign Out</span>
                   </button>
@@ -228,4 +306,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

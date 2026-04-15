@@ -123,11 +123,11 @@ If the URL does not work at the time of testing, the team will receive **no cred
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
-| Vibecoding for Internship | Home4U | ec2-18-223-158-116.us-east-2.compute.amazonaws.com | Consensus |
+| Vibecoding for Internship | Home4U | ec2-3-16-81-84.us-east-2.compute.amazonaws.com | Consensus |
 
 Current production host:
 - Public IP: `18.223.158.116`
-- Public DNS: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`
+- Public DNS: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`
 
 If the instance is stopped/started without an Elastic IP, these values can change.
 Current hostname can be checked on EC2 with:
@@ -137,11 +137,11 @@ curl -s http://169.254.169.254/latest/meta-data/public-hostname
 
 ## Deployment Info
 
-- API URL: http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com
+- API URL: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com
 - Test login (returns JWT):
   ```bash
   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-    http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/auth/login
+    http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/auth/login
   ```
 
 Frontend → Nginx → FastAPI → Database → JWT token
@@ -159,7 +159,7 @@ Frontend → Nginx → FastAPI → Database → JWT token
 2. Smoke test the API (auth expects form fields)
    ```bash
    curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-     http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/auth/login
+     http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/auth/login
    ```
 3. Keep code/DB in sync
    - Ensure shell and service use the same DB (`DATABASE_URL` if changed).

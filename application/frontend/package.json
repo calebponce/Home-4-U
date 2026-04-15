@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "VITE_API_BASE=/api vite build",
+    "test": "node --test src/pages/virtualTour/useTourStateReducer.test.js src/pages/virtualTour/useTourPreferences.test.js src/pages/virtualTour/useTourRoomInteractions.test.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

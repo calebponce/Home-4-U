@@ -1,14 +1,14 @@
 # Manual Fix Instructions for AWS Server
 
 Since I cannot connect to your AWS server remotely, please follow these steps manually.
-Current DNS in these commands: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`.
+Current DNS in these commands: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`.
 If your host changes after a restart, replace it with the current Public IPv4 DNS from AWS EC2.
 
 ---
 
 ## Step 1: SSH into your server
 ```bash
-ssh -i home4u-key.pem ec2-user@ec2-18-223-158-116.us-east-2.compute.amazonaws.com
+ssh -i home4u-key.pem ec2-user@ec2-3-16-81-84.us-east-2.compute.amazonaws.com
 ```
 
 ---

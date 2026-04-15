@@ -172,6 +172,15 @@
 }
 
 /* Mobile Nav (Floating Drawer) */
+.navbar-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 10, 18, 0.42);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  z-index: 998;
+}
+
 .navbar-mobile {
   position: fixed;
   top: 5.5rem;
