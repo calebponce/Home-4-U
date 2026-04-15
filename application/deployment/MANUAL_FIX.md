@@ -2,7 +2,7 @@
 
 Since I cannot connect to your AWS server remotely, please follow these steps manually.
 Current DNS in these commands: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`.
-Public app URL: `https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`.
+Public app URL: `http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`.
 If your host changes after a restart, replace it with the current Public IPv4 DNS from AWS EC2.
 
 ---

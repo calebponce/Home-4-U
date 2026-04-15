@@ -5,7 +5,7 @@
 > Current host values:
 > - IP: `3.16.81.84`
 > - DNS: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`
-> - App URL: `https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`
+> - App URL: `http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`
 >
 > If the instance is stopped/started without an Elastic IP, update these values
 > from AWS Console → EC2 → Instance details.
@@ -75,7 +75,7 @@ sqlite3 /home/ec2-user/data/home4u.db
 | **Instance Type** | t3.micro |
 | **Public IP Address** | 3.16.81.84 |
 | **Public DNS** | ec2-3-16-81-84.us-east-2.compute.amazonaws.com |
-| **Public App URL** | https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/ |
+| **Public App URL** | http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/ |
 | **SSH Username** | ec2-user |
 | **SSH Port** | 22 |
 
@@ -263,7 +263,7 @@ sudo yum install -y sqlite
 | Task | Command |
 |------|---------|
 | **SSH Connect** | `ssh -i home4u-key.pem ec2-user@3.16.81.84` |
-| **Open App** | `https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/` |
+| **Open App** | `http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/` |
 | **List users** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"` |
 | **Count projects** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"` |
 | **Open DB shell** | `sqlite3 /home/ec2-user/data/home4u.db` |
