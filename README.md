@@ -126,7 +126,7 @@ If the URL does not work at the time of testing, the team will receive **no cred
 | Vibecoding for Internship | Home4U | https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/ | Consensus |
 
 Current production host:
-- Public IP: `18.223.158.116`
+- Public IP: `3.16.81.84`
 - Public DNS: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`
 - Public App URL: `https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`
 

@@ -3,7 +3,7 @@
 > **IMPORTANT**: This folder contains all credentials and files needed to access the Home4U cloud infrastructure. Follow the steps below exactly as written.
 >
 > Current host values:
-> - IP: `18.223.158.116`
+> - IP: `3.16.81.84`
 > - DNS: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`
 > - App URL: `https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`
 >
@@ -33,7 +33,7 @@ chmod 400 home4u-key.pem
 
 ### Step 3: Connect to Server
 ```bash
-ssh -i home4u-key.pem ec2-user@18.223.158.116
+ssh -i home4u-key.pem ec2-user@3.16.81.84
 ```
 
 ### Step 4: Access Database
@@ -73,7 +73,7 @@ sqlite3 /home/ec2-user/data/home4u.db
 | **Instance ID** | i-048b1547e5254509c |
 | **Instance Name** | Home4U |
 | **Instance Type** | t3.micro |
-| **Public IP Address** | 18.223.158.116 |
+| **Public IP Address** | 3.16.81.84 |
 | **Public DNS** | ec2-3-16-81-84.us-east-2.compute.amazonaws.com |
 | **Public App URL** | https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/ |
 | **SSH Username** | ec2-user |
@@ -89,7 +89,7 @@ sqlite3 /home/ec2-user/data/home4u.db
 2. **Convert PEM to PPK** using PuTTYgen:
    - Open PuTTYgen → Load → Select home4u-key.pem → Save private key
 3. **Connect with PuTTY**:
-   - Host: `ec2-user@18.223.158.116`
+   - Host: `ec2-user@3.16.81.84`
    - Port: 22
    - SSH → Auth → Browse for your PPK file
 
@@ -113,15 +113,15 @@ chmod 400 home4u-key.pem
 Run this command in Terminal:
 
 ```bash
-ssh -i ~/Downloads/home4u-key.pem ec2-user@18.223.158.116
+ssh -i ~/Downloads/home4u-key.pem ec2-user@3.16.81.84
 ```
 
 **Expected Result:**
 ```
-The authenticity of host '18.223.158.116 (18.223.158.116)' can't be established.
+The authenticity of host '3.16.81.84 (3.16.81.84)' can't be established.
 ECDSA key fingerprint is SHA256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
 Are you sure you (yes/no)? want to continue connecting yes
-Warning: Permanently added '18.223.158.116' (ECDSA) to the list of known hosts.
+Warning: Permanently added '3.16.81.84' (ECDSA) to the list of known hosts.
 ```
 
 #### Step 4: Verify Connection
@@ -175,7 +175,7 @@ cd ~/Downloads
 chmod 400 home4u-key.pem
 
 # Test SSH connection
-ssh -i home4u-key.pem ec2-user@18.223.158.116
+ssh -i home4u-key.pem ec2-user@3.16.81.84
 ```
 
 ### For Windows (PowerShell)
@@ -190,7 +190,7 @@ icacls home4u-key.pem /grant:r "$($env:USERNAME):(R)"
 
 ```bash
 chmod 400 home4u-key.pem
-ssh -i home4u-key.pem ec2-user@18.223.158.116
+ssh -i home4u-key.pem ec2-user@3.16.81.84
 ```
 
 ---
@@ -225,7 +225,7 @@ chmod 400 home4u-key.pem
 
 **Solution:**
 ```bash
-ssh-keygen -R 18.223.158.116
+ssh-keygen -R 3.16.81.84
 ssh-keygen -R ec2-3-16-81-84.us-east-2.compute.amazonaws.com
 ```
 
@@ -262,7 +262,7 @@ sudo yum install -y sqlite
 
 | Task | Command |
 |------|---------|
-| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@18.223.158.116` |
+| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@3.16.81.84` |
 | **Open App** | `https://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/` |
 | **List users** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"` |
 | **Count projects** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"` |
@@ -274,10 +274,10 @@ sudo yum install -y sqlite
 
 ## What to Do If Still Having Issues
 
-1. **Double-check the IP address**: Make sure you're using `18.223.158.116`
+1. **Double-check the IP address**: Make sure you're using `3.16.81.84`
 2. **Verify PEM file location**: Use the full path like `~/Downloads/home4u-key.pem`
 3. **Check permissions**: Run `ls -la home4u-key.pem` - should show `-r--------`
-4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@18.223.158.116`
+4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@3.16.81.84`
 
 ---
 
