@@ -1,21 +1,21 @@
 .dashboard {
-  /* ── Adrien direction: product-screen ──────────────────────
-     Lighter surface. Graphite text. Brass accent.
-     Less decoration, strict card grid, clear nav hierarchy.
+  /* ── Marcelo direction: full atmospheric bleed ─────────────────
+     Transparent surface. Paper text. Brass accent.
+     Flat layout, 1px borders, massive typography.
      ─────────────────────────────────────────────────────── */
-  --dash-bg:              var(--color-stone-100);
-  --dash-surface:         var(--color-paper-50);
-  --dash-surface-soft:    rgb(var(--color-paper-50-rgb) / 0.85);
-  --dash-surface-strong:  var(--color-paper-0);
-  --dash-surface-glass:   rgb(var(--color-paper-50-rgb) / 0.72);
-  --dash-text:            var(--color-graphite-900);
-  --dash-muted:           var(--color-slate-400);
-  --dash-border:          rgb(var(--color-graphite-900-rgb) / 0.10);
+  --dash-bg:              transparent;
+  --dash-surface:         none;
+  --dash-surface-soft:    none;
+  --dash-surface-strong:  none;
+  --dash-surface-glass:   none;
+  --dash-text:            var(--color-paper-50);
+  --dash-muted:           rgb(var(--color-paper-50-rgb) / 0.55);
+  --dash-border:          rgb(var(--color-paper-50-rgb) / 0.12);
   --dash-brand:           var(--color-brass-400);
-  --dash-accent:          var(--color-steel-600);
+  --dash-accent:          var(--color-brass-300);
   --dash-danger:          var(--color-danger-500);
-  --card-radius:          var(--radius-md);
-  --card-padding:         var(--space-6);
+  --card-radius:          0;
+  --card-padding:         var(--space-6) 0;
 
   font-family: var(--font-sans);
   color: var(--dash-text);
@@ -23,6 +23,8 @@
   min-height: 100vh;
   padding: 0;
   background: var(--dash-bg);
+  position: relative;
+  z-index: 10;
 }
 
 .dashboard-shell {
@@ -36,16 +38,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-8);
-  padding-bottom: var(--space-5);
-  border-bottom: 1px solid var(--dash-border);
+  margin-bottom: clamp(4rem, 6vw, 6rem);
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .dashboard-header h1 {
-  font-family: var(--font-sans);
-  font-size: var(--text-2xl);
-  letter-spacing: -0.025em;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 8vw, 8rem);
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
   color: var(--dash-text);
   margin: 0;
 }
@@ -65,31 +68,32 @@
 
 .header-action {
   background: transparent;
-  border: 1px solid var(--dash-border);
   color: var(--dash-text);
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  letter-spacing: 0.01em;
+  border: 1px solid var(--dash-border);
+  padding: 0.5rem 1.25rem;
+  border-radius: 0;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   transition: all var(--motion-fast) ease;
 }
 
 .header-action-primary {
-  background: var(--color-graphite-900);
-  color: var(--color-paper-50);
-  border-color: var(--color-graphite-900);
+  background: transparent;
+  color: var(--dash-brand);
+  border-color: var(--dash-brand);
 }
 
 .header-action:hover {
-  border-color: rgb(var(--color-graphite-900-rgb) / 0.4);
-  transform: translateY(-1px);
+  border-color: var(--dash-text);
+  transform: none;
 }
 
 .header-action-primary:hover {
-  background: var(--color-graphite-800);
-  border-color: var(--color-graphite-800);
-  box-shadow: 0 8px 20px -10px rgb(var(--color-graphite-950-rgb) / 0.35);
+  background: rgb(var(--color-brass-400-rgb) / 0.1);
+  border-color: var(--dash-brand);
+  box-shadow: none;
 }
 
 .project-count-chip {
@@ -105,30 +109,39 @@
 }
 
 /* ── Adrien: structured cards ──────────────────────────────── */
+/* ── Marcelo: flat 1px borders, no radius ───────────────── */
 .recent-project-card,
 .project-card,
 .style-preview-card,
-.search-result-card,
-.stats-row-item {
-  background: var(--dash-surface);
-  border: 1px solid var(--dash-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-6);
-  box-shadow: var(--shadow-layer-1);
+.search-result-card {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--dash-border);
+  border-radius: 0;
+  padding: 1.5rem 0;
+  box-shadow: none;
   transition: all var(--motion-mid) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stats-row-item {
+  background: transparent;
+  border: 1px solid var(--dash-border);
+  border-radius: 0;
+  padding: var(--space-6);
+  box-shadow: none;
 }
 
 .project-card:hover,
 .search-result-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-layer-2);
+  transform: none;
+  box-shadow: none;
   border-color: rgb(var(--color-brass-400-rgb) / 0.40);
 }
 
 .recent-project-card[data-parallax-card]:hover,
 .style-preview-card[data-parallax-card]:hover {
-  transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.01) translateY(-3px);
-  box-shadow: var(--shadow-layer-3);
+  transform: none;
+  box-shadow: none;
   border-color: rgb(var(--color-brass-400-rgb) / 0.40);
 }
 
@@ -393,40 +406,24 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
-/* ── Adrien: editorial greeting strip (replaces parallax hero) ── */
+/* ── Marcelo: Editorial Banner ── */
 .dashboard-greeting {
   position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   margin-bottom: 2rem;
-  padding: clamp(3rem, 5vw, 5rem) clamp(2rem, 4vw, 4rem);
-  background:
-    linear-gradient(
-      164deg,
-      rgb(var(--color-graphite-950-rgb) / 0.88) 0%,
-      rgb(var(--color-graphite-900-rgb) / 0.60) 38%,
-      rgb(var(--color-graphite-950-rgb) / 0.82) 100%
-    ),
-    url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=90&w=2400')
-      center / cover no-repeat;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
+  padding: clamp(3rem, 5vw, 6rem) clamp(2rem, 4vw, 4rem);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: var(--space-6);
-  box-shadow: var(--shadow-layer-2);
+  box-shadow: none;
+  border: 1px solid var(--dash-border);
+  border-top: none;
+  border-left: none;
+  border-right: none;
 }
 
-/* Thin brass bottom rule */
-.dashboard-greeting::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(var(--color-brass-400-rgb) / 0.45), transparent);
-  pointer-events: none;
-}
 
 .greeting-left { position: relative; z-index: 1; }
 
@@ -509,46 +506,54 @@
 
 .hero-cta {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--space-3);
   margin-top: var(--space-2);
   flex-wrap: wrap;
 }
 
 .cta-primary {
-  background: var(--dash-brand);
-  color: var(--color-primary-slate);
-  border: 1px solid rgb(var(--color-camel-400-rgb) / 0.65);
-  box-shadow: 0 14px 28px -22px rgb(var(--color-camel-400-rgb) / 0.9);
+  background: transparent;
+  color: var(--dash-brand);
+  border: 1px solid var(--dash-brand);
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
 }
 
 .cta-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 18px 32px -24px rgb(var(--color-camel-400-rgb) / 0.95);
+  background: rgb(var(--color-brass-400-rgb) / 0.1);
+  transform: none;
 }
 
 .cta-secondary {
   background: transparent;
   color: var(--dash-text);
-  border: 1px solid rgb(var(--color-secondary-arctic-rgb) / 0.35);
+  border: 1px solid var(--dash-border);
+  border-radius: 0;
   box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
 }
 
 .cta-secondary:hover:not(:disabled) {
-  border-color: rgb(var(--color-secondary-arctic-rgb) / 0.55);
-  transform: translateY(-1px);
+  border-color: var(--dash-text);
+  transform: none;
 }
 
-/* ── Adrien: Stats horizontal band ────────────────────────── */
+/* ── Marcelo: Flat stats row ────────────────────────── */
 .stats-row {
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--dash-border);
-  border-radius: var(--radius-md);
-  background: var(--dash-surface);
-  overflow: hidden;
+  border-top: 1px solid var(--dash-border);
+  border-bottom: 1px solid var(--dash-border);
+  background: transparent;
   margin-bottom: 2rem;
-  box-shadow: var(--shadow-layer-1);
 }
 
 .stats-row-item {
@@ -609,8 +614,9 @@
 
 /* Section Header */
 .section-intro h2 {
-  font-family: var(--font-serif);
-  font-size: 1.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300;
   margin-bottom: 0.5rem;
   color: var(--dash-text);
 }
