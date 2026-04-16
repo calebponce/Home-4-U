@@ -72,15 +72,15 @@ const Sidebar = ({
     {phase === 'outside' && (
       <section className="experience-panel">
         <p className="tour-progress">Phase {currentPhaseStep + 1} of {phaseSteps.length} · {currentPhaseLabel}</p>
-        <p className="virtual-eyebrow">Story Start</p>
-        <h2 className="experience-title">Welcome To Home4U</h2>
+        <p className="virtual-eyebrow">Guided Tour</p>
+        <h2 className="experience-title">Welcome to Home4U</h2>
         <p className="experience-lead">Walk through the complete client journey from uncertainty to measurable transformation.</p>
         <div className="experience-pills">
           <span>{storyRooms.length} Guided Chapters</span>
           <span>Immersive 3D Tour</span>
-          <span>Live Story Metrics</span>
+          <span>Live Progress Metrics</span>
         </div>
-        <button type="button" className="room-secondary-link outside-secondary-cta" onClick={enterHouse} disabled={isEnteringHome || phaseTransitioning}>Begin Guided Story</button>
+        <button type="button" className="room-secondary-link outside-secondary-cta" onClick={enterHouse} disabled={isEnteringHome || phaseTransitioning}>Start Guided Tour</button>
       </section>
     )}
 
@@ -89,7 +89,7 @@ const Sidebar = ({
         <p className="tour-progress">Phase {currentPhaseStep + 1} of {phaseSteps.length} · {currentPhaseLabel}</p>
         <p className="virtual-eyebrow room-chooser-kicker">Choose Room</p>
         <h2 className="experience-title room-chooser-title">Story Map</h2>
-        <p className="experience-lead">Select any room to see how Home4U scanning and AI ideas guide your design choices.</p>
+        <p className="experience-lead">Select a room to review how Home4U analysis and AI recommendations guide design decisions.</p>
         <p className="blueprint-current">Current focus: {activeRoom.name}</p>
         <div className="virtual-room-grid">
           {storyRooms.map((room, index) => (

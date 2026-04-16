@@ -1,46 +1,60 @@
-/* Global atmosphere layer shared across routes.
-   Uses fixed pseudo-elements so individual pages can keep their own backgrounds. */
+/* ============================================================
+   ATMOSPHERE — Global Marcelo Overhaul
+   Everything inherits the heavy, cinematic, editorial mood.
+   ============================================================ */
 
 :root {
-  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.22);
-  --atmo-b: rgb(var(--color-camel-400-rgb) / 0.18);
-  --atmo-c: rgb(var(--color-action-emerald-rgb) / 0.1);
-  --atmo-strength: 0.85;
-  --grain-strength: 0.06;
+  /* Moody, dark, warm brass atmosphere */
+  --atmo-a: rgb(var(--color-brass-400-rgb) / 0.22);
+  --atmo-b: rgb(var(--color-steel-600-rgb)  / 0.18);
+  --atmo-c: rgb(var(--color-graphite-700-rgb) / 0.12);
+  --atmo-strength: 0.92;
+  --grain-strength: 0.055;
 }
 
 body {
   position: relative;
   overflow-x: hidden;
+  background-color: var(--color-graphite-950);
 }
 
+/* ── Soft chromatic orbs ──────────────────────────────────── */
 body::before {
   content: '';
   position: fixed;
-  inset: -35%;
+  inset: -30%;
   background:
-    radial-gradient(circle at 18% 18%, var(--atmo-a), transparent 55%),
-    radial-gradient(circle at 82% 68%, var(--atmo-b), transparent 58%),
-    radial-gradient(circle at 60% 12%, var(--atmo-c), transparent 62%);
-  filter: blur(24px) saturate(1.15);
+    radial-gradient(ellipse at 20% 15%, var(--atmo-a), transparent 52%),
+    radial-gradient(ellipse at 80% 72%, var(--atmo-b), transparent 56%),
+    radial-gradient(ellipse at 58% 10%, var(--atmo-c), transparent 60%);
+  filter: blur(28px) saturate(1.1);
   opacity: var(--atmo-strength);
-  transform: translate3d(0, 0, 0) rotate(-8deg);
-  animation: atmoDrift 18s ease-in-out infinite alternate;
+  transform: translate3d(0, 0, 0) rotate(-6deg);
+  animation: atmoDrift 22s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
 }
 
+/* ── Fine grain overlay ───────────────────────────────────── */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 4px);
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.025) 0 1px,
+      transparent 1px 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.015) 0 1px,
+      transparent 1px 5px
+    );
   opacity: var(--grain-strength);
   pointer-events: none;
   z-index: 0;
-  animation: grainShift 7s steps(10, end) infinite;
+  animation: grainShift 9s steps(12, end) infinite;
 }
 
 #root {
@@ -49,49 +63,16 @@ body::after {
 }
 
 @keyframes atmoDrift {
-  0% { transform: translate3d(-1%, -1%, 0) rotate(-8deg) scale(1); }
-  100% { transform: translate3d(1%, 1%, 0) rotate(-6deg) scale(1.03); }
+  0%   { transform: translate3d(-1.2%, -1%, 0) rotate(-6deg) scale(1); }
+  100% { transform: translate3d(1%,  1.2%, 0) rotate(-4deg) scale(1.025); }
 }
 
 @keyframes grainShift {
-  0% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(-2%, 1%, 0); }
-  50% { transform: translate3d(1%, -1%, 0); }
-  75% { transform: translate3d(2%, 2%, 0); }
-  100% { transform: translate3d(0, 0, 0); }
-}
-
-/* Scene/style tinting (opt-in) */
-body[data-scene="about"] {
-  --atmo-a: rgb(var(--color-wine-900-rgb) / 0.24);
-  --atmo-b: rgb(var(--color-chocolate-700-rgb) / 0.16);
-  --atmo-c: rgb(var(--color-camel-400-rgb) / 0.1);
-}
-
-body[data-scene="dashboard"] {
-  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.22);
-  --atmo-b: rgb(var(--color-camel-400-rgb) / 0.18);
-  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.08);
-  --grain-strength: 0.025;
-}
-
-body[data-scene="workspace"] {
-  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.2);
-  --atmo-b: rgb(var(--color-chocolate-700-rgb) / 0.16);
-  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.06);
-}
-
-body[data-style="industrial"] {
-  --atmo-a: rgb(var(--color-chocolate-700-rgb) / 0.16);
-  --atmo-b: rgb(var(--color-primary-slate-rgb) / 0.1);
-  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.05);
-}
-
-body[data-style="scandinavian"] {
-  --atmo-a: rgb(var(--color-accent-soft-rgb) / 0.14);
-  --atmo-b: rgb(var(--color-camel-400-rgb) / 0.06);
-  --atmo-c: rgb(var(--color-wine-900-rgb) / 0.05);
-  --grain-strength: 0.045;
+  0%   { transform: translate3d(0,    0,    0); }
+  25%  { transform: translate3d(-2%,  1%,   0); }
+  50%  { transform: translate3d(1%,  -1.5%, 0); }
+  75%  { transform: translate3d(2%,   2%,   0); }
+  100% { transform: translate3d(0,    0,    0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

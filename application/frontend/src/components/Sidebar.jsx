@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Compass, Brush, Presentation, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Volume2, VolumeX } from 'lucide-react';
+import { LayoutDashboard, Compass, Brush, Presentation, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Volume2, VolumeX, Home } from 'lucide-react';
 import { useAmbience } from '../context/AmbienceContext';
 import './Sidebar.css';
 
@@ -18,8 +18,8 @@ const Sidebar = () => {
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Workspace AI', path: '/workspace', icon: <Brush size={20} /> },
-    { name: 'Discover Styles', path: '/about', icon: <Compass size={20} /> },
+    { name: 'Workspace', path: '/workspace', icon: <Brush size={20} /> },
+    { name: 'Explore Styles', path: '/about', icon: <Compass size={20} /> },
     { name: 'Virtual Tour', path: '/virtual-tour', icon: <Presentation size={20} /> },
   ];
 
@@ -33,11 +33,12 @@ const Sidebar = () => {
           aria-label="Go to dashboard"
         >
           <div className="brand-logo">
-            <span className="brand-icon">🏠</span>
+            <span className="brand-icon" aria-hidden="true"><Home size={16} strokeWidth={2.3} /></span>
           </div>
           {isExpanded && <span className="brand-text">Home4U</span>}
         </button>
         <button 
+          type="button"
           className="toggle-collapse-btn" 
           onClick={() => setIsExpanded(!isExpanded)}
           aria-label={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
@@ -105,6 +106,7 @@ const Sidebar = () => {
             </li>
             <li>
               <button 
+                type="button"
                 className="nav-link logout-nav-btn" 
                 onClick={handleLogout}
                 title={!isExpanded ? 'Logout' : undefined}

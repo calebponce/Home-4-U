@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
         if (!cancelled) {
           setUser({ token });
         }
-      } catch (error) {
+      } catch {
         // Temporary connectivity issues should not force logout.
         if (!cancelled) {
           setUser({ token });
@@ -86,6 +86,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook paired with provider
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

@@ -1,10 +1,10 @@
 /**
  * Static data and pure camera utilities for the Virtual Tour experience.
  */
-const BRAND_AMBER = '#bb9457';
-const BRAND_WINE = '#6f1d1b';
-const BRAND_CHOCOLATE = '#99582a';
-const BRAND_COFFEE = '#432818';
+const BRAND_AMBER = '#a58b67';
+const BRAND_WINE = '#53656e';
+const BRAND_CHOCOLATE = '#42535b';
+const BRAND_COFFEE = '#201915';
 const TONE_WARM = '#2b1a12';
 const TONE_DEEP = '#140a07';
 const TONE_WINE = '#25130f';
@@ -14,7 +14,7 @@ const storyRooms = [
     id: 'atrium',
     name: 'Bedroom Studio',
     title: 'Scan Your Bedroom. Get a Plan Built for It.',
-    emoji: '🏛️',
+    emoji: 'BR',
     icon: 'bed',
     promise: 'Capture your bedroom once and receive a plan that already fits.',
     proof: 'The scan captures scale, openings, and light for room-true suggestions.',
@@ -43,7 +43,7 @@ const storyRooms = [
     id: 'pain',
     name: 'Living Room Explorer',
     title: 'Compare Living Room Concepts in Minutes',
-    emoji: '⚠️',
+    emoji: 'LR',
     icon: 'sofa',
     promise: 'Compare living room concepts directly on your scanned space.',
     proof: 'A swipeable feed applies each idea to your real layout.',
@@ -72,7 +72,7 @@ const storyRooms = [
     id: 'solution',
     name: 'Kitchen Planner',
     title: 'Plan a Kitchen That Works as Good as It Looks',
-    emoji: '🧠',
+    emoji: 'KT',
     icon: 'kitchen',
     promise: 'Get upgrade ideas that respect workflow, storage, and circulation.',
     proof: 'Suggestions align with zones and the work‑triangle flow.',
@@ -101,7 +101,7 @@ const storyRooms = [
     id: 'transform',
     name: 'Bathroom Refresh',
     title: 'See Your Bathroom Upgrade Before You Commit',
-    emoji: '🖼️',
+    emoji: 'BT',
     icon: 'bath',
     promise: 'Preview finishes, vanity, and lighting as a live before/after.',
     proof: 'You see exactly how each material shifts the room.',
@@ -130,7 +130,7 @@ const storyRooms = [
     id: 'proof',
     name: 'Home Office Setup',
     title: 'Build a Home Office That Improves Focus',
-    emoji: '📈',
+    emoji: 'OF',
     icon: 'desk',
     promise: 'Design an office layout tuned to workflow, light, and space.',
     proof: 'Desk placement and lighting angles are optimized for the scan.',
@@ -159,7 +159,7 @@ const storyRooms = [
     id: 'action',
     name: 'Whole Home Plan',
     title: 'Unify Every Room Into One Cohesive Plan',
-    emoji: '🚀',
+    emoji: 'WH',
     icon: 'home',
     promise: 'Combine all room decisions into a single style roadmap.',
     proof: 'The app compiles your choices into phases and next steps.',

@@ -214,7 +214,7 @@ const useTourFlow = ({ navigate }) => {
   const hasPrevRoom = activeIndex > 0;
   const hasNextRoom = activeIndex < storyRooms.length - 1;
   const dockBackLabel = phase === 'room' ? 'Prev Room' : phase === 'blueprint' ? 'Back Outside' : 'Back to Dashboard';
-  const dockPrimaryLabel = phase === 'room' ? 'Next Room' : phase === 'blueprint' ? 'Enter Selected Room' : 'Begin Guided Story';
+  const dockPrimaryLabel = phase === 'room' ? 'Next Room' : phase === 'blueprint' ? 'Enter Selected Room' : 'Start Guided Tour';
   const dockBackDisabled = phase === 'room' ? !hasPrevRoom : phaseTransitioning || isEnteringHome;
   const dockPrimaryDisabled = phase === 'room'
     ? !hasNextRoom

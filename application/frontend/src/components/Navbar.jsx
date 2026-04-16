@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Compass, Brush, Presentation, LogOut, Menu, X, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Compass, Brush, Presentation, LogOut, Menu, X, ChevronDown, Home } from 'lucide-react';
 import './Navbar.css';
 
 const MotionNavLink = motion(NavLink);
@@ -34,8 +34,8 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Workspace AI', path: '/workspace', icon: Brush },
-    { name: 'Discover', path: '/about', icon: Compass },
+    { name: 'Workspace', path: '/workspace', icon: Brush },
+    { name: 'Explore Styles', path: '/about', icon: Compass },
     { name: 'Virtual Tour', path: '/virtual-tour', icon: Presentation },
   ];
 
@@ -134,7 +134,7 @@ const Navbar = () => {
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             <div className="brand-glow" />
-            <div className="brand-icon">🏠</div>
+            <div className="brand-icon" aria-hidden="true"><Home size={16} strokeWidth={2.3} /></div>
             <motion.span 
               className="brand-text" 
               initial={{ opacity: 0, scaleX: 0.8 }}
@@ -199,6 +199,7 @@ const Navbar = () => {
             {/* User Menu */}
             <motion.li variants={itemVariants} className="user-menu-container">
               <motion.button
+                type="button"
                 className="user-menu-trigger"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 whileTap={{ scale: 0.97 }}
@@ -220,9 +221,9 @@ const Navbar = () => {
                     transition={{ type: 'spring', stiffness: 400 }}
                   >
                     <motion.li>
-                      <button className="user-menu-item" onClick={handleLogout}>
+                      <button type="button" className="user-menu-item" onClick={handleLogout}>
                         <LogOut size={18} />
-                        <span>Sign Out</span>
+                        <span>Logout</span>
                       </button>
                     </motion.li>
                   </motion.ul>
@@ -234,6 +235,7 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <motion.button 
+          type="button"
           ref={mobileToggleRef}
           className="mobile-toggle"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -293,7 +295,7 @@ const Navbar = () => {
                 <li>
                   <button type="button" className="mobile-nav-link logout" onClick={handleLogout}>
                     <LogOut size={20} />
-                    <span>Sign Out</span>
+                    <span>Logout</span>
                   </button>
                 </li>
               </ul>

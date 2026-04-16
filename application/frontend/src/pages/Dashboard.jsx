@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DollarSign, FolderKanban, Home, Palette, PlayCircle, SearchX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -62,8 +62,8 @@ const defaultStyles = [
     name: 'Modern', 
     description: 'Clean lines, minimal clutter, and functional design with neutral colors',
     emoji: '🪟',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    palette: ['#0b0f1a', '#667eea', '#c7d2fe', '#ffe6a7'],
+    gradient: 'linear-gradient(135deg, #24313a 0%, #53656e 100%)',
+    palette: ['#172026', '#53656e', '#c8d0d5', '#ffffff'],
     materials: ['Glass', 'Polished concrete'],
     signature: 'Statement lighting + negative space',
     previewEmojis: ['🛋️', '📐', '💡', '🪟'],
@@ -74,8 +74,8 @@ const defaultStyles = [
     name: 'Traditional', 
     description: 'Classic elegance with rich colors, ornate details, and quality craftsmanship',
     emoji: '🕰️',
-    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    palette: ['#2b0f16', '#f5576c', '#fbcfe8', '#fdf2f8'],
+    gradient: 'linear-gradient(135deg, #5b4034 0%, #8c6a57 100%)',
+    palette: ['#2b221d', '#8c6a57', '#d8c5b5', '#faf8f5'],
     materials: ['Mahogany', 'Velvet'],
     signature: 'Molding, symmetry, and heirloom pieces',
     previewEmojis: ['🕰️', '🪞', '🕯️', '🏺'],
@@ -86,8 +86,8 @@ const defaultStyles = [
     name: 'Scandinavian', 
     description: 'Cozy minimalism with natural materials, light colors, and hygge atmosphere',
     emoji: '🪵',
-    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    palette: ['#0b1116', '#00f2fe', '#e5e7eb', '#ffe6a7'],
+    gradient: 'linear-gradient(135deg, #8a958f 0%, #c7d0ca 100%)',
+    palette: ['#334038', '#9aa69e', '#e7ece8', '#ffffff'],
     materials: ['Light oak', 'Linen'],
     signature: 'Warm neutrals + soft texture layers',
     previewEmojis: ['🌿', '🪵', '🧸', '🕯️'],
@@ -98,8 +98,8 @@ const defaultStyles = [
     name: 'Industrial', 
     description: 'Raw materials, exposed elements, and urban-inspired aesthetics',
     emoji: '⚙️',
-    gradient: 'linear-gradient(135deg, #434343 0%, #000000 100%)',
-    palette: ['#0b0b0d', '#2a2a2f', '#8b8b96', '#f5f5f7'],
+    gradient: 'linear-gradient(135deg, #20252a 0%, #5e666d 100%)',
+    palette: ['#16191c', '#565d63', '#a4abb1', '#f5f5f3'],
     materials: ['Steel', 'Brick'],
     signature: 'Raw texture + high contrast lighting',
     previewEmojis: ['⚙️', '🧱', '💡', '🪜'],
@@ -110,8 +110,8 @@ const defaultStyles = [
     name: 'Bohemian', 
     description: 'Eclectic, colorful, and free-spirited with layered textures and patterns',
     emoji: '🧶',
-    gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    palette: ['#1a0b12', '#fa709a', '#fee140', '#fff7ed'],
+    gradient: 'linear-gradient(135deg, #7a5c44 0%, #b6946d 100%)',
+    palette: ['#2b2118', '#a1784f', '#d7bc93', '#faf5ef'],
     materials: ['Rattan', 'Woven textiles'],
     signature: 'Layered patterns + collected decor',
     previewEmojis: ['🌺', '💐', '🎭', '🪭'],
@@ -122,8 +122,8 @@ const defaultStyles = [
     name: 'Mid-Century', 
     description: 'Retro sophistication with bold colors, organic shapes, and timeless appeal',
     emoji: '🛋️',
-    gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-    palette: ['#1a0f11', '#ff9a9e', '#6f1d1b', '#fff7ed'],
+    gradient: 'linear-gradient(135deg, #5a6a55 0%, #a58b67 100%)',
+    palette: ['#20241e', '#6f7b66', '#a58b67', '#f6f1eb'],
     materials: ['Teak', 'Leather'],
     signature: 'Tapered legs + warm wood tones',
     previewEmojis: ['🪑', '📺', '🪵', '🌵'],
@@ -134,8 +134,8 @@ const defaultStyles = [
     name: 'Mediterranean', 
     description: 'Warm, inviting spaces with terracotta, wrought iron, and rustic textures',
     emoji: '🍋',
-    gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-    palette: ['#1a1208', '#fda085', '#f6d365', '#fff7ed'],
+    gradient: 'linear-gradient(135deg, #6f8379 0%, #d2b48c 100%)',
+    palette: ['#25312b', '#71857a', '#c8a67a', '#faf6f0'],
     materials: ['Terracotta', 'Wrought iron'],
     signature: 'Arches, tiles, and sun-washed warmth',
     previewEmojis: ['🌞', '🍋', '🏺', '🪴'],
@@ -146,8 +146,8 @@ const defaultStyles = [
     name: 'Japanese', 
     description: 'Serene simplicity with natural materials, clean spaces, and zen harmony',
     emoji: '🎍',
-    gradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-    palette: ['#070a0d', '#a8edea', '#e5e7eb', '#ffe6a7'],
+    gradient: 'linear-gradient(135deg, #3b4640 0%, #b3aa98 100%)',
+    palette: ['#1e221e', '#5c655d', '#c6bcaa', '#faf9f6'],
     materials: ['Cedar', 'Rice paper'],
     signature: 'Low furniture + calm negative space',
     previewEmojis: ['🗿', '🎋', '🧘', '🍵'],
@@ -283,6 +283,36 @@ const mergeStylesWithDefaults = (incoming = []) => {
   return Array.from(merged.values());
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const formatLoadError = (err) => {
+  if (!err) return 'Could not load dashboard data.';
+
+  const status = err.response?.status;
+  if (status === 401) return 'Your session expired. Please log in again.';
+  if (status === 403) return 'Access denied for this resource.';
+  if (status && status >= 500) return 'Server error while loading dashboard data.';
+  if (status && status >= 400) return err.response?.data?.detail || 'Request failed while loading dashboard data.';
+  if (err.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
+  if (err.message?.toLowerCase().includes('network')) {
+    return 'Network issue: unable to reach API. Check backend/proxy configuration.';
+  }
+  return 'Could not load dashboard data. Please refresh.';
+};
+
+const withRetry = async (fn, retries = 2, delay = 350) => {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) await sleep(delay * (attempt + 1));
+    }
+  }
+  throw lastError;
+};
+
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [styles, setStyles] = useState([]);
@@ -365,9 +395,10 @@ const Dashboard = () => {
     fetchData();
     
     // Trigger hero animation after component mounts
-    setTimeout(() => setHeroLoaded(true), 100);
+    const heroTimer = setTimeout(() => setHeroLoaded(true), 100);
     
-    return () => {};
+    return () => clearTimeout(heroTimer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- initial dashboard load should run once on mount.
   }, []);
 
   useEffect(() => {
@@ -591,37 +622,7 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, [actionMessage]);
 
-  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const formatLoadError = (err) => {
-    if (!err) return 'Could not load dashboard data.';
-
-    const status = err.response?.status;
-    if (status === 401) return 'Your session expired. Please log in again.';
-    if (status === 403) return 'Access denied for this resource.';
-    if (status && status >= 500) return 'Server error while loading dashboard data.';
-    if (status && status >= 400) return err.response?.data?.detail || 'Request failed while loading dashboard data.';
-    if (err.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
-    if (err.message?.toLowerCase().includes('network')) {
-      return 'Network issue: unable to reach API. Check backend/proxy configuration.';
-    }
-    return 'Could not load dashboard data. Please refresh.';
-  };
-
-  const withRetry = async (fn, retries = 2, delay = 350) => {
-    let lastError;
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        return await fn();
-      } catch (err) {
-        lastError = err;
-        if (attempt < retries) await sleep(delay * (attempt + 1));
-      }
-    }
-    throw lastError;
-  };
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       setLoadError('');
@@ -661,7 +662,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout, navigate]);
 
   // Debounced search hitting backend /search
   useEffect(() => {
@@ -744,12 +745,24 @@ const Dashboard = () => {
     { label: 'Avg Budget', value: `$${avgBudget}`, icon: DollarSign },
   ];
 
+  // Set scene for atmosphere tinting
+  useEffect(() => {
+    const prev = document.body.dataset.scene;
+    document.body.dataset.scene = 'dashboard';
+    return () => {
+      if (document.body.dataset.scene === 'dashboard') {
+        if (prev) document.body.dataset.scene = prev;
+        else delete document.body.dataset.scene;
+      }
+    };
+  }, []);
+
   return (
     <div className="dashboard">
       <div className="dashboard-shell">
         <header className="dashboard-header">
           <div className="header-left">
-            <h1>My Dashboard</h1>
+            <h1>Dashboard</h1>
             <span className="project-count-chip">{projects.length} Projects</span>
           </div>
           <div className="header-actions">
@@ -771,7 +784,7 @@ const Dashboard = () => {
       {loadError && <div className="status-banner status-error">{loadError}</div>}
       {loadError && (
         <div className="status-banner-actions">
-          <button className="status-retry-btn" onClick={fetchData}>
+          <button type="button" className="status-retry-btn" onClick={fetchData}>
             Retry Loading
           </button>
         </div>
@@ -782,45 +795,51 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Parallax Hero Section */}
-      <section className="parallax-hero" ref={parallaxRef}>
-        <div className="parallax-grid-layer" />
-        <div className="parallax-bg" aria-hidden="true" />
-        <div 
-          className={`parallax-content ${heroLoaded ? 'loaded' : ''}`}
-        >
-          <p className={`hero-eyebrow ${heroLoaded ? 'fade-in' : ''}`}>
-            Home4U AI Studio
-          </p>
-          <h1 className={`hero-title ${heroLoaded ? 'fade-in' : ''}`}>
-            <span className="title-line">
-              Your <span className="hero-emphasis">Design</span> Workspace
-            </span>
+      {/* ── Adrien greeting strip (Marcelo type) ────────────────── */}
+      <section className="dashboard-greeting" aria-label="Workspace greeting">
+        <div className="greeting-left">
+          <p className="greeting-eyebrow">Home4U AI Studio</p>
+          <h1 className="greeting-heading">
+            Your&nbsp;<em>Design</em><br />Workspace
           </h1>
-          <p className={`hero-subtitle ${heroLoaded ? 'fade-in' : ''}`}>
-            Create, explore, and transform spaces with AI.
-          </p>
-          <div className={`hero-cta ${heroLoaded ? 'fade-in' : ''}`}>
-            <button className="cta-primary" onClick={() => navigate('/workspace')}>
-              Upload Room
-            </button>
-            <button
-              className="cta-secondary"
-              onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              Explore Styles
-            </button>
-          </div>
         </div>
-        <div className="scroll-indicator">
-          <span>Scroll to explore</span>
-          <div className="mouse-icon">
-            <div className="wheel"></div>
-          </div>
+        <div className="greeting-right">
+          <button
+            type="button"
+            className="cta-primary"
+            onClick={() => navigate('/workspace')}
+          >
+            Upload Room
+          </button>
+          <button
+            type="button"
+            className="cta-secondary"
+            onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            Explore Styles
+          </button>
         </div>
       </section>
 
-      <motion.section 
+      {/* ── Stats band — Adrien: immediately visible after greeting ── */}
+      <section className="stats-row-section" aria-label="Dashboard statistics">
+        <div className="stats-row">
+          {dashboardStats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <article key={stat.label} className="stats-row-item">
+                <span className="stats-row-icon" aria-hidden="true">
+                  <Icon size={14} strokeWidth={2} />
+                </span>
+                <span className="stats-row-label">{stat.label}</span>
+                <span className="stats-row-value">{stat.value}</span>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <motion.section
         className="recent-projects reveal-on-scroll"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -828,7 +847,6 @@ const Dashboard = () => {
       >
         <div className="section-intro">
           <h2>Recent Activity</h2>
-          <p>Resume your ongoing spatial transformations.</p>
         </div>
         {recentProjects.length ? (
           <div className="recent-projects-grid">
@@ -866,24 +884,6 @@ const Dashboard = () => {
         )}
       </motion.section>
 
-      <section className="stats-row-section reveal-on-scroll">
-        <div className="stats-row" aria-label="Dashboard statistics">
-          {dashboardStats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <article key={stat.label} className="stats-row-item">
-                <span className="stats-row-icon" aria-hidden="true">
-                  <Icon size={16} strokeWidth={2.1} />
-                </span>
-                <div className="stats-row-copy">
-                  <span className="stats-row-value">{stat.value}</span>
-                  <span className="stats-row-label">{stat.label}</span>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
 
 	      <div className="dashboard-grid">
 	        <aside className="metrics-rail">
@@ -904,7 +904,6 @@ const Dashboard = () => {
           >
             <div className="section-intro">
               <h2>Spatial Walkthrough</h2>
-              <p>Experience Home4U’s design philosophy through an interactive 3D showcase.</p>
             </div>
 
             <motion.button
@@ -942,8 +941,8 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <button className="tour-immersive-btn" data-magnetic-button onClick={() => navigate('/virtual-tour')}>
-              Launch Experience
+            <button type="button" className="tour-immersive-btn" data-magnetic-button onClick={() => navigate('/virtual-tour')}>
+              Open Virtual Tour
             </button>
           </motion.section>
 
@@ -963,13 +962,18 @@ const Dashboard = () => {
           {/* Search bar */}
           <div className="search-panel">
             <div className="search-row">
+              <label className="sr-only" htmlFor="dashboard-style-search">
+                Search design styles
+              </label>
               <input
+                id="dashboard-style-search"
                 type="search"
                 placeholder="Search styles (e.g., modern, industrial, cozy)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <button
+                type="button"
                 className="cta-secondary"
                 onClick={() => setSearchTerm(searchTerm.trim())}
                 disabled={!searchTerm.trim()}
@@ -994,8 +998,8 @@ const Dashboard = () => {
                   >
                     <SearchX size={48} strokeWidth={1.5} />
                   </motion.div>
-                  <h3>No Visions Found</h3>
-                  <p>We couldn't find any styles matching "{searchTerm}". Try adjusting your keywords to discover new aesthetics.</p>
+                  <h3>No Results Found</h3>
+                  <p>No styles matched "{searchTerm}". Try refining your search terms.</p>
                 </motion.div>
               </AnimatePresence>
             )}
@@ -1070,7 +1074,7 @@ const Dashboard = () => {
                       <button
                         type="button"
                         className="init-primary"
-                        onClick={() => navigate(`/virtual-tour?style=${styleSlug(initStyle.name)}`)}
+                        onClick={() => navigate(`/workspace?style=${styleSlug(initStyle.name)}`)}
                       >
                         Start AI Transformation
                       </button>
@@ -1117,7 +1121,12 @@ const Dashboard = () => {
                     const { key: styleKey, previewEmojis, previewFeatures } = resolveStyleElements(style);
                     const palette = Array.isArray(style.palette) && style.palette.length
                       ? style.palette.slice(0, 4)
-                      : [style.accent || '#b18bff', style.accentTwo || '#9273d8', style.base || '#432818', '#ffe6a7'].slice(0, 4);
+                      : [
+                          style.accent || 'var(--color-action-emerald)',
+                          style.accentTwo || 'var(--color-camel-400)',
+                          style.base || 'var(--color-primary-slate)',
+                          'var(--color-secondary-arctic)',
+                        ].slice(0, 4);
                     const materials = Array.isArray(style.materials) && style.materials.length ? style.materials.slice(0, 2) : [];
                     return (
                       <button
@@ -1127,10 +1136,10 @@ const Dashboard = () => {
                         aria-label={`Explore ${style.name} style`}
                         onClick={(e) => handleStyleSelect(style, e.currentTarget)}
                         style={{ 
-                          '--card-bg': style.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          '--style-accent': style.accent || (style.name === 'Scandinavian' ? '#ffe6a7' : style.name === 'Industrial' ? '#bb9457' : style.name === 'Bohemian' ? '#6f1d1b' : '#bb9457'),
-                          '--style-accent-2': style.accentTwo || (style.name === 'Scandinavian' ? '#bb9457' : style.name === 'Industrial' ? '#432818' : style.name === 'Bohemian' ? '#99582a' : '#6f1d1b'),
-                          '--style-base': style.base || '#432818'
+                          '--card-bg': style.gradient || 'linear-gradient(135deg, #24313a 0%, #53656e 100%)',
+                          '--style-accent': style.accent || (style.name === 'Scandinavian' ? '#ffffff' : style.name === 'Industrial' ? '#a58b67' : style.name === 'Bohemian' ? '#53656e' : '#a58b67'),
+                          '--style-accent-2': style.accentTwo || (style.name === 'Scandinavian' ? '#a58b67' : style.name === 'Industrial' ? '#1c2328' : style.name === 'Bohemian' ? '#42535b' : '#53656e'),
+                          '--style-base': style.base || '#201915'
                         }}
                       >
                         <div className="style-card-head">
@@ -1207,7 +1216,7 @@ const Dashboard = () => {
                       AI will adapt {selectedStyleDrawer.name} principles to your room layout.
                     </p>
                   </div>
-                  <button className="drawer-close" onClick={closeDrawer} aria-label="Close style drawer">✕</button>
+                  <button type="button" className="drawer-close" onClick={closeDrawer} aria-label="Close style drawer">✕</button>
                 </div>
 
                 <div className="drawer-body">
@@ -1253,7 +1262,7 @@ const Dashboard = () => {
                         'Low furniture density',
                       ]).slice(0, 4).map((reason, idx) => (
                         <li key={idx} className="why-style-item">
-                          <span className="reason-icon">🔍</span>
+                          <span className="reason-icon">•</span>
                           <span>{reason}</span>
                         </li>
                       ))}
@@ -1275,7 +1284,7 @@ const Dashboard = () => {
                           key={idx}
                           className={`why-style-item ${hoveredTrait && reason.toLowerCase().includes(hoveredTrait.toLowerCase()) ? 'reason-highlight' : ''}`}
                         >
-                          <span className="reason-icon">🧠</span>
+                          <span className="reason-icon">•</span>
                           <span>{reason}</span>
                         </li>
                       ))}
@@ -1291,15 +1300,24 @@ const Dashboard = () => {
                         const icons = resolveStyleElements(selectedStyleDrawer).previewEmojis;
                         const icon = icons[idx % icons.length];
                         return (
-                          <span
+                          <button
                             key={idx}
                             className="dna-chip dna-chip-interactive"
+                            type="button"
                             onMouseEnter={() => setHoveredTrait(item)}
                             onMouseLeave={() => setHoveredTrait('')}
+                            onFocus={() => setHoveredTrait(item)}
+                            onBlur={() => setHoveredTrait('')}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setHoveredTrait(item);
+                              }
+                            }}
                           >
                             <span className="dna-icon">{icon}</span>
                             <span>{item}</span>
-                          </span>
+                          </button>
                         );
                       })}
                     </div>
@@ -1333,6 +1351,7 @@ const Dashboard = () => {
             <div className="section-header">
               <h2>My Room Projects</h2>
               <button 
+                type="button"
                 onClick={() => setShowNewProject(!showNewProject)}
                 className="new-project-btn"
               >
@@ -1412,6 +1431,7 @@ const Dashboard = () => {
 
                   <div className="zero-state-templates">
                     <motion.button 
+                      type="button"
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.99 }}
                       className={`template-card ${newProjectType === 'Living Room' ? 'is-selected' : ''}`}
@@ -1425,6 +1445,7 @@ const Dashboard = () => {
                       </div>
                     </motion.button>
                     <motion.button 
+                      type="button"
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.99 }}
                       className={`template-card ${newProjectType === 'Bedroom' ? 'is-selected' : ''}`}
@@ -1441,6 +1462,7 @@ const Dashboard = () => {
 
                   <div className="zero-state-actions">
                     <motion.button 
+                      type="button"
                       whileHover={{ y: -1 }}
                       whileTap={{ scale: 0.99 }}
                       className="new-project-btn cta-primary" 
@@ -1473,10 +1495,11 @@ const Dashboard = () => {
                         <p><strong>Initiated:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="project-actions">
-                        <button className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
+                        <button type="button" className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
                           Open Studio
                         </button>
                         <button 
+                          type="button"
                           onClick={() => handleDeleteProject(project.id)}
                           className="delete-btn ghost-danger"
                           disabled={deletingProjectId === project.id}
@@ -1495,7 +1518,7 @@ const Dashboard = () => {
 
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>© 2026 Home4U - Your Dream Home Starts Here</p>
+        <p>© 2026 Home4U - Interior Design Assistant</p>
       </footer>
       </div>
     </div>

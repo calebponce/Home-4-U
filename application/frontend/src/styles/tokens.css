@@ -1,112 +1,191 @@
 :root {
-  /* Merlot & Desert Neutrals Palette */
-  --color-wine-900: #6f1d1b; /* Dark Wine */
-  --color-camel-400: #bb9457; /* Camel */
-  --color-chocolate-700: #99582a; /* Chocolate Brown */
-  --color-coffee-900: #432818; /* Dark Coffee */
-  --color-apricot-100: #ffe6a7; /* Light Apricot */
+  /* ============================================================
+     HYBRID PALETTE — graphite · steel · slate · brass · stone · paper
+     Public surfaces: Marcelo (mood, atmosphere, large type)
+     Product screens: Adrien (structure, clarity, grid discipline)
+     ============================================================ */
 
-  --color-wine-900-rgb: 111 29 27;
-  --color-camel-400-rgb: 187 148 87;
-  --color-chocolate-700-rgb: 153 88 42;
-  --color-coffee-900-rgb: 67 40 24;
-  --color-apricot-100-rgb: 255 230 167;
+  /* Raw palette */
+  --color-graphite-950: #191917;
+  --color-graphite-900: #222220;
+  --color-graphite-800: #2e2e2c;
+  --color-graphite-700: #3d3d3a;
+  --color-steel-600:    #53656e;
+  --color-steel-500:    #6a7d87;
+  --color-slate-400:    #8a9aa4;
+  --color-slate-300:    #b0bec6;
+  --color-brass-500:    #b5924c;
+  --color-brass-400:    #c9a96e;
+  --color-brass-300:    #dcc08e;
+  --color-stone-200:    #d8d2c7;
+  --color-stone-100:    #ece8e1;
+  --color-paper-50:     #f7f4ef;
+  --color-paper-0:      #ffffff;
+  --color-success-600:  #2f5e4f;
+  --color-danger-500:   #ef4444;
 
-  /* Core Brand Tokens */
-  --color-primary-slate: var(--color-coffee-900); /* Dark Coffee */
-  --color-secondary-arctic: var(--color-apricot-100); /* Light Apricot */
-  --color-action-emerald: var(--color-wine-900); /* Dark Wine */
+  /* RGB channel triples (for rgba() usage) */
+  --color-graphite-950-rgb: 25 25 23;
+  --color-graphite-900-rgb: 34 34 32;
+  --color-graphite-800-rgb: 46 46 44;
+  --color-graphite-700-rgb: 61 61 58;
+  --color-steel-600-rgb:    83 101 110;
+  --color-steel-500-rgb:    106 125 135;
+  --color-slate-400-rgb:    138 154 164;
+  --color-slate-300-rgb:    176 190 198;
+  --color-brass-500-rgb:    181 146 76;
+  --color-brass-400-rgb:    201 169 110;
+  --color-brass-300-rgb:    220 192 142;
+  --color-stone-200-rgb:    216 210 199;
+  --color-stone-100-rgb:    236 232 225;
+  --color-paper-50-rgb:     247 244 239;
+  --color-paper-0-rgb:      255 255 255;
+  --color-success-600-rgb:  47 94 79;
 
-  --color-primary-slate-rgb: var(--color-coffee-900-rgb);
-  --color-secondary-arctic-rgb: var(--color-apricot-100-rgb);
-  --color-action-emerald-rgb: var(--color-wine-900-rgb);
-  --color-accent-soft: var(--color-apricot-100);
-  --color-accent-soft-rgb: var(--color-apricot-100-rgb);
-  
-  /* Brand Alias */
-  --color-brand-400: var(--color-camel-400); /* Camel */
-  --color-brand-500: var(--color-action-emerald);
-  --color-brand-600: var(--color-chocolate-700); /* Chocolate Brown */
-  --color-brand-700: var(--color-coffee-900); /* Dark Coffee */
+  /* ── Semantic roles ────────────────────────────────────────── */
 
-  /* Alias: Primary (used across newer UI) */
-  --color-primary-200: var(--color-apricot-100); /* Light Apricot */
-  --color-primary-300: var(--color-camel-400); /* Camel */
-  --color-primary-400: var(--color-chocolate-700); /* Chocolate Brown */
-  --color-primary-500: var(--color-camel-400);
-  --color-primary-600: var(--color-coffee-900); /* Dark Coffee */
-  --color-primary-700: var(--color-primary-slate);
+  /* Backgrounds */
+  --color-bg-deep:        var(--color-graphite-950);   /* deepest — hero overlays */
+  --color-bg-base:        var(--color-graphite-900);   /* page background */
+  --color-bg-raised:      var(--color-graphite-800);   /* elevated surface */
+  --color-bg-overlay:     var(--color-graphite-700);   /* modals, drawers */
+  --color-bg-light:       var(--color-stone-100);      /* light surface (product screens) */
+  --color-bg-paper:       var(--color-paper-50);       /* near-white (product screens) */
 
-  /* Feedback Colors */
-  --color-danger-500: #ef4444;
+  --color-bg-deep-rgb:    var(--color-graphite-950-rgb);
+  --color-bg-base-rgb:    var(--color-graphite-900-rgb);
+  --color-bg-raised-rgb:  var(--color-graphite-800-rgb);
 
-  /* Surface & Text (Spatial Aesthetic) */
-  --color-bg-950: var(--color-secondary-arctic);
-  --color-surface-900: var(--color-apricot-100); /* Light Apricot */
-  --color-surface-850: var(--color-camel-400); /* Camel */
-  --color-border-700: rgb(var(--color-primary-slate-rgb) / 0.1);
-  --color-text-100: var(--color-primary-slate);
-  --color-text-300: var(--color-chocolate-700); /* Chocolate Brown */
-  --color-text-50: var(--color-coffee-900); /* Dark Coffee base */
-  --color-text-200: var(--color-coffee-900); 
-  --color-text-400: var(--color-chocolate-700); /* Darker */
+  /* Text */
+  --color-text-primary:   var(--color-paper-50);       /* primary text on dark */
+  --color-text-secondary: var(--color-stone-200);      /* secondary / muted on dark */
+  --color-text-tertiary:  var(--color-slate-400);      /* placeholder / dim */
+  --color-text-dark:      var(--color-graphite-900);   /* text on light bg */
+  --color-text-mid:       var(--color-steel-600);      /* mid-tone label */
 
-  /* Typography — Inter (UI/data) + Playfair Display (display) */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --font-serif: var(--font-display);
+  --color-text-primary-rgb:   var(--color-paper-50-rgb);
+  --color-text-secondary-rgb: var(--color-stone-200-rgb);
 
-  /* Modular type scale (major third ~1.25) */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-md: 1.125rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.5625rem;
-  --text-2xl: 1.953125rem;
-  --text-3xl: 2.44140625rem;
-  --text-display: clamp(2rem, 4.5vw, 3.05rem);
+  /* Accent — brass */
+  --color-accent:         var(--color-brass-400);
+  --color-accent-strong:  var(--color-brass-500);
+  --color-accent-subtle:  var(--color-brass-300);
+  --color-accent-rgb:     var(--color-brass-400-rgb);
+  --color-accent-strong-rgb: var(--color-brass-500-rgb);
 
-  --leading-tight: 1.2;
-  --leading-snug: 1.35;
-  --leading-normal: 1.5;
+  /* Borders */
+  --color-border:         rgb(var(--color-stone-200-rgb) / 0.14);
+  --color-border-mid:     rgb(var(--color-stone-200-rgb) / 0.22);
+  --color-border-strong:  rgb(var(--color-stone-200-rgb) / 0.4);
+  --color-border-light:   rgb(var(--color-graphite-800-rgb) / 0.18);  /* on light bg */
+
+  /* ── Legacy aliases (keep existing components compiling) ───── */
+  --color-primary-slate:         var(--color-graphite-900);
+  --color-primary-slate-rgb:     var(--color-graphite-900-rgb);
+  --color-secondary-arctic:      var(--color-paper-50);
+  --color-secondary-arctic-rgb:  var(--color-paper-50-rgb);
+  --color-action-emerald:        var(--color-steel-600);
+  --color-action-emerald-rgb:    var(--color-steel-600-rgb);
+  --color-camel-400:             var(--color-brass-400);
+  --color-camel-400-rgb:         var(--color-brass-400-rgb);
+  --color-wine-900:              var(--color-steel-600);
+  --color-wine-900-rgb:          var(--color-steel-600-rgb);
+  --color-chocolate-700:         var(--color-graphite-800);
+  --color-chocolate-700-rgb:     var(--color-graphite-800-rgb);
+  --color-coffee-900:            var(--color-graphite-950);
+  --color-coffee-900-rgb:        var(--color-graphite-950-rgb);
+  --color-apricot-100:           var(--color-paper-50);
+  --color-apricot-100-rgb:       var(--color-paper-50-rgb);
+  --color-accent-soft:           var(--color-stone-200);
+  --color-accent-soft-rgb:       var(--color-stone-200-rgb);
+  --color-limestone-100:         var(--color-stone-100);
+  --color-limestone-200:         var(--color-stone-200);
+  --color-stone-300:             var(--color-stone-200);
+  --color-stone-300-rgb:         var(--color-stone-200-rgb);
+  --color-slate-500:             var(--color-slate-400);
+  --color-ink-900:               var(--color-graphite-950);
+  --color-ink-900-rgb:           var(--color-graphite-950-rgb);
+
+  --color-brand-400: var(--color-brass-300);
+  --color-brand-500: var(--color-brass-400);
+  --color-brand-600: var(--color-brass-500);
+  --color-brand-700: var(--color-graphite-900);
+
+  --color-primary-200: var(--color-paper-50);
+  --color-primary-300: var(--color-stone-200);
+  --color-primary-400: var(--color-brass-400);
+  --color-primary-500: var(--color-steel-600);
+  --color-primary-600: var(--color-graphite-900);
+  --color-primary-700: var(--color-graphite-950);
+
+  --color-bg-950:       var(--color-stone-100);
+  --color-surface-900:  var(--color-paper-50);
+  --color-surface-850:  var(--color-stone-200);
+  --color-border-700:   rgb(var(--color-stone-200-rgb) / 0.9);
+  --color-text-100:     var(--color-graphite-900);
+  --color-text-200:     var(--color-graphite-900);
+  --color-text-300:     var(--color-slate-400);
+  --color-text-400:     var(--color-slate-400);
+  --color-text-50:      var(--color-graphite-950);
+
+  /* ── Typography ────────────────────────────────────────────── */
+  /* Marcelo direction: display type is larger, looser, editorial */
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Cormorant Garamond', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-serif:   var(--font-display);
+
+  /* Type scale */
+  --text-xs:      0.75rem;
+  --text-sm:      0.875rem;
+  --text-base:    1rem;
+  --text-md:      1.125rem;
+  --text-lg:      1.25rem;
+  --text-xl:      1.5625rem;
+  --text-2xl:     1.953125rem;
+  --text-3xl:     2.44140625rem;
+  --text-display: clamp(2.8rem, 6vw, 5.5rem);    /* Marcelo: big editorial headlines */
+  --text-display-sm: clamp(2rem, 4vw, 3.5rem);
+
+  --leading-tight:   1.1;
+  --leading-snug:    1.25;
+  --leading-normal:  1.5;
   --leading-relaxed: 1.65;
 
-  /* Atmospheric layered shadows (3D stack) */
-  --shadow-layer-1: 0 1px 2px rgb(var(--color-primary-slate-rgb) / 0.05);
-  --shadow-layer-2: 0 4px 12px rgb(var(--color-primary-slate-rgb) / 0.07);
-  --shadow-layer-3: 0 12px 28px rgb(var(--color-primary-slate-rgb) / 0.09);
-  --shadow-layer-4: 0 28px 56px rgb(var(--color-primary-slate-rgb) / 0.12);
-  --shadow-elevated: var(--shadow-layer-1), var(--shadow-layer-2), var(--shadow-layer-3), var(--shadow-layer-4);
+  /* ── Shadows ────────────────────────────────────────────────── */
+  --shadow-layer-1: 0 1px 2px rgb(var(--color-graphite-950-rgb) / 0.08);
+  --shadow-layer-2: 0 4px 12px rgb(var(--color-graphite-950-rgb) / 0.12);
+  --shadow-layer-3: 0 12px 28px rgb(var(--color-graphite-950-rgb) / 0.16);
+  --shadow-layer-4: 0 28px 56px rgb(var(--color-graphite-950-rgb) / 0.22);
+  --shadow-elevated: var(--shadow-layer-1), var(--shadow-layer-2), var(--shadow-layer-3);
 
   --shadow-glass-atmosphere:
-    0 1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 -1px 0 rgb(var(--color-primary-slate-rgb) / 0.06) inset,
-    0 8px 32px rgb(var(--color-primary-slate-rgb) / 0.09),
-    0 2px 8px rgb(var(--color-primary-slate-rgb) / 0.05),
-    0 24px 48px rgb(var(--color-primary-slate-rgb) / 0.08);
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 -1px 0 rgb(var(--color-graphite-950-rgb) / 0.08) inset,
+    0 8px 32px rgb(var(--color-graphite-950-rgb) / 0.18),
+    0 2px 8px rgb(var(--color-graphite-950-rgb) / 0.1);
 
-  /* Focus ring */
-  --focus-ring: 0 0 0 3px rgb(var(--color-action-emerald-rgb) / 0.2);
-  --focus-ring-strong: 0 0 0 4px rgb(var(--color-action-emerald-rgb) / 0.28);
+  /* Focus ring — brass */
+  --focus-ring:        0 0 0 3px rgb(var(--color-brass-400-rgb) / 0.32);
+  --focus-ring-strong: 0 0 0 4px rgb(var(--color-brass-400-rgb) / 0.42);
 
-  /* Spatial Grid System (4px/8px base) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-8: 48px;
+  /* ── Spacing (4px / 8px grid) ────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-8:  48px;
   --space-12: 64px;
 
-  /* Modern Radius (Standardized to 8px where requested) */
-  --radius-sm: 8px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
+  /* ── Radius ────────────────────────────────────────────────── */
+  /* Adrien direction: tighter, more architectural */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
 
-  /* Motion */
-  --motion-fast: 180ms;
-  --motion-mid: 300ms;
-  --motion-slow: 520ms;
+  /* ── Motion ────────────────────────────────────────────────── */
+  --motion-fast: 160ms;
+  --motion-mid:  280ms;
+  --motion-slow: 480ms;
 }

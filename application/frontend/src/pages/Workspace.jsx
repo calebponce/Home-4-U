@@ -144,7 +144,7 @@ const Workspace = () => {
     setPreviewState('processing');
     setProcessingLevel(0);
     
-    // Techy processing text
+    // Progressive status messages shown while the preview is generated.
     const texts = [
       "Analyzing spatial geometry...",
       "Detecting light sources...",
@@ -205,7 +205,7 @@ const Workspace = () => {
         if (!isMountedRef.current) return;
         setShowSuccessGlow(false);
       }, 2000);
-    }, 3000); // Tripled the fake wait time for better drama
+    }, 3000); // Simulated processing time for preview mode.
   };
 
   const handleMagneticMove = (e) => {
@@ -239,22 +239,21 @@ const Workspace = () => {
         <header className="workspace-header">
           <div>
             <p className="workspace-eyebrow">
-              AI Transformation Workspace <span className="badge demo-badge">Demo Mode</span>
+              AI Transformation Workspace <span className="badge demo-badge">Preview</span>
             </p>
             <h1>{styleInfo.name}</h1>
             <p className="workspace-sub">{styleInfo.description}</p>
           </div>
-          <button className="back-btn" onClick={() => navigate('/dashboard')}>← Back to Styles</button>
+          <button type="button" className="back-btn" onClick={() => navigate('/dashboard')}>← Back to Dashboard</button>
         </header>
 
         <main className="workspace-main">
         <div className="design-timeline" aria-label="Design progress">
           {steps.map((step, idx) => (
-            <div key={step.key} className="timeline-step">
+            <div key={step.key} className="timeline-step" aria-current={idx === activeStepIndex ? 'step' : undefined}>
               <div
                 className={`timeline-node ${step.done ? 'done' : ''} ${idx === activeStepIndex ? 'active' : ''}`}
-                aria-checked={step.done}
-                role="checkbox"
+                aria-label={`${step.label}${step.done ? ' complete' : idx === activeStepIndex ? ' current' : ''}`}
               >
                 <step.icon size={14} className="step-icon" />
               </div>
@@ -401,6 +400,7 @@ const Workspace = () => {
                 type="button"
                 className={`toggle ${lighting === 'warm' ? 'active' : ''}`}
                 onClick={() => setLighting('warm')}
+                aria-pressed={lighting === 'warm'}
               >
                 Warm
               </button>
@@ -408,6 +408,7 @@ const Workspace = () => {
                 type="button"
                 className={`toggle ${lighting === 'cool' ? 'active' : ''}`}
                 onClick={() => setLighting('cool')}
+                aria-pressed={lighting === 'cool'}
               >
                 Cool
               </button>
@@ -416,7 +417,7 @@ const Workspace = () => {
 
           <div className="control-group actions">
             <div className="demo-rooms-section">
-              <span className="demo-rooms-label">Try a Demo Room</span>
+              <span className="demo-rooms-label">Try a Sample Room</span>
               <div className="demo-rooms-buttons">
                 <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-1598928506311-c55dd12966c4?auto=format&fit=crop&q=80&w=800')}>Living Room</button>
                 <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=800')}>Kitchen</button>
@@ -449,15 +450,18 @@ const Workspace = () => {
               />
             </label>
             <button 
+              type="button"
               ref={generateBtnRef}
               className="primary generate-btn" 
               onClick={handleGenerate} 
               disabled={isGenerating || !roomImage}
               onMouseLeave={handleMagneticLeave}
             >
-              {isGenerating ? 'Generating…' : 'Generate Preview (Demo)'}
+              {isGenerating ? 'Generating…' : 'Generate Preview'}
             </button>
-            <button className="secondary ghost">Full AI Engine Coming Soon</button>
+            <button type="button" className="secondary ghost" disabled aria-disabled="true" title="Feature coming soon">
+              Full AI Engine Coming Soon
+            </button>
           </div>
         </aside>
         </main>

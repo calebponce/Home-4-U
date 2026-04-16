@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authAPI } from '../services/api';
@@ -6,15 +6,39 @@ import { useAuth } from '../context/AuthContext';
 import { Home, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 import './Login.css';
 
-const Login = () => {
+const Login = ({ initialMode = 'login' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(initialMode === 'register');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  /* ── Scene tinting ────────────────────────────────────────── */
+  useEffect(() => {
+    const prev = document.body.dataset.scene;
+    document.body.dataset.scene = 'login';
+    return () => {
+      if (document.body.dataset.scene === 'login') {
+        if (prev) document.body.dataset.scene = prev;
+        else delete document.body.dataset.scene;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsRegister(initialMode === 'register');
+    setError('');
+  }, [initialMode]);
+
+  const handleAuthModeToggle = () => {
+    const nextModeIsRegister = !isRegister;
+    setIsRegister(nextModeIsRegister);
+    setError('');
+    navigate(nextModeIsRegister ? '/register' : '/login');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,68 +62,95 @@ const Login = () => {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0, x: 50 },
-    visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
-    exit: { opacity: 0, x: -50, transition: { duration: 0.4 } }
+  /* ── Framer Motion variants ───────────────────────────────── */
+  const panelVariants = {
+    hidden:  { opacity: 0, x: 40 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+    exit:    { opacity: 0, x: -30, transition: { duration: 0.35 } },
   };
 
-  const fadeUpVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.1 } }
+  const heroVariants = {
+    hidden:  { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.14, delayChildren: 0.1 },
+    },
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+  const fadeUp = {
+    hidden:  { opacity: 0, y: 28 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
   };
 
   return (
     <div className="auth-split-layout">
-      {/* Left side: Cinematic Hero */}
+      {/* ── LEFT: Cinematic hero (Marcelo) ─────────────────── */}
       <div className="auth-hero">
-        <motion.div 
+        {/* Brand logo */}
+        <motion.div
           layoutId="global-brand-logo"
           className="auth-hero-content auth-logo"
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.8, delay: 0.15 }}
         >
-          <Home size={28} /> Home4U
+          <Home size={22} aria-hidden="true" />
+          Home4U
         </motion.div>
-        
-        <motion.div 
+
+        {/* Editorial headline */}
+        <motion.div
           className="auth-hero-content auth-quote"
-          variants={fadeUpVariants}
+          variants={heroVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.h2 variants={itemVariants}>
-            Elevate your space.<br />Unleash your aesthetic.
+          <motion.h2 variants={fadeUp}>
+            {isRegister ? (
+              <>Begin your<br /><em>design story.</em></>
+            ) : (
+              <>Where space<br /><em>becomes vision.</em></>
+            )}
           </motion.h2>
-          <motion.p variants={itemVariants}>
-            Join the premium platform for spatial design. Upload your room, explore curated styles, and generate AI-powered interior renovations instantly.
+          <motion.p variants={fadeUp}>
+            Home4U is a precision design platform — upload room photos,
+            evaluate style directions, and generate AI-assisted plans.
           </motion.p>
+        </motion.div>
+
+        {/* Footer attribution mark */}
+        <motion.div
+          className="auth-hero-footer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9, duration: 0.6 }}
+        >
+          <div className="auth-hero-footer-line" />
+          <span className="auth-hero-footer-text">Premium Architecture Platform · 2026</span>
         </motion.div>
       </div>
 
-      {/* Right side: Form Container */}
+      {/* ── RIGHT: Form panel (Adrien) ──────────────────────── */}
       <div className="auth-form-container">
         <AnimatePresence mode="wait">
           <motion.div
             key={isRegister ? 'register' : 'login'}
-            variants={containerVariants}
+            variants={panelVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             <div className="auth-form-header">
-              <h3>{isRegister ? 'Create Workspace' : 'Welcome Back'}</h3>
-              <p>{isRegister ? 'Sign up to start designing your dream home.' : 'Enter your studio credentials to continue.'}</p>
+              <h3>{isRegister ? 'Create Account' : 'Welcome Back'}</h3>
+              <p>
+                {isRegister
+                  ? 'Create your account to begin planning your next interior project.'
+                  : 'Enter your credentials to continue to your workspace.'}
+              </p>
             </div>
 
             {error && (
-              <motion.div 
+              <motion.div
                 className="error-message"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -117,8 +168,9 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder=" "
                   required
+                  autoComplete="email"
                 />
-                <label htmlFor="email">Studio Email</label>
+                <label htmlFor="email">Email Address</label>
               </div>
 
               <div className="input-floating">
@@ -129,30 +181,35 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder=" "
                   required
+                  autoComplete={isRegister ? 'new-password' : 'current-password'}
                 />
                 <label htmlFor="password">Password</label>
               </div>
 
-              <button type="submit" className="btn-cinematic" data-magnetic-button disabled={loading}>
+              <button
+                type="submit"
+                className="btn-cinematic"
+                disabled={loading}
+              >
                 {loading ? (
-                  <><Loader2 size={18} className="spin" /> Authenticating...</>
+                  <><Loader2 size={16} className="spin" aria-hidden="true" /> Authenticating…</>
                 ) : (
-                  <>{isRegister ? 'Initialize Studio' : 'Enter Workspace'} <ArrowRight size={18} /></>
+                  <>{isRegister ? 'Create Account' : 'Sign In'} <ArrowRight size={16} aria-hidden="true" /></>
                 )}
               </button>
             </form>
 
             <div className="auth-switch">
               {isRegister ? 'Already a member?' : 'New to Home4U?'}
-              <button onClick={() => setIsRegister(!isRegister)} type="button">
+              <button onClick={handleAuthModeToggle} type="button">
                 {isRegister ? 'Sign In' : 'Create an Account'}
               </button>
             </div>
 
             <div className="auth-exploration">
               <button onClick={() => navigate('/about')} type="button">
-                <Sparkles size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                Explore the platform
+                <Sparkles size={12} aria-hidden="true" />
+                Explore Home4U
               </button>
             </div>
           </motion.div>

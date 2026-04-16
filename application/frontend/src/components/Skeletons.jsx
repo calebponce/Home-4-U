@@ -33,7 +33,7 @@ export const SkeletonStyleCard = ({ className = '' }) => (
 export const SkeletonKanbanColumn = ({ title = 'Column', count = 0, children }) => (
   <div className="k-col todo-col">
     <div className="k-col-head">
-      <span>Column Title</span>
+      <span>{title}</span>
       <span className="count">{count}</span>
     </div>
     <div className="k-col-body">
@@ -61,7 +61,7 @@ export const LoadingSpinner = ({ className = '' }) => (
 
 export const PageSkeleton = ({ title = 'Loading...', subtitle = '' }) => (
   <div className="page-skeleton">
-    <header className="skeleton-header">
+    <header className="skeleton-header" aria-label={[title, subtitle].filter(Boolean).join(' - ')}>
       <div className="skeleton skeleton-text-lg" />
       <div className="skeleton skeleton-text" />
     </header>

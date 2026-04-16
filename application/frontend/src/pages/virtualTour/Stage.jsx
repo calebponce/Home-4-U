@@ -99,7 +99,7 @@ const Stage = ({
         >
           <header className="blueprint-head">
             <p className="blueprint-kicker">Phase 2 · Structure</p>
-            <h3>Home4U Story Blueprint</h3>
+            <h3>Home4U Tour Blueprint</h3>
             <p className="blueprint-subtitle">Pick a room to dive into its story — tailored to your space.</p>
           </header>
 
@@ -223,11 +223,11 @@ const Stage = ({
 
     {phase !== 'outside' && (
       <nav className={`virtual-sticky-dock phase-${phase} ${phaseTransitioning ? 'hidden' : ''}`}>
-        <button className="dock-btn ghost" onClick={handleDockBack} disabled={dockBackDisabled}>← {dockBackLabel}</button>
+        <button type="button" className="dock-btn ghost" onClick={handleDockBack} disabled={dockBackDisabled}>← {dockBackLabel}</button>
         {phase === 'room' && (
-          <button className="dock-btn ghost" onClick={goToOverview} disabled={dockOverviewDisabled}>Tour Overview</button>
+          <button type="button" className="dock-btn ghost" onClick={goToOverview} disabled={dockOverviewDisabled}>Tour Overview</button>
         )}
-        <button className="dock-btn primary" onClick={handleDockPrimary} disabled={dockPrimaryDisabled}>{dockPrimaryLabel} →</button>
+        <button type="button" className="dock-btn primary" onClick={handleDockPrimary} disabled={dockPrimaryDisabled}>{dockPrimaryLabel} →</button>
       </nav>
     )}
   </section>

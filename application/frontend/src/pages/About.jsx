@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import './About.css';
 
 const About = () => {
-  const { logout } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
   const [animatedCounters, setAnimatedCounters] = useState({});
@@ -24,6 +24,10 @@ const About = () => {
   const previousFocusedRef = useRef(null);
 
   const closeMemberModal = () => setSelectedMember(null);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     const prevScene = document.body.dataset.scene;
@@ -85,14 +89,14 @@ const About = () => {
     setTimeout(() => {
       setFormStatus('success');
       setContactForm({ name: '', email: '', message: '' });
-      setFormNotice('Demo mode: contact form submissions are disabled.');
+      setFormNotice('Contact form submissions are unavailable in this preview environment.');
       setTimeout(() => setFormNotice(''), 3500);
     }, 1000);
   };
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    setNewsletterNotice(`Demo mode: newsletter subscription for ${newsletterEmail} is disabled.`);
+    setNewsletterNotice(`Newsletter signup for ${newsletterEmail} is unavailable in this preview environment.`);
     setTimeout(() => setNewsletterNotice(''), 3500);
     setNewsletterEmail('');
   };
@@ -117,8 +121,8 @@ const About = () => {
     { 
       name: 'Caleb Ponce', 
       role: 'Team Lead / System Architecture', 
-      emoji: '👨‍💼', 
-      color: '#bb9457',
+      emoji: 'CP', 
+      color: 'var(--color-camel-400)',
       bio: 'Computer Science student at SFSU with a passion for building scalable web applications. Leads the technical direction and architecture of Home4U.',
       skills: ['System Design', 'React', 'Node.js', 'Cloud Architecture'],
       linkedin: 'https://linkedin.com/in/calebponce',
@@ -127,9 +131,9 @@ const About = () => {
     { 
       name: 'Tyler Morris', 
       role: 'Backend Development', 
-      emoji: '⚙️', 
-      color: '#432818',
-      bio: 'SFSU CS 3rd year,leetcode lover, backend specialist focused on API development.',
+      emoji: 'TM', 
+      color: 'var(--color-primary-slate)',
+      bio: 'Computer Science student at SFSU focused on backend architecture, API design, and reliable platform services.',
       skills: ['Python', 'FastAPI', 'Machine Learning', 'Database Design'],
       linkedin: 'https://linkedin.com/in/tylermorris',
       github: 'https://github.com/tylerrendon'
@@ -137,9 +141,9 @@ const About = () => {
     { 
       name: 'Christopher Quach', 
       role: 'Frontend Development', 
-      emoji: '🎨', 
-      color: '#6f1d1b',
-      bio: 'Creative developer who brings designs to life through beautiful, responsive interfaces and a deep passion for user experience',
+      emoji: 'CQ', 
+      color: 'var(--color-action-emerald)',
+      bio: 'Frontend engineer focused on responsive interfaces, interaction quality, and accessible user experiences.',
       skills: ['React', 'CSS/SASS', 'UI/UX Design', 'Animation'],
       linkedin: 'https://linkedin.com/in/christopherquach',
       github: 'https://github.com/christopherquach'
@@ -147,9 +151,9 @@ const About = () => {
     { 
       name: 'Mason Lee', 
       role: 'Data Modeling & Scoring Engine', 
-      emoji: '📊', 
-      color: '#99582a',
-      bio: 'Data scientist designing the resemblance scoring algorithm. Working on accurate and meaningful sytle matching.',
+      emoji: 'ML', 
+      color: 'var(--color-chocolate-700)',
+      bio: 'Data-focused engineer building the resemblance scoring engine for accurate and meaningful style matching.',
       skills: ['Data Science', 'Python', 'Algorithms', 'Analytics'],
       linkedin: 'https://linkedin.com/in/masonlee',
       github: 'https://github.com/mlee82'
@@ -157,8 +161,8 @@ const About = () => {
     { 
       name: 'Dias Almat', 
       role: 'Database Administrator', 
-      emoji: '📝', 
-      color: '#ffe6a7',
+      emoji: 'DA', 
+      color: 'var(--color-text-300)',
       bio: 'Designs and maintains the database architecture. Ensures data integrity, manages migrations, and optimizes queries to keep the app fast and reliable.',
       skills: ['SQLAlchemy', 'PostgreSQL', 'SQLite', 'Database Design', 'Python'],
       linkedin: 'https://www.linkedin.com/in/dias-almat/',
@@ -173,9 +177,9 @@ const About = () => {
   ];
 
   const faqs = [
-    { question: "Is Home4U free to use?", answer: "Yes! Home4U offers a free tier with all core features. Premium features coming soon." },
+    { question: "Is Home4U free to use?", answer: "Home4U includes a free tier with core features, with expanded capabilities planned." },
     { question: "How does the AI recommendation work?", answer: "Our AI analyzes your room type, budget, and style preferences to suggest products that match your vision." },
-    { question: "Can I use Home4U on multiple devices?", answer: "Absolutely! Your projects sync across all your devices via your account." },
+    { question: "Can I use Home4U on multiple devices?", answer: "Yes. Your projects sync across devices through your account." },
     { question: "How accurate is the style matching?", answer: "Our resemblance scoring algorithm provides 85%+ accuracy based on user feedback and testing." }
   ];
 
@@ -269,11 +273,17 @@ const About = () => {
       <header className="about-header">
         <div className="header-content">
           <button type="button" className="logo" onClick={() => navigate('/dashboard')} aria-label="Go to dashboard">
-            <span>🏠</span> Home4U Studio
+            <Home size={16} aria-hidden="true" /> Home4U Studio
           </button>
           <nav className="header-nav">
-            <button onClick={() => navigate('/dashboard')} className="nav-link">Dashboard</button>
-            <button onClick={logout} className="logout-btn">Logout</button>
+            {token ? (
+              <>
+                <button type="button" onClick={() => navigate('/dashboard')} className="nav-link">Dashboard</button>
+                <button type="button" onClick={handleLogout} className="logout-btn">Logout</button>
+              </>
+            ) : (
+              <button type="button" onClick={() => navigate('/login')} className="nav-link">Login</button>
+            )}
           </nav>
         </div>
       </header>
@@ -285,7 +295,7 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="hero-content">
-          <motion.span variants={itemVariants} className="hero-badge">✨ Redefining Your Space</motion.span>
+          <motion.span variants={itemVariants} className="hero-badge">Redefining Your Space</motion.span>
           <motion.h2 variants={itemVariants} className="hero-title">
             Design Your <span>Editorial Vision</span>
           </motion.h2>
@@ -293,8 +303,8 @@ const About = () => {
             The world's first spatial design assistant. Leverage AI to curate, plan, and execute high-end interior transformations with professional precision.
           </motion.p>
           <motion.div variants={itemVariants} className="hero-buttons">
-            <button onClick={() => navigate('/dashboard')} className="primary-btn">Begin Journey <ArrowRight size={18} inline /></button>
-            <button onClick={() => scrollToSection('features')} className="secondary-btn">The Blueprint</button>
+            <button type="button" onClick={() => navigate('/dashboard')} className="primary-btn">Get Started <ArrowRight size={18} inline /></button>
+            <button type="button" onClick={() => scrollToSection('features')} className="secondary-btn">The Blueprint</button>
           </motion.div>
           <motion.div variants={itemVariants} className="hero-stats">
             <div className="hero-stat"><span className="stat-number">6+</span><span className="stat-text">Spatial Archetypes</span></div>
@@ -313,7 +323,7 @@ const About = () => {
           <div className="hero-card" data-parallax-card>
             <div className="card-glow"></div>
             <div className="card-content">
-              <div className="card-icon">🛋️</div>
+              <div className="card-icon">ST</div>
               <div className="card-text">Scandinavian Loft</div>
               <div className="card-progress"><div className="progress-fill"></div></div>
               <div className="card-meta">
@@ -351,22 +361,22 @@ const About = () => {
             
             <div className="preview-body">
               <div className="preview-sidebar">
-                <div className="preview-logo">🏠 Home4U</div>
+                <div className="preview-logo">Home4U</div>
                 <nav className="preview-nav">
                   <div className="nav-item active">
-                    <span className="nav-icon">📊</span>
+                    <span className="nav-icon">DB</span>
                     <span>Dashboard</span>
                   </div>
                   <div className="nav-item">
-                    <span className="nav-icon">📁</span>
+                    <span className="nav-icon">PR</span>
                     <span>Projects</span>
                   </div>
                   <div className="nav-item">
-                    <span className="nav-icon">🎨</span>
+                    <span className="nav-icon">ST</span>
                     <span>Styles</span>
                   </div>
                   <div className="nav-item">
-                    <span className="nav-icon">💡</span>
+                    <span className="nav-icon">AI</span>
                     <span>Recommendations</span>
                   </div>
                 </nav>
@@ -375,24 +385,24 @@ const About = () => {
               <div className="preview-main">
                 <div className="preview-header-bar">
                   <h3>My Dashboard</h3>
-                  <div className="preview-user">👤 John D.</div>
+                  <div className="preview-user">User: John D.</div>
                 </div>
                 
                 <div className="preview-cards">
                   <div className="preview-card">
-                    <span className="card-emoji">🛏️</span>
+                    <span className="card-emoji">BR</span>
                     <span className="card-name">Bedroom</span>
                     <span className="card-budget">$3,500</span>
                     <div className="card-progress-bar"><div className="progress" style={{width: '65%'}}></div></div>
                   </div>
                   <div className="preview-card">
-                    <span className="card-emoji">🛋️</span>
+                    <span className="card-emoji">LR</span>
                     <span className="card-name">Living Room</span>
                     <span className="card-budget">$5,000</span>
                     <div className="card-progress-bar"><div className="progress" style={{width: '40%'}}></div></div>
                   </div>
                   <div className="preview-card">
-                    <span className="card-emoji">🍳</span>
+                    <span className="card-emoji">KT</span>
                     <span className="card-name">Kitchen</span>
                     <span className="card-budget">$8,000</span>
                     <div className="card-progress-bar"><div className="progress" style={{width: '80%'}}></div></div>
@@ -400,15 +410,15 @@ const About = () => {
                 </div>
                 
                 <div className="preview-recommendations">
-                  <h4>💡 Intelligence Feed</h4>
+                  <h4>Intelligence Feed</h4>
                   <div className="rec-items">
                     <div className="rec-item">
-                      <span className="rec-img">🪑</span>
+                      <span className="rec-img">CH</span>
                       <span className="rec-name">Vitra Chair</span>
                       <span className="rec-price">$1,299</span>
                     </div>
                     <div className="rec-item">
-                      <span className="rec-img">💡</span>
+                      <span className="rec-img">LP</span>
                       <span className="rec-name">Arco Lamp</span>
                       <span className="rec-price">$2,149</span>
                     </div>
@@ -511,6 +521,7 @@ const About = () => {
         <div className="team-grid">
           {teamMembers.map((member, index) => (
             <motion.button
+              type="button"
               whileHover={{ y: -10, scale: 1.02 }}
               variants={itemVariants}
               key={index} 
@@ -540,7 +551,7 @@ const About = () => {
             aria-describedby="member-modal-description"
             onClick={(e) => e.stopPropagation()}
           >
-            <button ref={memberModalCloseRef} className="modal-close" onClick={closeMemberModal} aria-label="Close profile dialog">×</button>
+            <button type="button" ref={memberModalCloseRef} className="modal-close" onClick={closeMemberModal} aria-label="Close profile dialog">×</button>
             <div className="modal-header">
               <div className="modal-avatar" style={{ background: selectedMember.color }}>
                 {selectedMember.emoji}
@@ -579,16 +590,16 @@ const About = () => {
       >
         <div className="company-content">
           <motion.div variants={containerVariants} initial="hidden" whileInView="visible" className="company-text">
-            <motion.h3 variants={itemVariants}>Legacy</motion.h3>
+            <motion.h3 variants={itemVariants}>Company</motion.h3>
             <motion.h2 variants={itemVariants}>Home4U Studio</motion.h2>
             <motion.p variants={itemVariants}>Founded in February 2026, Home4U was born from a simple idea: professional-grade interior design should be an effortless extension of the creative mind.</motion.p>
             <div className="company-values">
               <motion.div variants={itemVariants} className="value-item">
-                <span className="value-icon">🎯</span>
+                <span className="value-icon">01</span>
                 <div><h4>The Mission</h4><p>Democratize professional spatial excellence.</p></div>
               </motion.div>
               <motion.div variants={itemVariants} className="value-item">
-                <span className="value-icon">💎</span>
+                <span className="value-icon">02</span>
                 <div><h4>The Values</h4><p>Precision, Aesthetics, Innovation.</p></div>
               </motion.div>
             </div>
@@ -616,7 +627,7 @@ const About = () => {
       >
         <div className="section-header">
           <h3>Methodology</h3>
-          <h2>Effortless Evolution</h2>
+          <h2>Operational Workflow</h2>
         </div>
         <div className="steps-container">
           {steps.map((step, index) => (
@@ -641,8 +652,8 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="section-header">
-          <h3>Inquiry</h3>
-          <h2>Deep Intelligence</h2>
+          <h3>FAQ</h3>
+          <h2>Frequently Asked Questions</h2>
         </div>
         <div className="faq-grid">
           {faqs.map((faq, index) => (
@@ -742,26 +753,30 @@ const About = () => {
         <div className="cta-content">
           <h2>Ready to Transform Your Space?</h2>
           <p>Start your interior design journey today.</p>
-          <button onClick={() => navigate('/dashboard')} className="cta-btn">Go to Dashboard 🚀</button>
+          <button type="button" onClick={() => navigate('/dashboard')} className="cta-btn">Go to Dashboard</button>
         </div>
       </section>
 
       <footer className="about-footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <h3>🏠 Home4U</h3>
+            <h3>Home4U</h3>
             <p>Your personal interior design assistant</p>
           </div>
           <div className="footer-links">
             <div className="footer-column">
               <h4>Navigation</h4>
-              <button onClick={() => navigate('/dashboard')}>Dashboard</button>
-              <button onClick={() => navigate('/login')}>Login</button>
+              <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
+              {token ? (
+                <button type="button" onClick={handleLogout}>Logout</button>
+              ) : (
+                <button type="button" onClick={() => navigate('/login')}>Login</button>
+              )}
             </div>
             <div className="footer-column">
               <h4>About</h4>
               <p>Version 1.0.0</p>
-              <p>Made with ❤️</p>
+              <p>Built by the Home4U team</p>
             </div>
           </div>
         </div>

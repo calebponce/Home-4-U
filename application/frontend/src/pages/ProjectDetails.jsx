@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { projectsAPI, recommendationsAPI } from '../services/api';
@@ -33,22 +33,7 @@ const ProjectDetails = () => {
   const [budget, setBudget] = useState('');
   const [generating, setGenerating] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
-
-  useEffect(() => {
-    const prevScene = document.body.dataset.scene;
-    document.body.dataset.scene = 'project';
-    return () => {
-      if (document.body.dataset.scene === 'project') {
-        if (prevScene) document.body.dataset.scene = prevScene;
-        else delete document.body.dataset.scene;
-      }
-    };
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const projectRes = await projectsAPI.getById(id);
       setProject(projectRes.data);
@@ -64,7 +49,22 @@ const ProjectDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const prevScene = document.body.dataset.scene;
+    document.body.dataset.scene = 'project';
+    return () => {
+      if (document.body.dataset.scene === 'project') {
+        if (prevScene) document.body.dataset.scene = prevScene;
+        else delete document.body.dataset.scene;
+      }
+    };
+  }, []);
 
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
@@ -136,40 +136,27 @@ const ProjectDetails = () => {
     >
       <motion.div variants={sectionVariants} className="project-details-header">
         <div className="header-left">
-          <button onClick={() => navigate('/dashboard')} className="back-btn-ghost">
+          <button type="button" onClick={() => navigate('/dashboard')} className="back-btn-ghost">
             <ChevronLeft size={16} /> Back to Dashboard
           </button>
           <h1 className="p-title">{project?.name}</h1>
-          <div className="p-meta">{project?.room_type} — Spatial Canvas #{id}</div>
+          <div className="p-meta">{project?.room_type} — Project #{id}</div>
         </div>
       </motion.div>
 
       <div className="canvas-grid">
         <motion.div variants={sectionVariants} className="project-sidebar">
-          <div className="finance-card" data-parallax-card>
+          <div className="finance-card">
             <div className="finance-head">
               <h3>Financial Pulse</h3>
-              <p>Budget Performance</p>
+              <p>Capital Allocated</p>
             </div>
             
-            <div className="budget-donut-container">
-              <svg className="budget-svg" viewBox="0 0 160 160">
-                <circle className="budget-bg" cx="80" cy="80" r="65" />
-                <motion.circle 
-                  className={`budget-progress ${remaining < 0 ? 'over-budget' : ''}`}
-                  cx="80" cy="80" r="65"
-                  initial={{ strokeDasharray: `0, ${circumference}` }}
-                  animate={{ strokeDasharray: `${circumference - offset}, ${circumference}` }}
-                  transition={{ duration: 1.8, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
-                />
-              </svg>
-              <div className="budget-center">
-                <span className="val">${spent.toLocaleString()}</span>
-                <span className="lbl">{remaining < 0 ? 'Over' : 'Invested'}</span>
-              </div>
-            </div>
-
             <div className="budget-details">
+              <div className="budget-item">
+                <span className="lbl">Invested</span>
+                <span className="val">${spent.toLocaleString()}</span>
+              </div>
               <div className="budget-item">
                 <span className="lbl">Ceiling</span>
                 <span className="val">${projectBudget.toLocaleString()}</span>
@@ -183,7 +170,9 @@ const ProjectDetails = () => {
             </div>
 
             <form onSubmit={handleUpdateBudget} className="budget-form">
+              <label className="sr-only" htmlFor="project-budget-input">Adjust budget ceiling</label>
               <input 
+                id="project-budget-input"
                 type="number" 
                 placeholder="Adjust ceiling..." 
                 value={budget} 
@@ -198,6 +187,7 @@ const ProjectDetails = () => {
           <div className="kanban-header">
             <h2>Spatial Strategy</h2>
             <button 
+              type="button"
               className="generate-tasks-btn"
               onClick={handleGenerateRecommendations}
               disabled={generating}
@@ -218,7 +208,7 @@ const ProjectDetails = () => {
                   <div className="empty-kanban">Your strategy is clean. No pending tasks.</div>
                 ) : (
                   <AnimatePresence>
-                    {recommendations.filter(r => !r.is_completed).map((rec, idx) => (
+                    {recommendations.filter(r => !r.is_completed).map((rec) => (
                       <motion.div 
                         key={rec.id}
                         initial={{ opacity: 0, x: -20, filter: 'blur(8px)' }}
@@ -229,7 +219,7 @@ const ProjectDetails = () => {
                         <p className="k-card-desc">{rec.description}</p>
                         <div className="k-card-meta">
                           <span className="k-badge">${Number(rec.estimated_cost).toLocaleString()}</span>
-                          <button onClick={() => handleMarkComplete(rec.id)} className="k-action-btn">
+                          <button type="button" onClick={() => handleMarkComplete(rec.id)} className="k-action-btn">
                             Complete
                           </button>
                         </div>
@@ -247,7 +237,7 @@ const ProjectDetails = () => {
               </div>
               <div className="k-col-body">
                 <AnimatePresence>
-                  {recommendations.filter(r => r.is_completed).reverse().map((rec, idx) => (
+                  {recommendations.filter(r => r.is_completed).reverse().map((rec) => (
                     <motion.div 
                       key={rec.id} 
                       initial={{ opacity: 0, y: 10 }}

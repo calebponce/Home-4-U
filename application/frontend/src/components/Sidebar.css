@@ -60,7 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgb(var(--color-action-emerald-rgb) / 0.28);
   flex-shrink: 0;
 }
 
@@ -71,7 +71,7 @@
 .brand-text {
   font-size: 1.25rem;
   font-weight: 700;
-  background: linear-gradient(to right, #fff, #a5b4fc);
+  background: linear-gradient(to right, #fff, rgb(var(--color-camel-400-rgb) / 0.9));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -178,8 +178,8 @@
 }
 
 .nav-link.active {
-  background: rgba(99, 102, 241, 0.15);
-  color: #c7d2fe;
+  background: rgb(var(--color-action-emerald-rgb) / 0.16);
+  color: rgb(var(--color-secondary-arctic-rgb) / 0.94);
   font-weight: 500;
 }
 

@@ -149,6 +149,7 @@ const NotFound = () => {
         {/* CTA buttons — high-end interactive */}
         <motion.div className="nf-actions" variants={fadeUp}>
           <motion.button
+            type="button"
             className="nf-btn-primary"
             onClick={() => navigate('/dashboard')}
             whileHover={{ scale: 1.04, y: -2 }}
@@ -160,6 +161,7 @@ const NotFound = () => {
           </motion.button>
 
           <motion.button
+            type="button"
             className="nf-btn-ghost"
             onClick={() => navigate(-1)}
             whileHover={{ scale: 1.04, y: -2 }}
@@ -171,6 +173,7 @@ const NotFound = () => {
           </motion.button>
 
           <motion.button
+            type="button"
             className="nf-btn-ghost"
             onClick={() => navigate('/about')}
             whileHover={{ scale: 1.04, y: -2 }}

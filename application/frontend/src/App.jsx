@@ -48,6 +48,7 @@ const ProtectedRoute = ({ children }) => {
 }
 
 function App() {
+  const { token, loading } = useAuth()
   const location = useLocation();
 
   useEffect(() => {
@@ -227,14 +228,25 @@ function App() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={<PageMotion><Login /></PageMotion>} />
+          <Route path="/register" element={<PageMotion><Login initialMode="register" /></PageMotion>} />
           <Route
             path="/about"
             element={
-              <PageMotion>
-                <Suspense fallback={<RouteChunkFallback />}>
-                  <About />
-                </Suspense>
-              </PageMotion>
+              loading ? (
+                <SessionLoadingGate />
+              ) : token ? (
+                <ProtectedRoute>
+                  <Suspense fallback={<RouteChunkFallback />}>
+                    <About />
+                  </Suspense>
+                </ProtectedRoute>
+              ) : (
+                <PageMotion>
+                  <Suspense fallback={<RouteChunkFallback />}>
+                    <About />
+                  </Suspense>
+                </PageMotion>
+              )
             }
           />
           <Route 
