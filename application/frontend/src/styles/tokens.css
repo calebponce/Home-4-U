@@ -5,42 +5,42 @@
      Product screens: Adrien (structure, clarity, grid discipline)
      ============================================================ */
 
-  /* Raw palette */
-  --color-graphite-950: #050505;
-  --color-graphite-900: #0a0a0a;
-  --color-graphite-800: #141414;
-  --color-graphite-700: #1f1f1f;
-  --color-steel-600: #32908f;
-  --color-steel-500:    #6a7d87;
-  --color-slate-400: #a3e7fc;
-  --color-slate-300:    #b0bec6;
-  --color-brass-500: #99cc22;
-  --color-brass-400: #c3f833;
-  --color-brass-300: #e0ff85;
-  --color-stone-200: #2a2a2a;
-  --color-stone-100: #020202;
-  --color-paper-50: #ffffff;
-  --color-paper-0: #e0e0e0;
-  --color-success-600:  #2f5e4f;
-  --color-danger-500:   #ef4444;
+  /* Raw palette — Frost/Air Cinematic (Ecco style) */
+  --color-graphite-950: #dbe8f0;
+  --color-graphite-900: #e8eff2;
+  --color-graphite-800: #f4f7f9;
+  --color-graphite-700: #ffffff;
+  --color-steel-600: #aebfd0;
+  --color-steel-500: #9badbd;
+  --color-slate-400: #7f8c98;
+  --color-slate-300: #677481;
+  --color-brass-500: #1f2122;
+  --color-brass-400: #000000;
+  --color-brass-300: #85a366;
+  --color-stone-200: #c2d0d9;
+  --color-stone-100: #c2d9e6;
+  --color-paper-50:  #111111;
+  --color-paper-0:   #445159;
+  --color-success-600: #2f5e4f;
+  --color-danger-500:  #ef4444;
 
   /* RGB channel triples (for rgba() usage) */
-  --color-graphite-950-rgb: 5 5 5;
-  --color-graphite-900-rgb: 10 10 10;
-  --color-graphite-800-rgb: 20 20 20;
-  --color-graphite-700-rgb: 31 31 31;
-  --color-steel-600-rgb: 50 144 143;
-  --color-steel-500-rgb:    106 125 135;
-  --color-slate-400-rgb: 163 231 252;
-  --color-slate-300-rgb:    176 190 198;
-  --color-brass-500-rgb: 153 204 34;
-  --color-brass-400-rgb: 195 248 51;
-  --color-brass-300-rgb: 224 255 133;
-  --color-stone-200-rgb: 42 42 42;
-  --color-stone-100-rgb: 2 2 2;
-  --color-paper-50-rgb: 255 255 255;
-  --color-paper-0-rgb: 224 224 224;
-  --color-success-600-rgb:  47 94 79;
+  --color-graphite-950-rgb: 219 232 240;
+  --color-graphite-900-rgb: 232 239 242;
+  --color-graphite-800-rgb: 244 247 249;
+  --color-graphite-700-rgb: 255 255 255;
+  --color-steel-600-rgb: 174 191 208;
+  --color-steel-500-rgb: 155 173 189;
+  --color-slate-400-rgb: 127 140 152;
+  --color-slate-300-rgb: 103 116 129;
+  --color-brass-500-rgb: 31 33 34;
+  --color-brass-400-rgb: 0 0 0;
+  --color-brass-300-rgb: 133 163 102;
+  --color-stone-200-rgb: 194 208 217;
+  --color-stone-100-rgb: 194 217 230;
+  --color-paper-50-rgb: 17 17 17;
+  --color-paper-0-rgb: 68 81 89;
+  --color-success-600-rgb: 47 94 79;
 
   /* ── Semantic roles ────────────────────────────────────────── */
 

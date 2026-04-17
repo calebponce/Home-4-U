@@ -4,12 +4,12 @@
    ============================================================ */
 
 :root {
-  /* Moody, dark, warm brass atmosphere */
-  --atmo-a: rgb(195 248 51 / 0.15);
-  --atmo-b: rgb(34 204 255 / 0.1);
-  --atmo-c: rgb(195 248 51 / 0.08);
-  --atmo-strength: 0.92;
-  --grain-strength: 0.055;
+  /* Moody, light frost and air cinematic atmosphere */
+  --atmo-a: rgb(255 255 255 / 0.85);
+  --atmo-b: rgb(var(--color-stone-100-rgb) / 0.70);
+  --atmo-c: rgb(var(--color-brass-300-rgb) / 0.15); /* very soft moss tint */
+  --atmo-strength: 1.0;
+  --grain-strength: 0.035;
 }
 
 body {
@@ -43,12 +43,12 @@ body::after {
   background-image:
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.025) 0 1px,
+      rgba(0, 0, 0, 0.02) 0 1px,
       transparent 1px 4px
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.015) 0 1px,
+      rgba(0, 0, 0, 0.015) 0 1px,
       transparent 1px 5px
     );
   opacity: var(--grain-strength);

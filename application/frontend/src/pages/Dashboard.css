@@ -71,17 +71,15 @@
   color: var(--dash-text);
   border: 1px solid var(--dash-border);
   padding: 0.5rem 1.25rem;
-  border-radius: 0;
+  border-radius: 999px;
   font-weight: 500;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 0.85rem;
   transition: all var(--motion-fast) ease;
 }
 
 .header-action-primary {
-  background: transparent;
-  color: var(--dash-brand);
+  background: var(--dash-brand);
+  color: var(--color-graphite-700);
   border-color: var(--dash-brand);
 }
 
@@ -91,8 +89,8 @@
 }
 
 .header-action-primary:hover {
-  background: rgb(var(--color-brass-400-rgb) / 0.1);
-  border-color: var(--dash-brand);
+  background: var(--color-brass-500);
+  border-color: var(--color-brass-500);
   box-shadow: none;
 }
 
@@ -513,19 +511,19 @@
 }
 
 .cta-primary {
-  background: transparent;
-  color: var(--dash-brand);
+  background: var(--dash-brand);
+  color: var(--color-graphite-700);
   border: 1px solid var(--dash-brand);
-  border-radius: 0;
+  border-radius: 999px;
   box-shadow: none;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.75rem;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .cta-primary:hover:not(:disabled) {
-  background: rgb(var(--color-brass-400-rgb) / 0.1);
+  background: var(--color-brass-500);
+  border-color: var(--color-brass-500);
   transform: none;
 }
 
@@ -533,12 +531,11 @@
   background: transparent;
   color: var(--dash-text);
   border: 1px solid var(--dash-border);
-  border-radius: 0;
+  border-radius: 999px;
   box-shadow: none;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.75rem;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .cta-secondary:hover:not(:disabled) {
