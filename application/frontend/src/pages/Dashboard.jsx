@@ -6,6 +6,21 @@ import { projectsAPI, stylesAPI, searchAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './Dashboard.css';
 
+// Marcelo's Cinematic Transition Configs (Extremely smooth, long sweep)
+const marceloTransition = { duration: 1.6, ease: [0.16, 1, 0.3, 1] };
+const marceloStagger = {
+  animate: {
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.2
+    }
+  }
+};
+const marceloItem = {
+  initial: { opacity: 0, y: 40 },
+  animate: { opacity: 1, y: 0, transition: marceloTransition }
+};
+
 // Room data for the interactive house tour
 const tourRooms = [
   {
@@ -758,7 +773,13 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="dashboard">
+    <motion.div 
+      className="dashboard"
+      initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: -15, filter: 'blur(10px)' }}
+      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="dashboard-shell">
         <header className="dashboard-header">
           <div className="header-left">
@@ -796,14 +817,22 @@ const Dashboard = () => {
       )}
 
       {/* ── Adrien greeting strip (Marcelo type) ────────────────── */}
-      <section className="dashboard-greeting" aria-label="Workspace greeting">
+      <motion.section 
+        className="dashboard-greeting" 
+        aria-label="Workspace greeting"
+        initial="initial"
+        animate="animate"
+        variants={marceloStagger}
+      >
         <div className="greeting-left">
-          <p className="greeting-eyebrow">Home4U AI Studio</p>
-          <h1 className="greeting-heading">
+          <motion.p className="greeting-eyebrow" variants={marceloItem}>
+            Home4U AI Studio
+          </motion.p>
+          <motion.h1 className="greeting-heading" variants={marceloItem}>
             Your&nbsp;<em>Design</em><br />Workspace
-          </h1>
+          </motion.h1>
         </div>
-        <div className="greeting-right">
+        <motion.div className="greeting-right" variants={marceloItem}>
           <button
             type="button"
             className="cta-primary"
@@ -818,8 +847,8 @@ const Dashboard = () => {
           >
             Explore Styles
           </button>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
       {/* ── Stats band — Adrien: immediately visible after greeting ── */}
       <section className="stats-row-section" aria-label="Dashboard statistics">
@@ -855,11 +884,11 @@ const Dashboard = () => {
                 key={project.id}
                 type="button"
                 className="recent-project-card"
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -4, scale: 1.01 }}
+                initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ ...marceloTransition, delay: idx * 0.1 }}
+                whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.4, ease: "backOut" } }}
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <div className="recent-project-top">
@@ -897,10 +926,10 @@ const Dashboard = () => {
 	      <div className="dashboard-main">
           <motion.section 
             className="house-tour-section reveal-on-scroll"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 60 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={marceloTransition}
           >
             <div className="section-intro">
               <h2>Spatial Walkthrough</h2>
@@ -950,9 +979,10 @@ const Dashboard = () => {
           <motion.section 
             className="search-section reveal-on-scroll" 
             id="search-section"
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, scale: 0.98, y: 60 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={marceloTransition}
           >
             <div className="section-intro">
               <h2>Design Studio Explorer</h2>
@@ -1521,7 +1551,7 @@ const Dashboard = () => {
         <p>© 2026 Home4U - Interior Design Assistant</p>
       </footer>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
