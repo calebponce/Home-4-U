@@ -5,42 +5,42 @@
      Product screens: Adrien (structure, clarity, grid discipline)
      ============================================================ */
 
-  /* Raw palette — Frost/Air Cinematic (Ecco style) */
-  --color-graphite-950: #dbe8f0;
-  --color-graphite-900: #e8eff2;
-  --color-graphite-800: #f4f7f9;
-  --color-graphite-700: #ffffff;
-  --color-steel-600: #aebfd0;
+  /* Raw palette — Expanded Ecco Cinematic (Marcelo Exact Extraction) */
+  --color-graphite-950: #8CA6BE; /* Alpine Sky Blue (top gradient) */
+  --color-graphite-900: #9EB5CB; /* Lighter Sky */
+  --color-graphite-800: #DBE4E7; /* Fog/Mist White (horizon) */
+  --color-graphite-700: #ECEDD7; /* Warm Sunlight Glow */
+  --color-steel-600: #789AB7;    /* Deep Sky Edge */
   --color-steel-500: #9badbd;
-  --color-slate-400: #7f8c98;
-  --color-slate-300: #677481;
-  --color-brass-500: #1f2122;
-  --color-brass-400: #000000;
-  --color-brass-300: #85a366;
-  --color-stone-200: #c2d0d9;
-  --color-stone-100: #c2d9e6;
-  --color-paper-50:  #111111;
-  --color-paper-0:   #445159;
-  --color-success-600: #2f5e4f;
+  --color-slate-400: #657788;    /* Muted Blue Text */
+  --color-slate-300: #8FA2B4;
+  --color-brass-500: #2C4614;    /* Deep Moss / Pine Shadow */
+  --color-brass-400: #0E1012;    /* Pure Obsidian (Buttons/Icons) */
+  --color-brass-300: #7BAC23;    /* Vivid Field Grass */
+  --color-stone-200: #C4D3DE;    /* Frosted Glass Shadow */
+  --color-stone-100: #E6EDF0;    /* Frosted Glass Base */
+  --color-paper-50:  #ffffff;    /* Real White for cards */
+  --color-paper-0:   #F3F7F8;
+  --color-success-600: #58811A;
   --color-danger-500:  #ef4444;
 
-  /* RGB channel triples (for rgba() usage) */
-  --color-graphite-950-rgb: 219 232 240;
-  --color-graphite-900-rgb: 232 239 242;
-  --color-graphite-800-rgb: 244 247 249;
-  --color-graphite-700-rgb: 255 255 255;
-  --color-steel-600-rgb: 174 191 208;
+  /* RGB channel triples */
+  --color-graphite-950-rgb: 140 166 190;
+  --color-graphite-900-rgb: 158 181 203;
+  --color-graphite-800-rgb: 219 228 231;
+  --color-graphite-700-rgb: 236 237 215;
+  --color-steel-600-rgb: 120 154 183;
   --color-steel-500-rgb: 155 173 189;
-  --color-slate-400-rgb: 127 140 152;
-  --color-slate-300-rgb: 103 116 129;
-  --color-brass-500-rgb: 31 33 34;
-  --color-brass-400-rgb: 0 0 0;
-  --color-brass-300-rgb: 133 163 102;
-  --color-stone-200-rgb: 194 208 217;
-  --color-stone-100-rgb: 194 217 230;
-  --color-paper-50-rgb: 17 17 17;
-  --color-paper-0-rgb: 68 81 89;
-  --color-success-600-rgb: 47 94 79;
+  --color-slate-400-rgb: 101 119 136;
+  --color-slate-300-rgb: 143 162 180;
+  --color-brass-500-rgb: 44 70 20;
+  --color-brass-400-rgb: 14 16 18;
+  --color-brass-300-rgb: 123 172 35;
+  --color-stone-200-rgb: 196 211 222;
+  --color-stone-100-rgb: 230 237 240;
+  --color-paper-50-rgb: 255 255 255;
+  --color-paper-0-rgb: 243 247 248;
+  --color-success-600-rgb: 88 129 26;
 
   /* ── Semantic roles ────────────────────────────────────────── */
 

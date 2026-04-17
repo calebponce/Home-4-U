@@ -8,11 +8,11 @@
   --dash-surface-soft:    none;
   --dash-surface-strong:  none;
   --dash-surface-glass:   none;
-  --dash-text:            var(--color-paper-50);
-  --dash-muted:           rgb(var(--color-paper-50-rgb) / 0.55);
-  --dash-border:          rgb(var(--color-paper-50-rgb) / 0.12);
-  --dash-brand:           var(--color-brass-400);
-  --dash-accent:          var(--color-brass-300);
+  --dash-text:            var(--color-brass-400); /* Obsidian */
+  --dash-muted:           rgb(var(--color-brass-400-rgb) / 0.65);
+  --dash-border:          rgb(var(--color-brass-400-rgb) / 0.12);
+  --dash-brand:           var(--color-paper-50); /* White! */
+  --dash-accent:          var(--color-brass-300); /* Vivid Grass */
   --dash-danger:          var(--color-danger-500);
   --card-radius:          0;
   --card-padding:         var(--space-6) 0;
@@ -78,18 +78,19 @@
 }
 
 .header-action-primary {
-  background: var(--dash-brand);
-  color: var(--color-graphite-700);
-  border-color: var(--dash-brand);
+  background: var(--color-brass-400);
+  color: var(--color-paper-50);
+  border-color: var(--color-brass-400);
 }
 
 .header-action:hover {
-  border-color: var(--dash-text);
+  border-color: var(--color-brass-400);
+  background: rgb(var(--color-brass-400-rgb) / 0.05);
   transform: none;
 }
 
 .header-action-primary:hover {
-  background: var(--color-brass-500);
+  background: var(--color-brass-500); /* Deep Moss */
   border-color: var(--color-brass-500);
   box-shadow: none;
 }
@@ -511,9 +512,9 @@
 }
 
 .cta-primary {
-  background: var(--dash-brand);
-  color: var(--color-graphite-700);
-  border: 1px solid var(--dash-brand);
+  background: var(--color-brass-400); /* Obsidian */
+  color: var(--color-paper-50);       /* White text */
+  border: 1px solid var(--color-brass-400);
   border-radius: 999px;
   box-shadow: none;
   padding: 0.75rem 1.75rem;
