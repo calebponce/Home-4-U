@@ -5,9 +5,9 @@
 
 :root {
   /* Moody, dark, warm brass atmosphere */
-  --atmo-a: rgb(var(--color-brass-400-rgb) / 0.22);
-  --atmo-b: rgb(var(--color-steel-600-rgb)  / 0.18);
-  --atmo-c: rgb(var(--color-graphite-700-rgb) / 0.12);
+  --atmo-a: rgb(195 248 51 / 0.15);
+  --atmo-b: rgb(34 204 255 / 0.1);
+  --atmo-c: rgb(195 248 51 / 0.08);
   --atmo-strength: 0.92;
   --grain-strength: 0.055;
 }

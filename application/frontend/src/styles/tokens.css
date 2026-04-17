@@ -6,40 +6,40 @@
      ============================================================ */
 
   /* Raw palette */
-  --color-graphite-950: #2f0601;
-  --color-graphite-900: #3a151b;
-  --color-graphite-800: #553a41;
-  --color-graphite-700: #6d4b53;
+  --color-graphite-950: #050505;
+  --color-graphite-900: #0a0a0a;
+  --color-graphite-800: #141414;
+  --color-graphite-700: #1f1f1f;
   --color-steel-600: #32908f;
   --color-steel-500:    #6a7d87;
   --color-slate-400: #a3e7fc;
   --color-slate-300:    #b0bec6;
-  --color-brass-500: #1b8e61;
-  --color-brass-400: #26c485;
-  --color-brass-300: #a3e7fc;
-  --color-stone-200: #32908f;
-  --color-stone-100: #2f0601;
+  --color-brass-500: #99cc22;
+  --color-brass-400: #c3f833;
+  --color-brass-300: #e0ff85;
+  --color-stone-200: #2a2a2a;
+  --color-stone-100: #020202;
   --color-paper-50: #ffffff;
-  --color-paper-0: #c9f1fd;
+  --color-paper-0: #e0e0e0;
   --color-success-600:  #2f5e4f;
   --color-danger-500:   #ef4444;
 
   /* RGB channel triples (for rgba() usage) */
-  --color-graphite-950-rgb: 47 6 1;
-  --color-graphite-900-rgb: 58 21 27;
-  --color-graphite-800-rgb: 85 58 65;
-  --color-graphite-700-rgb: 109 75 83;
+  --color-graphite-950-rgb: 5 5 5;
+  --color-graphite-900-rgb: 10 10 10;
+  --color-graphite-800-rgb: 20 20 20;
+  --color-graphite-700-rgb: 31 31 31;
   --color-steel-600-rgb: 50 144 143;
   --color-steel-500-rgb:    106 125 135;
   --color-slate-400-rgb: 163 231 252;
   --color-slate-300-rgb:    176 190 198;
-  --color-brass-500-rgb: 27 142 97;
-  --color-brass-400-rgb: 38 196 133;
-  --color-brass-300-rgb: 163 231 252;
-  --color-stone-200-rgb: 50 144 143;
-  --color-stone-100-rgb: 47 6 1;
+  --color-brass-500-rgb: 153 204 34;
+  --color-brass-400-rgb: 195 248 51;
+  --color-brass-300-rgb: 224 255 133;
+  --color-stone-200-rgb: 42 42 42;
+  --color-stone-100-rgb: 2 2 2;
   --color-paper-50-rgb: 255 255 255;
-  --color-paper-0-rgb: 201 241 253;
+  --color-paper-0-rgb: 224 224 224;
   --color-success-600-rgb:  47 94 79;
 
   /* ── Semantic roles ────────────────────────────────────────── */
