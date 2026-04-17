@@ -86,16 +86,22 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── pages
 │   │   │   ├── services
 │   │   │   ├── styles
+│   │   │   ├── test
 │   │   │   ├── App.css
 │   │   │   ├── App.jsx
+│   │   │   ├── App.smoke.test.jsx
 │   │   │   ├── index.css
 │   │   │   └── main.jsx
+│   │   ├── PROVISIONAL_UI_UX_CHECKLIST.md
 │   │   ├── README.md
 │   │   ├── eslint.config.js
 │   │   ├── index.html
 │   │   ├── package-lock.json
 │   │   ├── package.json
 │   │   ├── start_frontend.sh
+│   │   ├── update_palette.py
+│   │   ├── update_tokens.py
+│   │   ├── update_tokens_marcelo.py
 │   │   └── vite.config.js
 │   └── README.md
 ├── milestones
@@ -324,5 +330,5 @@ When working on this project:
 
 ---
 
-*Last Updated: 2026-04-16 01:48:29*
+*Last Updated: 2026-04-17 00:23:26*
 *This document is maintained by the CI/CD pipeline*
