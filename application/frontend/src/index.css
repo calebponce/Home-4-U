@@ -10,7 +10,7 @@
   --secondary: var(--color-steel-600);
   --secondary-light: var(--color-brass-300);
   --danger: var(--color-danger-500);
-  --background: var(--color-stone-100);
+  --background: var(--color-graphite-950);
   --card-bg: var(--color-paper-50);
   --text: var(--color-graphite-900);
   --text-secondary: var(--color-slate-400);
@@ -32,7 +32,7 @@
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  background: var(--color-stone-100);
+  background: var(--color-graphite-950);
   color: var(--color-graphite-900);
   line-height: var(--leading-normal);
   min-height: 100vh;

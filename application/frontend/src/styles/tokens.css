@@ -6,40 +6,40 @@
      ============================================================ */
 
   /* Raw palette */
-  --color-graphite-950: #191917;
-  --color-graphite-900: #222220;
-  --color-graphite-800: #2e2e2c;
-  --color-graphite-700: #3d3d3a;
-  --color-steel-600:    #53656e;
+  --color-graphite-950: #2f0601;
+  --color-graphite-900: #3a151b;
+  --color-graphite-800: #553a41;
+  --color-graphite-700: #6d4b53;
+  --color-steel-600: #32908f;
   --color-steel-500:    #6a7d87;
-  --color-slate-400:    #8a9aa4;
+  --color-slate-400: #a3e7fc;
   --color-slate-300:    #b0bec6;
-  --color-brass-500:    #b5924c;
-  --color-brass-400:    #c9a96e;
-  --color-brass-300:    #dcc08e;
-  --color-stone-200:    #d8d2c7;
-  --color-stone-100:    #ece8e1;
-  --color-paper-50:     #f7f4ef;
-  --color-paper-0:      #ffffff;
+  --color-brass-500: #1b8e61;
+  --color-brass-400: #26c485;
+  --color-brass-300: #a3e7fc;
+  --color-stone-200: #32908f;
+  --color-stone-100: #2f0601;
+  --color-paper-50: #ffffff;
+  --color-paper-0: #c9f1fd;
   --color-success-600:  #2f5e4f;
   --color-danger-500:   #ef4444;
 
   /* RGB channel triples (for rgba() usage) */
-  --color-graphite-950-rgb: 25 25 23;
-  --color-graphite-900-rgb: 34 34 32;
-  --color-graphite-800-rgb: 46 46 44;
-  --color-graphite-700-rgb: 61 61 58;
-  --color-steel-600-rgb:    83 101 110;
+  --color-graphite-950-rgb: 47 6 1;
+  --color-graphite-900-rgb: 58 21 27;
+  --color-graphite-800-rgb: 85 58 65;
+  --color-graphite-700-rgb: 109 75 83;
+  --color-steel-600-rgb: 50 144 143;
   --color-steel-500-rgb:    106 125 135;
-  --color-slate-400-rgb:    138 154 164;
+  --color-slate-400-rgb: 163 231 252;
   --color-slate-300-rgb:    176 190 198;
-  --color-brass-500-rgb:    181 146 76;
-  --color-brass-400-rgb:    201 169 110;
-  --color-brass-300-rgb:    220 192 142;
-  --color-stone-200-rgb:    216 210 199;
-  --color-stone-100-rgb:    236 232 225;
-  --color-paper-50-rgb:     247 244 239;
-  --color-paper-0-rgb:      255 255 255;
+  --color-brass-500-rgb: 27 142 97;
+  --color-brass-400-rgb: 38 196 133;
+  --color-brass-300-rgb: 163 231 252;
+  --color-stone-200-rgb: 50 144 143;
+  --color-stone-100-rgb: 47 6 1;
+  --color-paper-50-rgb: 255 255 255;
+  --color-paper-0-rgb: 201 241 253;
   --color-success-600-rgb:  47 94 79;
 
   /* ── Semantic roles ────────────────────────────────────────── */
