@@ -123,12 +123,12 @@ If the URL does not work at the time of testing, the team will receive **no cred
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
-| Vibecoding for Internship | Home4U | http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/ | Consensus |
+| Vibecoding for Internship | Home4U | http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/ | Consensus |
 
 Current production host:
-- Public IP: `18.223.158.116`
-- Public DNS: `ec2-18-223-158-116.us-east-2.compute.amazonaws.com`
-- Public App URL: `http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/`
+- Public IP: `3.16.81.84`
+- Public DNS: `ec2-3-16-81-84.us-east-2.compute.amazonaws.com`
+- Public App URL: `http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/`
 
 If the instance is stopped/started without an Elastic IP, these values can change.
 Current hostname can be checked on EC2 with:
@@ -138,19 +138,20 @@ curl -s http://169.254.169.254/latest/meta-data/public-hostname
 
 ## Deployment Info
 
-- Public App URL: http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/
-- Proxied API Base: http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/api/
-- Public Health Check: http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/health
+- Public App URL: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/
+- Proxied API Base: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/api/
+- Public Health Check: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/health
 - Test login (returns JWT):
   ```bash
   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-    http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/api/auth/login
+    http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/api/auth/login
   ```
 
 Production routing:
 - Browser/frontend requests `http://<host>/api/*`
 - Nginx strips `/api` and forwards the request to FastAPI on `127.0.0.1:8000`
 - Uploaded assets are served through `http://<host>/uploads/*`
+- Trusted HTTPS is not currently available on the raw EC2 `amazonaws.com` hostname. A custom domain or load balancer hostname is required before Let’s Encrypt or AWS-managed TLS can be added cleanly.
 
 ### Deployment / Ops Checklist (AWS)
 
@@ -164,9 +165,9 @@ Production routing:
    ```
 2. Smoke test the public health endpoint and proxied API
    ```bash
-   curl -sf http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/health
+   curl -sf http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/health
    curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-     http://ec2-18-223-158-116.us-east-2.compute.amazonaws.com/api/auth/login
+     http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/api/auth/login
    ```
 3. Keep code/DB in sync
    - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
