@@ -72,7 +72,6 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── main.py
 │   │   │   ├── tests_search_smoke.py
 │   │   │   └── tests_workspace_analysis_smoke.py
-│   │   ├── uploads
 │   │   ├── package-lock.json
 │   │   ├── requirements.txt
 │   │   ├── seed.py
@@ -88,7 +87,6 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── nginx.conf
 │   │   └── quick_fix.sh
 │   ├── frontend
-│   │   ├── design
 │   │   ├── public
 │   │   │   └── vite.svg
 │   │   ├── src
@@ -403,5 +401,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-04-20 09:53:15*
+*Last Updated: 2026-04-20 16:54:33*
 *This document is maintained by the repository documentation generator.*
