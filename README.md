@@ -138,14 +138,19 @@ curl -s http://169.254.169.254/latest/meta-data/public-hostname
 
 ## Deployment Info
 
-- API URL: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/
+- Public App URL: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/
+- Proxied API Base: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/api/
+- Public Health Check: http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/health
 - Test login (returns JWT):
   ```bash
   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-    http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/auth/login
+    http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/api/auth/login
   ```
 
-Frontend → Nginx → FastAPI → Database → JWT token
+Production routing:
+- Browser/frontend requests `http://<host>/api/*`
+- Nginx strips `/api` and forwards the request to FastAPI on `127.0.0.1:8000`
+- Uploaded assets are served through `http://<host>/uploads/*`
 
 ### Deployment / Ops Checklist (AWS)
 
@@ -157,16 +162,17 @@ Frontend → Nginx → FastAPI → Database → JWT token
    git pull origin master
    bash application/deployment/deploy_fix.sh
    ```
-2. Smoke test the API (auth expects form fields)
+2. Smoke test the public health endpoint and proxied API
    ```bash
+   curl -sf http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/health
    curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
-     http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/auth/login
+     http://ec2-3-16-81-84.us-east-2.compute.amazonaws.com/api/auth/login
    ```
 3. Keep code/DB in sync
    - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
    - If a user exists locally but not on AWS, add/reset once in the AWS DB.
 4. Service management
-   - Managed by systemd unit `home4u-backend` (uvicorn :8000, proxied by Nginx).
+   - Managed by systemd unit `home4u-backend` (uvicorn on `127.0.0.1:8000`, exposed publicly through Nginx).
    - Logs: `journalctl -u home4u-backend -n 200 --no-pager`.
 
 ---

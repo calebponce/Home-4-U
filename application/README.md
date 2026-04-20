@@ -21,7 +21,7 @@ Home4U solves this gap by:
 
 Allowing users to upload a room image
 
-Identifying key visual elements through AI-assisted tagging
+Capturing room signals such as lighting, palette, and selected design tags
 
 Comparing the room against structured style definitions
 
@@ -29,7 +29,7 @@ Computing a weighted resemblance score
 
 Generating prioritized, budget-aware recommendations
 
-Suggesting curated product items aligned with the selected style
+Persisting a project plan that can be reviewed and refined later
 
 The system focuses on explainability, personalization, and structured decision support rather than simple inspiration browsing.
 
@@ -41,7 +41,7 @@ User authentication and account management
 
 Room project creation and management
 
-Image upload and AI-assisted tag suggestion
+Image upload and project photo management
 
 Multi-style comparison engine
 
@@ -49,7 +49,7 @@ Weighted resemblance scoring algorithm
 
 Budget-aware prioritization of recommendations
 
-Curated product suggestions
+Workspace analysis and saved project plans
 
 Administrative style and weight management
 
@@ -59,13 +59,12 @@ About page with team introduction and company information
 
 ## Installation and Setup
 
-Describe how to set up the application locally or in a development environment.
-
 Prerequisites:
 
 - Python 3.12.x
 - Node.js 18+
-- PostgreSQL 14+
+- SQLite is used by default in development
+- PostgreSQL or another relational database is optional via `DATABASE_URL`
 - Git
 
 ### Backend Setup
@@ -79,12 +78,12 @@ cd application/backend
 **Option 2: Manual setup**
 ```bash
 cd application/backend
-python -m venv .venv
+python3 -m venv .venv
 # Windows: .venv\Scripts\activate
 # Mac/Linux: 
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 -m uvicorn app.main:app --reload
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Backend will run at:
@@ -107,35 +106,29 @@ cd application/frontend
 ```bash
 cd application/frontend
 npm install
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ```
 
 
 Frontend will run at:
 
-http://localhost:5173
+http://127.0.0.1:5173
 
 ---
 
 ## Usage
 
-Explain how to run and use the application once it is installed.
+Create an account and sign in.
 
-Create an account.
+Open the Dashboard and choose a design style.
 
-Create a new Room Project.
+Launch the Workspace or Virtual Tour from the selected style context.
 
-Upload a room image.
+Upload a room image or load a sample room in Workspace.
 
-Select one or more target styles.
+Generate a saved plan to create or update a project, upload the photo, and calculate style scores.
 
-Confirm or adjust AI-suggested tags.
-
-View resemblance score.
-
-Review prioritized recommendations.
-
-Explore curated product suggestions.
+Review the returned summary, saved recommendations, and project plan.
 
 Screenshots or short examples may be added if helpful.
 
@@ -144,10 +137,14 @@ Screenshots or short examples may be added if helpful.
 ## Configuration
 
 Environment Variables: 
-    Backend requires: 
-    DATABASE_URL=
-    OPENAI_API_KEY=
-    JWT_SECRET_KEY=
+    Backend supports:
+    DATABASE_URL=              # optional; defaults to local SQLite in development
+    HOME4U_SECRET_KEY=         # recommended in production
+    HOME4U_ENV=                # optional; set to production to move default SQLite outside repo
+    HOME4U_DATA_DIR=           # optional; used with HOME4U_ENV=production
+
+    Frontend supports:
+    VITE_API_BASE=             # optional; defaults to /api
 
 
 Do not include secrets or credentials in this file.
@@ -177,64 +174,42 @@ application/
 │   └── package.json
 │
 └── deployment/
-    └── nginx/            # Reverse proxy configuration
+    └── nginx.conf        # Reverse proxy configuration
 
 
 ---
 
 ## Contributing
 
-Describe how contributors should work with the codebase:
+Repository policy:
 
-Branching Strategy
+- The root repository README identifies `master` as the branch used for grading.
+- Feature branches are still recommended for isolated work before merging back into `master`.
 
-master (or main) — stable branch
+Code standards:
 
-Feature branches:
-feature/backend-auth
-feature/frontend-upload
+- Python follows PEP 8 guidelines.
+- Use meaningful variable and function names.
+- Include docstrings for public functions.
+- All backend endpoints should use Pydantic schemas.
+- Frontend components should remain modular and reusable.
 
-Code Standards: 
+Suggested pull request workflow:
 
-Python follows PEP 8 guidelines.
-
-Use meaningful variable and function names.
-
-Include docstrings for public functions.
-
-All backend endpoints must use Pydantic schemas.
-
-Frontend components must be modular and reusable
-
-Pull Request Workflow: 
-
-Create feature branch.
-
-Complete feature.
-
-Ensure code runs locally.
-
-Submit pull request.
-
-Require at least one team review before merge.
-
-This section is especially important if the project is continued after the course.
+1. Create a feature branch from `master`.
+2. Complete the change and run local verification.
+3. Open a pull request for review.
+4. Merge back into `master` after approval.
 
 ---
 
 ## License
-
-Specify the license under which this project is released, if applicable.
-
-If no license has been chosen yet, state that explicitly.
 
 License to be determined.
 
 ---
 
 ## Credits
-
-List the project contributors and their roles.
 
 Team 4 — Home4U
 

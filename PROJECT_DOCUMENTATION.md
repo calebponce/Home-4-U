@@ -1,11 +1,11 @@
 # Home4U Project Documentation
 
-> **⚠️ IMPORTANT**: This document is automatically generated and maintained. Do not edit manually.
-> Any manual changes will be overwritten by the CI/CD pipeline.
+> **IMPORTANT**: This document is automatically generated from `.github/workflows/generate_docs.py`.
+> Update the generator when the repo contract changes; direct edits to this file will be overwritten.
 
 ---
 
-## 📋 Project Overview
+## Project Overview
 
 | Property | Value |
 |----------|-------|
@@ -13,40 +13,49 @@
 | **Team Alias** | Vibecoding for Internship |
 | **Project Type** | Full-Stack Web Application |
 | **Status** | Active Development |
-| **Current Milestone** | M1 |
+| **Milestone Folders Present** | M1, M2, M3, M4, M5 |
+| **Runtime API Contract** | Frontend `/api/*` proxy -> backend unversioned routes |
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Home4U Application                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   ┌─────────────────────┐         ┌─────────────────────────┐   │
-│   │                     │         │                         │   │
-│   │   Frontend          │         │   Backend              │   │
-│   │   (React + Vite)    │ ◄─────► │   (FastAPI + Python)   │   │
-│   │                     │  REST   │                         │   │
-│   │   Port: 5173        │         │   Port: 8000            │   │
-│   │                     │         │                         │   │
-│   └─────────────────────┘         └───────────┬─────────────┘   │
-│                                               │                 │
-│                                               ▼                 │
-│                                    ┌─────────────────────┐     │
-│                                    │   Database          │     │
-│                                    │   (PostgreSQL)      │     │
-│                                    │                     │     │
-│                                    │   Host: TBD         │     │
-│                                    └─────────────────────┘     │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                           Home4U Application                        │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   React + Vite frontend                                              │
+│   127.0.0.1:5173 in development                                      │
+│        │                                                             │
+│        ├── /api/*      -> proxied to FastAPI backend root routes     │
+│        └── /uploads/*  -> proxied to backend-hosted uploaded files   │
+│                                │                                     │
+│                                ▼                                     │
+│                       FastAPI + Uvicorn backend                      │
+│                       127.0.0.1:8000                                 │
+│                                │                                     │
+│                                ▼                                     │
+│                  SQLAlchemy-backed relational data layer             │
+│                  SQLite by default in development                    │
+│                  DATABASE_URL override for other relational DBs      │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📁 Directory Structure
+## Runtime Contract
+
+- Backend route modules currently live under `application/backend/app/api/v1/`, but the public backend URLs are **not** versioned as `/api/v1/*`.
+- The frontend uses `VITE_API_BASE=/api` in [api.js](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/src/services/api.js) and [AuthContext.jsx](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/src/context/AuthContext.jsx).
+- In development, [vite.config.js](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/vite.config.js) strips `/api` before forwarding requests to `http://127.0.0.1:8000`, and proxies `/uploads` directly.
+- In production, [nginx.conf](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/deployment/nginx.conf) applies the same `/api` rewrite and `/uploads` proxy behavior.
+- Uploaded room images are served by the backend static mount at `/uploads/*`.
+
+---
+
+## Directory Structure
 
 ```
 csc648-848-project-sp26-vibecoding-for-internship/
@@ -61,7 +70,9 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   ├── main.py
-│   │   │   └── tests_search_smoke.py
+│   │   │   ├── tests_search_smoke.py
+│   │   │   └── tests_workspace_analysis_smoke.py
+│   │   ├── uploads
 │   │   ├── package-lock.json
 │   │   ├── requirements.txt
 │   │   ├── seed.py
@@ -77,6 +88,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── nginx.conf
 │   │   └── quick_fix.sh
 │   ├── frontend
+│   │   ├── design
 │   │   ├── public
 │   │   │   └── vite.svg
 │   │   ├── src
@@ -87,6 +99,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── services
 │   │   │   ├── styles
 │   │   │   ├── test
+│   │   │   ├── utils
 │   │   │   ├── App.css
 │   │   │   ├── App.jsx
 │   │   │   ├── App.smoke.test.jsx
@@ -137,198 +150,258 @@ csc648-848-project-sp26-vibecoding-for-internship/
 
 ---
 
-## 🔧 Technology Stack
+## Technology Stack
 
 ### Backend
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | fastapi | 0.110.0 | Web framework |
-| uvicorn[standard] | 0.27.1 | Utility |
-| pydantic | 2.6.1 | Data validation |
-| python-multipart | 0.0.9 | Form data parsing |
-| sqlalchemy | 2.0.25 | ORM |
+| uvicorn[standard] | 0.27.1 | ASGI server |
+| pydantic | 2.6.1 | Schema validation |
+| python-multipart | 0.0.9 | Multipart form parsing |
+| sqlalchemy | 2.0.25 | ORM and relational persistence |
 | python-jose | 3.3.0 | JWT handling |
-| passlib[bcrypt] | 1.7.4 | Utility |
-| email-validator | 2.3.0 | Utility |
-| bcrypt | 4.0.1 | Utility |
+| passlib[bcrypt] | 1.7.4 | Password hashing |
+| email-validator | 2.3.0 | Email validation |
+| bcrypt | 4.0.1 | Password hashing backend |
+| httpx | 0.27.2 | HTTP client used by FastAPI test tooling |
 
 
 ### Frontend
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| axios | ^1.6.7 | Dependency |
-| framer-motion | ^12.38.0 | Dependency |
-| lucide-react | ^0.577.0 | Dependency |
 | react | ^19.2.0 | UI framework |
-| react-dom | ^19.2.0 | UI framework |
-| react-router-dom | ^6.22.0 | Dependency |
+| react-dom | ^19.2.0 | DOM renderer |
+| react-router-dom | ^6.22.0 | Client-side routing |
+| axios | ^1.6.7 | HTTP client |
+| framer-motion | ^12.38.0 | Motion and transitions |
+| lucide-react | ^0.577.0 | Icon library |
+| vite | ^8.0.0-beta.13 | Build and dev server |
+| vitest | ^4.1.4 | Component and smoke test runner |
+| eslint | ^9.39.1 | Linting |
+| @testing-library/react | ^16.3.2 | UI test utilities |
 
 
-### Infrastructure (Planned)
+### Runtime / Infrastructure
 
-| Service | Provider | Notes |
-|---------|----------|-------|
-| Compute | AWS/GCP/Azure | Free tier |
-| Database | PostgreSQL | Recommended |
-| Web Server | Nginx | For production |
+| Layer | Current Repo Reality | Notes |
+|------|-----------------------|-------|
+| Frontend dev server | Vite on `127.0.0.1:5173` | `start_frontend.sh` uses `--strictPort` |
+| Backend app | FastAPI/Uvicorn on `127.0.0.1:8000` | `start_backend.sh` runs without `--reload` |
+| Default development database | SQLite file at `application/backend/home4u.db` | Override with `DATABASE_URL` if needed |
+| Production edge | Nginx reverse proxy | Strips `/api` before forwarding to backend |
 
 ---
 
-## 👥 Team Members
+## Team Members
 
 | # | Name | SFSU Email | GitHub | Discord | Role | Contract |
 |---|------|------------|--------|---------|------|----------|
-| 1 | Caleb Ponce | cponce8@sfsu.edu | calebponce | fusionn8 | Team Lead | ✅ |
-| 2 | Mason Lee | mlee82@sfsu.edu | mlee82 | masonl | | ✅ |
-| 3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg | | ✅ |
-| 4 | Tyler Morris | tmorris6@sfsu.edu | tylerrendon | sinigang4463 | Unsure | ✅ |
-| 5 | Dias Almat | dalmat@sfsu.edu | vincivv | vinciv | | ✅ |
-| 6 | - | - | - | - | | ❌ |
-| 7 | - | - | - | - | | ❌ |
+| 1 | Caleb Ponce | cponce8@sfsu.edu | calebponce | fusionn8 | Team Lead | Yes |
+| 2 | Mason Lee | mlee82@sfsu.edu | mlee82 | masonl | - | Yes |
+| 3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg | - | Yes |
+| 4 | Tyler Morris | tmorris6@sfsu.edu | tylerrendon | sinigang4463 | Unsure | Yes |
+| 5 | Dias Almat | dalmat@sfsu.edu | vincivv | vinciv | - | Yes |
+| 6 | - | - | - | - | - | No |
+| 7 | - | - | - | - | - | No |
 
 ---
 
-## 📡 API Endpoints
+## Current Feature Map
 
-### Backend Endpoints
+- Authentication: signup, login, JWT session validation, and `/auth/me` checks.
+- Dashboard flow: protected dashboard, style selection, workspace launch, and guided virtual-tour launch.
+- Workspace flow: project creation, budget and room-type updates, local photo upload, project analysis, concept-board rendering, and saved recommendations.
+- Project management: recommendation retrieval, completion tracking, and plan refresh.
+- Discovery: public style catalog plus fuzzy style search.
 
-| Method | Endpoint | Handler | Status |
-|--------|----------|---------|--------|
-| GET | `/` | main.py | ✅ Active |
-| GET | `/api/v1/health` | health.py | ✅ Active |
+---
+
+## Backend Endpoints
+
+| Method | Endpoint | Access | Handler | Notes |
+|--------|----------|--------|---------|-------|
+| GET | `/` | Public | `main.py::root` | Basic API status message. |
+| POST | `/auth/login` | Public | `auth.py::login` | - |
+| GET | `/auth/me` | Protected | `auth.py::get_me` | - |
+| POST | `/auth/signup` | Public | `auth.py::signup` | - |
+| GET | `/health` | Public | `health.py::health` | Returns API and database diagnostics. |
+| GET | `/projects/` | Protected | `projects.py::get_projects` | - |
+| POST | `/projects/` | Protected | `projects.py::create_project` | - |
+| GET | `/projects/{project_id}` | Protected | `projects.py::get_project` | - |
+| PUT | `/projects/{project_id}` | Protected | `projects.py::update_project` | - |
+| DELETE | `/projects/{project_id}` | Protected | `projects.py::delete_project` | - |
+| POST | `/projects/{project_id}/analysis` | Protected | `projects.py::analyze_project` | Persists room tags, style scores, and recommendations for Workspace. |
+| POST | `/projects/{project_id}/photo` | Protected | `projects.py::upload_project_photo` | Accepts JPG, PNG, and WebP uploads up to 5MB. |
+| POST | `/recommendations/` | Protected | `recommendations.py::create_recommendation` | Uses a required `project_id` query parameter. |
+| POST | `/recommendations/generate/{project_id}` | Protected | `recommendations.py::generate_recommendations` | Builds a fresh plan from saved resemblance scores. |
+| GET | `/recommendations/project/{project_id}` | Protected | `recommendations.py::get_project_recommendations` | - |
+| PUT | `/recommendations/{recommendation_id}/complete` | Protected | `recommendations.py::mark_recommendation_complete` | - |
+| GET | `/search/` | Public | `search.py::search` | - |
+| GET | `/styles/` | Public | `styles.py::get_styles` | - |
+| GET | `/styles/tags/` | Public | `styles.py::get_all_tags` | - |
+| POST | `/styles/tags/` | Public | `styles.py::create_tag` | Prototype admin endpoint; no auth enforcement is currently wired. |
+| GET | `/styles/{style_id}` | Public | `styles.py::get_style` | - |
+| GET | `/styles/{style_id}/tags` | Public | `styles.py::get_style_tags` | - |
 
 
 ### Frontend Routes
 
-| Path | Component |
-|------|-----------|
-| / | App (root) |
+| Path | Access | Component / Behavior | Notes |
+|------|--------|----------------------|-------|
+| `/login` | Public | Login | - |
+| `/register` | Public | Login | - |
+| `/about` | Public / Auth-aware | About | Public page that renders inside the authenticated shell when a session exists. |
+| `/dashboard` | Protected | Dashboard | Primary authenticated landing page. |
+| `/project/:id` | Protected | ProjectDetails | Project plan view for a saved room project. |
+| `/virtual-tour` | Protected | VirtualTour3D | Protected 3D tour experience. |
+| `/workspace` | Protected | Workspace | Protected design workspace with project sync and analysis. |
+| `/` | Public | Navigate | Redirects to `/dashboard`. |
+| `*` | Public | NotFound | Catch-all not-found route. |
+
 
 ---
 
-## 🚀 Running the Application
+## Running the Application
 
 ### Backend
 
+Recommended script:
+
 ```bash
-# Navigate to backend directory
 cd application/backend
-
-# Create virtual environment (if not exists)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+./start_backend.sh
 ```
 
-The API will be available at: `http://localhost:8000`
-- API Docs (Swagger UI): `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+Optional dependency install during startup:
+
+```bash
+cd application/backend
+INSTALL_DEPS=1 ./start_backend.sh
+```
+
+Manual startup:
+
+```bash
+cd application/backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Backend URLs:
+
+- API root: `http://127.0.0.1:8000/`
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+- Health check: `http://127.0.0.1:8000/health`
 
 ### Frontend
 
+Recommended script:
+
 ```bash
-# Navigate to frontend directory
 cd application/frontend
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
+./start_frontend.sh
 ```
 
-The frontend will be available at: `http://localhost:5173`
+Manual startup:
+
+```bash
+cd application/frontend
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+Frontend URLs:
+
+- App: `http://127.0.0.1:5173`
+- API via dev proxy: `http://127.0.0.1:5173/api/*`
+- Uploaded assets via dev proxy: `http://127.0.0.1:5173/uploads/*`
 
 ---
 
-## 📄 Milestones
+## Data and Configuration Notes
+
+- Development defaults to SQLite via [database.py](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/backend/app/core/database.py).
+- `HOME4U_ENV=production` moves the default SQLite path outside the repo so deployments do not lose local data on `git pull`.
+- `DATABASE_URL` can override the default database connection for other relational database deployments.
+- The backend currently starts without requiring an AI provider key; Workspace analysis is implemented through deterministic backend scoring rather than an external model call.
+
+---
+
+## Milestones
 
 | Milestone | Status | Description |
 |-----------|--------|-------------|
-| M1 | 📝 In Progress | Requirements & Architecture |
-| M2 | ⏳ Pending | Database & API Design |
-| M3 | ⏳ Pending | UI/UX Implementation |
-| M4 | ⏳ Pending | Integration & Testing |
-| M5 | ⏳ Pending | Deployment & Final |
+| M1 | Present | Requirements and architecture |
+| M2 | Present | System design and data modeling |
+| M3 | Present | UI, architecture, and implementation review |
+| M4 | Present | Beta prototype and testing |
+| M5 | Present | Final delivery |
 
 
 ---
 
-## 🔄 Development Workflow
+## Development Workflow
 
-### Branching Strategy
+### Repository Policy
 
-```
-master (production-ready)
-    │
-    └── develop (integration branch)
-            │
-            ├── feature/feature-name
-            ├── bugfix/bug-description
-            └── hotfix/urgent-fix
-```
+- The root [README.md](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/README.md) states that `master` is the branch used for grading.
+- Feature branches and pull requests are still the safer day-to-day workflow, but repository-wide decisions should stay consistent with the course policy documented in the root README.
 
-### Commit Message Format
+### Suggested Engineering Workflow
 
-```
+1. Branch from `master` for isolated work.
+2. Run local verification before merging: frontend tests, lint, build, and backend smoke checks as appropriate.
+3. Merge reviewed work back into `master`.
+4. Regenerate project documentation by updating `.github/workflows/generate_docs.py` when the route contract or project structure changes.
+
+### Commit Message Guidance
+
+```text
 <type>(<scope>): <description>
 
-Types: feat, fix, docs, style, refactor, test, chore
+Examples: feat(workspace): add project analysis flow
+          docs(project): refresh generated runtime contract
+          fix(auth): normalize login emails
 ```
 
-### Pull Request Process
-
-1. Create feature branch from `develop`
-2. Make changes and commit
-3. Push and create PR to `develop`
-4. Request code review
-5. Merge after approval
-
 ---
 
-## 📝 Notes for AI Agents
-
-When working on this project:
+## Notes for AI Agents
 
 ### Backend Development
-- All backend code goes in `application/backend/app/`
-- Follow the existing module structure (api/, models/, schemas/, services/, utils/)
-- Use FastAPI for new endpoints
-- Follow PEP 8 style guide
-- Add type hints to all functions
+
+- Add backend code under `application/backend/app/`.
+- Follow the existing structure: `api/`, `models/`, `schemas/`, `services/`, `utils/`.
+- Use FastAPI endpoints with Pydantic schemas and type hints.
+- Preserve the current public API contract unless the frontend and proxy config are updated together.
 
 ### Frontend Development
-- All frontend code goes in `application/frontend/src/`
-- Use functional components with hooks
-- Follow React best practices
-- Use CSS modules or styled-components for styling
 
-### Database
-- PostgreSQL is the recommended database
-- Use SQLAlchemy for ORM
-- Follow database naming conventions (snake_case)
+- Add frontend code under `application/frontend/src/`.
+- Use functional React components and keep route-level behavior aligned with [App.jsx](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/src/App.jsx).
+- The frontend currently expects `/api/*` and `/uploads/*` to be available through dev and production proxies.
 
 ### API Design
-- RESTful principles
-- Version APIs under `/api/v1/`
-- Use meaningful HTTP methods and status codes
+
+- The **current live contract** is unversioned backend paths such as `/auth/login`, `/projects/`, `/styles/`, and `/health`.
+- If API versioning is introduced later, update backend routes, frontend clients, and proxy rewrites together instead of only changing the folder naming.
+- Use meaningful HTTP methods, response models, and authentication boundaries.
 
 ---
 
-## 📞 Contact
+## Contact
 
-- **Team Lead**: Caleb Ponce (cponce8@sfsu.edu)
-- **Repository**: GitHub Classroom
-- **Decision Making**: Consensus
+- Team Lead: Caleb Ponce (`cponce8@sfsu.edu`)
+- Repository: GitHub Classroom course repository
+- Decision Making Policy: Consensus
 
 ---
 
-*Last Updated: 2026-04-17 00:23:26*
-*This document is maintained by the CI/CD pipeline*
+*Last Updated: 2026-04-20 09:53:15*
+*This document is maintained by the repository documentation generator.*

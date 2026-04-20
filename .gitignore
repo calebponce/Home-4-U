@@ -23,5 +23,6 @@ Thumbs.db
 *.sqlite3
 *.db-wal
 *.db-shm
+application/backend/uploads/
 application/backend/server.log
 nohup.out

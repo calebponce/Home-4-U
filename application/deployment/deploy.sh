@@ -173,10 +173,12 @@ systemctl status home4u-backend
 echo "=== Deployment Complete! ==="
 if [ -z "$PUBLIC_DNS" ]; then
   echo "Frontend should be available at your current EC2 public DNS or IP"
-  echo "API is available at your current EC2 public DNS or IP"
+  echo "Proxied API base is available at http://<your-host>/api"
+  echo "Health check is available at http://<your-host>/health"
 else
   echo "Frontend should be available at http://$PUBLIC_DNS"
-  echo "API is at http://$PUBLIC_DNS"
+  echo "Proxied API base is at http://$PUBLIC_DNS/api"
+  echo "Health check is at http://$PUBLIC_DNS/health"
 fi
 echo ""
 echo "Test users:"
