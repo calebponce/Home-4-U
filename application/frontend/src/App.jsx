@@ -20,7 +20,7 @@ const Workspace = lazy(() => import('./pages/Workspace'))
 const RouteChunkFallback = () => (
   <div className="page-shell route-loading-state" role="status" aria-live="polite">
     <div className="route-loading-state__dot" aria-hidden="true" />
-    <p>Loading page…</p>
+    <p>Loading screen…</p>
   </div>
 )
 

@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { DollarSign, FolderKanban, Home, Palette, PlayCircle, SearchX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { projectsAPI, stylesAPI, searchAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { serializeStyleContext, styleSlug } from '../utils/styleContext';
 import './Dashboard.css';
 
-// Marcelo's Cinematic Transition Configs (Extremely smooth, long sweep)
-const marceloTransition = { duration: 1.6, ease: [0.16, 1, 0.3, 1] };
+// Cinematic transitions, but restrained enough for a product shell.
+const marceloTransition = { duration: 0.85, ease: [0.16, 1, 0.3, 1] };
 const marceloStagger = {
   animate: {
     transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2
+      staggerChildren: 0.09,
+      delayChildren: 0.14
     }
   }
 };
 const marceloItem = {
-  initial: { opacity: 0, y: 40 },
-  animate: { opacity: 1, y: 0, transition: marceloTransition }
+  initial: { opacity: 0, y: 22, filter: 'blur(10px)' },
+  animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: marceloTransition }
 };
 
 // Room data for the interactive house tour
@@ -170,21 +171,6 @@ const defaultStyles = [
   }
 ];
 
-const styleEmojiMap = {
-  Modern: '🪟',
-  Traditional: '🏛️',
-  Scandinavian: '🪵',
-  Industrial: '⚒️',
-  Bohemian: '🧿',
-  'Mid-Century': '📺',
-  Mediterranean: '🫒',
-  Japanese: '🎎',
-  Minimalist: '⚪️',
-  Farmhouse: '🏡',
-};
-
-const styleEmojiFallback = ['🪟', '🏛️', '🪵', '⚒️', '🧿', '📺', '🫒', '🎎', '🪴', '🧭'];
-
 const normalizeStyleName = (name) => (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 const canonicalStyleKey = (name) => {
@@ -266,25 +252,28 @@ const resolveStyleElements = (style) => {
   return { key, previewEmojis, previewFeatures };
 };
 
-const resolveStyleEmoji = (style, index) => {
-  const key = (style?.name || '').trim();
-  if (styleEmojiMap[key]) return styleEmojiMap[key];
-  const canonical = canonicalStyleKey(key);
-  const canonicalMap = {
-    modern: styleEmojiMap.Modern,
-    traditional: styleEmojiMap.Traditional,
-    scandinavian: styleEmojiMap.Scandinavian,
-    industrial: styleEmojiMap.Industrial,
-    bohemian: styleEmojiMap.Bohemian,
-    midcentury: styleEmojiMap['Mid-Century'],
-    mediterranean: styleEmojiMap.Mediterranean,
-    japanese: styleEmojiMap.Japanese,
-    minimalist: styleEmojiMap.Minimalist,
-    farmhouse: styleEmojiMap.Farmhouse,
+const resolveStyleMonogram = (style) => {
+  const canonical = canonicalStyleKey(style?.name);
+  const monograms = {
+    modern: 'MO',
+    traditional: 'TR',
+    scandinavian: 'SC',
+    industrial: 'IN',
+    bohemian: 'BO',
+    midcentury: 'MC',
+    mediterranean: 'ME',
+    japanese: 'JP',
+    minimalist: 'MN',
+    farmhouse: 'FH',
   };
-  if (canonicalMap[canonical]) return canonicalMap[canonical];
-  if (style?.emoji) return style.emoji;
-  return styleEmojiFallback[index % styleEmojiFallback.length];
+  if (monograms[canonical]) return monograms[canonical];
+  return String(style?.name || 'ST')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || 'ST';
 };
 
 const mergeStylesWithDefaults = (incoming = []) => {
@@ -343,7 +332,6 @@ const Dashboard = () => {
   const [searchError, setSearchError] = useState(null);
   const [deletingProjectId, setDeletingProjectId] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
-  const [heroLoaded, setHeroLoaded] = useState(false);
   const [initStyle, setInitStyle] = useState(null);
   const [initLoading, setInitLoading] = useState(false);
   const [selectedStyleDrawer, setSelectedStyleDrawer] = useState(null);
@@ -352,8 +340,13 @@ const Dashboard = () => {
   const drawerFirstFocusRef = useRef(null);
   const [drawerStages, setDrawerStages] = useState({ preview: false, compat: false, dna: false });
   const [hoveredTrait, setHoveredTrait] = useState('');
+  const [selectedTrait, setSelectedTrait] = useState('');
   const [tourMode, setTourMode] = useState(false);
   const [isEnteringTour, setIsEnteringTour] = useState(false);
+  const drawerTitleId = useId();
+  const drawerDescriptionId = useId();
+  const drawerHintId = useId();
+  const activeTrait = hoveredTrait || selectedTrait;
   
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -361,13 +354,39 @@ const Dashboard = () => {
   const parallaxRef = useRef(null);
   const heroInViewRef = useRef(true);
   const initPanelRef = useRef(null);
-  function styleSlug(name) {
-    return (name || '').toLowerCase().replace(/\s+/g, '-');
-  }
+  const enterTourTimeoutRef = useRef(null);
+  const initLoadingTimeoutRef = useRef(null);
+  const drawerFocusTimeoutRef = useRef(null);
+  const drawerStageTimeoutsRef = useRef([]);
+
+  const clearEnterTourTimeout = useCallback(() => {
+    if (enterTourTimeoutRef.current === null) return;
+    window.clearTimeout(enterTourTimeoutRef.current);
+    enterTourTimeoutRef.current = null;
+  }, []);
+
+  const clearInitLoadingTimeout = useCallback(() => {
+    if (initLoadingTimeoutRef.current === null) return;
+    window.clearTimeout(initLoadingTimeoutRef.current);
+    initLoadingTimeoutRef.current = null;
+  }, []);
+
+  const clearDrawerFocusTimeout = useCallback(() => {
+    if (drawerFocusTimeoutRef.current === null) return;
+    window.clearTimeout(drawerFocusTimeoutRef.current);
+    drawerFocusTimeoutRef.current = null;
+  }, []);
+
+  const clearDrawerStageTimeouts = useCallback(() => {
+    drawerStageTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    drawerStageTimeoutsRef.current = [];
+  }, []);
 
   function startTour() {
+    clearEnterTourTimeout();
     setIsEnteringTour(true);
-    setTimeout(() => {
+    enterTourTimeoutRef.current = window.setTimeout(() => {
+      enterTourTimeoutRef.current = null;
       setTourMode(true);
       setIsEnteringTour(false);
       navigate('/virtual-tour');
@@ -378,23 +397,56 @@ const Dashboard = () => {
     setTourMode(false);
   }
 
+  function navigateToWorkspace(style) {
+    const selectedStyle = serializeStyleContext(style);
+    const slug = selectedStyle?.slug || '';
+    const query = slug ? `?style=${encodeURIComponent(slug)}` : '';
+
+    navigate(`/workspace${query}`, selectedStyle ? { state: { selectedStyle } } : undefined);
+  }
+
+  function navigateToGuidedDemo(style) {
+    const selectedStyle = serializeStyleContext(style);
+    const params = new URLSearchParams({ demo: '1' });
+
+    if (selectedStyle?.slug) {
+      params.set('style', selectedStyle.slug);
+    }
+
+    navigate(`/virtual-tour?${params.toString()}`, {
+      state: {
+        demoMode: true,
+        ...(selectedStyle ? { selectedStyle } : {}),
+      },
+    });
+  }
+
   function openDrawer(style, triggerEl) {
     setSelectedStyleDrawer(style);
     setIsDrawerOpen(true);
     drawerTriggerRef.current = triggerEl || document.activeElement;
     setDrawerStages({ preview: false, compat: false, dna: false });
-    setTimeout(() => setDrawerStages((s) => ({ ...s, preview: true })), 150);
-    setTimeout(() => setDrawerStages((s) => ({ ...s, compat: true })), 350);
-    setTimeout(() => setDrawerStages((s) => ({ ...s, dna: true })), 500);
+    setHoveredTrait('');
+    setSelectedTrait('');
+    clearDrawerStageTimeouts();
+    drawerStageTimeoutsRef.current = [
+      window.setTimeout(() => setDrawerStages((s) => ({ ...s, preview: true })), 150),
+      window.setTimeout(() => setDrawerStages((s) => ({ ...s, compat: true })), 350),
+      window.setTimeout(() => setDrawerStages((s) => ({ ...s, dna: true })), 500),
+    ];
   }
 
-  function closeDrawer() {
+  const closeDrawer = useCallback(() => {
+    clearDrawerStageTimeouts();
+    clearDrawerFocusTimeout();
     setIsDrawerOpen(false);
     setSelectedStyleDrawer(null);
+    setHoveredTrait('');
+    setSelectedTrait('');
     if (drawerTriggerRef.current && drawerTriggerRef.current.focus) {
       drawerTriggerRef.current.focus();
     }
-  }
+  }, [clearDrawerFocusTimeout, clearDrawerStageTimeouts]);
 
   function handleStyleSelect(style, triggerEl) {
     openDrawer(style, triggerEl);
@@ -402,19 +454,27 @@ const Dashboard = () => {
 
   function startAiFromDrawer() {
     if (!selectedStyleDrawer) return;
+    const style = selectedStyleDrawer;
     closeDrawer();
-    navigate(`/workspace?style=${styleSlug(selectedStyleDrawer.name)}`);
+    navigateToWorkspace(style);
   }
 
   useEffect(() => {
     fetchData();
-    
-    // Trigger hero animation after component mounts
-    const heroTimer = setTimeout(() => setHeroLoaded(true), 100);
-    
-    return () => clearTimeout(heroTimer);
   // eslint-disable-next-line react-hooks/exhaustive-deps -- initial dashboard load should run once on mount.
   }, []);
+
+  useEffect(() => () => {
+    clearEnterTourTimeout();
+    clearInitLoadingTimeout();
+    clearDrawerFocusTimeout();
+    clearDrawerStageTimeouts();
+  }, [
+    clearDrawerFocusTimeout,
+    clearDrawerStageTimeouts,
+    clearEnterTourTimeout,
+    clearInitLoadingTimeout,
+  ]);
 
   useEffect(() => {
     const prevScene = document.body.dataset.scene;
@@ -536,6 +596,7 @@ const Dashboard = () => {
     if (!styles.length) return;
     const params = new URLSearchParams(location.search);
     const styleParam = params.get('style');
+    clearInitLoadingTimeout();
     if (!styleParam) {
       setInitStyle(null);
       setInitLoading(false);
@@ -549,12 +610,18 @@ const Dashboard = () => {
     if (match) {
       setInitLoading(true);
       setInitStyle(match);
-      setTimeout(() => setInitLoading(false), 800);
+      initLoadingTimeoutRef.current = window.setTimeout(() => {
+        initLoadingTimeoutRef.current = null;
+        setInitLoading(false);
+      }, 800);
     } else {
       setInitStyle(null);
       setInitLoading(false);
     }
-  }, [location.search, styles]);
+    return () => {
+      clearInitLoadingTimeout();
+    };
+  }, [clearInitLoadingTimeout, location.search, styles]);
 
   useEffect(() => {
     if (initStyle && !initLoading && initPanelRef.current) {
@@ -597,11 +664,16 @@ const Dashboard = () => {
       }
     };
     window.addEventListener('keydown', onKey);
-    setTimeout(() => {
+    clearDrawerFocusTimeout();
+    drawerFocusTimeoutRef.current = window.setTimeout(() => {
+      drawerFocusTimeoutRef.current = null;
       if (drawerFirstFocusRef.current) drawerFirstFocusRef.current.focus();
     }, 0);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isDrawerOpen]);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      clearDrawerFocusTimeout();
+    };
+  }, [clearDrawerFocusTimeout, closeDrawer, isDrawerOpen]);
 
   useEffect(() => {
     const elements = document.querySelectorAll('.reveal-on-scroll');
@@ -838,14 +910,14 @@ const Dashboard = () => {
             className="cta-primary"
             onClick={() => navigate('/workspace')}
           >
-            Upload Room
+            Open Workspace
           </button>
           <button
             type="button"
             className="cta-secondary"
             onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            Explore Styles
+            Browse Style Library
           </button>
         </motion.div>
       </motion.section>
@@ -884,11 +956,11 @@ const Dashboard = () => {
                 key={project.id}
                 type="button"
                 className="recent-project-card"
-                initial={{ opacity: 0, scale: 0.95, y: 30 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+                whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ ...marceloTransition, delay: idx * 0.1 }}
-                whileHover={{ y: -4, scale: 1.01, transition: { duration: 0.4, ease: "backOut" } }}
+                whileHover={{ y: -2, transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1] } }}
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <div className="recent-project-top">
@@ -915,11 +987,11 @@ const Dashboard = () => {
 
 
 	      <div className="dashboard-grid">
-	        <aside className="metrics-rail">
+        <aside className="metrics-rail">
           <div className="metrics-card reveal-on-scroll" style={{ '--delay': '0s' }}>
-            <p className="metrics-label">Welcome Back</p>
+            <p className="metrics-label">Account Overview</p>
             <h3 className="metrics-user">{user?.full_name || user?.email || 'Designer'}</h3>
-            <p className="metrics-subtle">Keep building spaces your clients will love.</p>
+            <p className="metrics-subtle">Review current work and move the next room forward.</p>
           </div>
         </aside>
 
@@ -939,8 +1011,8 @@ const Dashboard = () => {
               type="button"
               className={`tour-media-card ${isEnteringTour ? 'entering' : ''}`}
               onClick={startTour}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 0 }}
             >
               <div className="tour-media-scrim" aria-hidden="true" />
               <div className="tour-media-play" aria-hidden="true">
@@ -979,8 +1051,8 @@ const Dashboard = () => {
           <motion.section 
             className="search-section reveal-on-scroll" 
             id="search-section"
-            initial={{ opacity: 0, scale: 0.98, y: 60 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0, y: 40, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             viewport={{ once: true, margin: "-100px" }}
             transition={marceloTransition}
           >
@@ -1016,9 +1088,9 @@ const Dashboard = () => {
               <AnimatePresence>
                 <motion.div 
                   className="search-empty-cinematic"
-                  initial={{ opacity: 0, scale: 0.95, filter: 'blur(8px)' }}
-                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, scale: 0.95, filter: 'blur(4px)' }}
+                  initial={{ opacity: 0, y: 18, filter: 'blur(8px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <motion.div 
@@ -1091,7 +1163,7 @@ const Dashboard = () => {
             {initStyle && (
               <section ref={initPanelRef} className={`style-init-panel inline ${initLoading ? 'is-loading' : ''}`}>
                 {initLoading ? (
-                  <p className="init-status">Initializing {initStyle.name} style parameters...</p>
+                  <p className="init-status">Preparing the {initStyle.name} workspace...</p>
                 ) : (
                   <>
                     <p className="virtual-eyebrow">Style Activated</p>
@@ -1104,13 +1176,13 @@ const Dashboard = () => {
                       <button
                         type="button"
                         className="init-primary"
-                        onClick={() => navigate(`/workspace?style=${styleSlug(initStyle.name)}`)}
+                        onClick={() => navigateToWorkspace(initStyle)}
                       >
-                        Start AI Transformation
+                        Open Design Workspace
                       </button>
                       <div className="init-secondary">
-                        <button type="button" onClick={() => setShowNewProject(true)}>Upload My Room</button>
-                        <button type="button" onClick={() => navigate(`/virtual-tour?style=${styleSlug(initStyle.name)}&demo=1`)}>Preview Demo Room</button>
+                        <button type="button" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
+                        <button type="button" onClick={() => navigateToGuidedDemo(initStyle)}>Open Guided Demo</button>
                       </div>
                     </div>
                     <div className="init-stats">
@@ -1147,8 +1219,8 @@ const Dashboard = () => {
                   >
                   {/** resolve per-card emoji with unique fallback */} 
                   {(() => {
-                    const resolvedEmoji = resolveStyleEmoji(style, index);
-                    const { key: styleKey, previewEmojis, previewFeatures } = resolveStyleElements(style);
+                    const styleMonogram = resolveStyleMonogram(style);
+                    const { key: styleKey, previewFeatures } = resolveStyleElements(style);
                     const palette = Array.isArray(style.palette) && style.palette.length
                       ? style.palette.slice(0, 4)
                       : [
@@ -1158,6 +1230,7 @@ const Dashboard = () => {
                           'var(--color-secondary-arctic)',
                         ].slice(0, 4);
                     const materials = Array.isArray(style.materials) && style.materials.length ? style.materials.slice(0, 2) : [];
+                    const styleTags = (materials.length ? materials : previewFeatures).slice(0, 3);
                     return (
                       <button
                         type="button"
@@ -1174,9 +1247,10 @@ const Dashboard = () => {
                       >
                         <div className="style-card-head">
                           <div className="style-icon-wrapper" aria-hidden="true">
-                            <span className="style-emoji">{resolvedEmoji}</span>
+                            <span className="style-monogram">{styleMonogram}</span>
                           </div>
                           <div className="style-card-headtext">
+                            <span className="style-card-kicker">Style Direction</span>
                             <h3 className="style-card-title">{style.name}</h3>
                             <p className="style-card-desc">
                               {style.description || 'A modern interior style.'}
@@ -1201,23 +1275,20 @@ const Dashboard = () => {
                         </div>
 
                         <div className="style-chips" aria-label="Style highlights">
-                          {previewEmojis.map((emoji, i) => (
+                          {styleTags.map((item, i) => (
                             <span
                               key={`${style.id}-chip-${i}`}
                               className="style-chip"
-                              title={previewFeatures[i] || `Element ${i + 1}`}
+                              title={item}
                             >
-                              <span className="chip-emoji" aria-hidden="true">{emoji}</span>
-                              <span className="chip-text">
-                                {previewFeatures[i] || `Element ${i + 1}`}
-                              </span>
+                              <span className="chip-text">{item}</span>
                             </span>
                           ))}
                         </div>
 
                         <div className="style-cta-strip" aria-hidden="true">
                           <span className="cta-left">
-                            <span className="cta-label">Explore</span>
+                            <span className="cta-label">Open Brief</span>
                             <span className="cta-tag">{style.name}</span>
                           </span>
                           <span className="cta-arrow">→</span>
@@ -1235,14 +1306,16 @@ const Dashboard = () => {
               <aside
                 className="style-drawer open"
                 role="dialog"
-                aria-label={`${selectedStyleDrawer.name} style details`}
+                aria-modal="true"
+                aria-labelledby={drawerTitleId}
+                aria-describedby={`${drawerDescriptionId} ${drawerHintId}`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="drawer-header">
                   <div>
                     <p className="virtual-eyebrow">AI Style Lab</p>
-                    <h3 className="drawer-title">{selectedStyleDrawer.name} Studio</h3>
-                    <p className="drawer-tagline">
+                    <h3 id={drawerTitleId} className="drawer-title">{selectedStyleDrawer.name} Studio</h3>
+                    <p id={drawerDescriptionId} className="drawer-tagline">
                       AI will adapt {selectedStyleDrawer.name} principles to your room layout.
                     </p>
                   </div>
@@ -1253,17 +1326,17 @@ const Dashboard = () => {
                   <div className={`style-preview-card ${drawerStages.preview ? 'reveal-in' : 'pre-reveal'}`}>
                     <div className="style-preview-label">Style Preview</div>
                     <div
-                      className={`style-preview-visual ${hoveredTrait ? 'preview-highlight' : ''}`}
+                      className={`style-preview-visual ${activeTrait ? 'preview-highlight' : ''}`}
                       style={{
                         backgroundImage: selectedStyleDrawer.previewImage
                           ? `linear-gradient(140deg, rgba(12,10,20,0.55), rgba(12,10,20,0.2)), url(${selectedStyleDrawer.previewImage})`
                           : 'linear-gradient(160deg, #20142f, #120c1e 40%, #0c0916)',
                       }}
                     >
-                      <div className="style-preview-overlay" />
-                      <div className="style-preview-grid" />
-                      <div className="style-preview-geo" />
-                      <div className="scan-line" />
+                      <div className="style-preview-overlay" aria-hidden="true" />
+                      <div className="style-preview-grid" aria-hidden="true" />
+                      <div className="style-preview-geo" aria-hidden="true" />
+                      <div className="scan-line" aria-hidden="true" />
                       <p className="style-preview-copy inline inside">
                         {(selectedStyleDrawer.description || 'Clean lines, minimal decor, balanced palette').slice(0, 110)}
                       </p>
@@ -1312,7 +1385,7 @@ const Dashboard = () => {
                       ]).slice(0, 4).map((reason, idx) => (
                         <li
                           key={idx}
-                          className={`why-style-item ${hoveredTrait && reason.toLowerCase().includes(hoveredTrait.toLowerCase()) ? 'reason-highlight' : ''}`}
+                          className={`why-style-item ${activeTrait && reason.toLowerCase().includes(activeTrait.toLowerCase()) ? 'reason-highlight' : ''}`}
                         >
                           <span className="reason-icon">•</span>
                           <span>{reason}</span>
@@ -1334,16 +1407,12 @@ const Dashboard = () => {
                             key={idx}
                             className="dna-chip dna-chip-interactive"
                             type="button"
+                            aria-pressed={selectedTrait === item}
                             onMouseEnter={() => setHoveredTrait(item)}
                             onMouseLeave={() => setHoveredTrait('')}
                             onFocus={() => setHoveredTrait(item)}
                             onBlur={() => setHoveredTrait('')}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setHoveredTrait(item);
-                              }
-                            }}
+                            onClick={() => setSelectedTrait((current) => (current === item ? '' : item))}
                           >
                             <span className="dna-icon">{icon}</span>
                             <span>{item}</span>
@@ -1354,7 +1423,7 @@ const Dashboard = () => {
                   </div>
 
                   <div className="drawer-section actions">
-                    <p className="drawer-microcopy">Transform your room using AI-powered {selectedStyleDrawer.name} design principles.</p>
+                    <p id={drawerHintId} className="drawer-microcopy">Transform your room using AI-powered {selectedStyleDrawer.name} design principles. Select a Style DNA chip to highlight matching cues.</p>
                   </div>
                 </div>
 
@@ -1365,11 +1434,11 @@ const Dashboard = () => {
                     className="init-primary"
                     onClick={startAiFromDrawer}
                   >
-                    Start AI Transformation
+                    Open Design Workspace
                   </button>
                   <div className="drawer-actions-inline">
-                    <button type="button" className="drawer-secondary" onClick={() => navigate(`/virtual-tour?style=${styleSlug(selectedStyleDrawer.name)}&demo=1`)}>Preview Demo</button>
-                    <button type="button" className="drawer-tertiary" onClick={() => setShowNewProject(true)}>Upload My Room</button>
+                    <button type="button" className="drawer-secondary" onClick={() => navigateToGuidedDemo(selectedStyleDrawer)}>Open Guided Demo</button>
+                    <button type="button" className="drawer-tertiary" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
                   </div>
                 </div>
               </aside>
@@ -1463,7 +1532,7 @@ const Dashboard = () => {
                     <motion.button 
                       type="button"
                       whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ y: 0 }}
                       className={`template-card ${newProjectType === 'Living Room' ? 'is-selected' : ''}`}
                       aria-pressed={newProjectType === 'Living Room'}
                       onClick={() => { setNewProjectType('Living Room'); setShowNewProject(true); }}
@@ -1477,7 +1546,7 @@ const Dashboard = () => {
                     <motion.button 
                       type="button"
                       whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ y: 0 }}
                       className={`template-card ${newProjectType === 'Bedroom' ? 'is-selected' : ''}`}
                       aria-pressed={newProjectType === 'Bedroom'}
                       onClick={() => { setNewProjectType('Bedroom'); setShowNewProject(true); }}
@@ -1494,7 +1563,7 @@ const Dashboard = () => {
                     <motion.button 
                       type="button"
                       whileHover={{ y: -1 }}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ y: 0 }}
                       className="new-project-btn cta-primary" 
                       onClick={() => setShowNewProject(true)}
                     >

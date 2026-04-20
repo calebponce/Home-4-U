@@ -7,10 +7,12 @@ import { SkeletonKanbanColumn, SkeletonCard } from '../components/Skeletons';
 import './ProjectDetails.css';
 
 const containerVariants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 12, filter: 'blur(10px)' },
   visible: { 
     opacity: 1, 
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 } 
+    y: 0,
+    filter: 'blur(0px)',
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.08, delayChildren: 0.12 }
   }
 };
 
@@ -20,7 +22,7 @@ const sectionVariants = {
     opacity: 1, 
     y: 0, 
     filter: 'blur(0px)',
-    transition: { type: 'spring', stiffness: 100, damping: 20 }
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
   }
 };
 
@@ -121,11 +123,6 @@ const ProjectDetails = () => {
   const projectBudget = Number(project?.budget) || 0;
   const spent = recommendations.filter(r => r.is_completed).reduce((sum, r) => sum + (Number(r.estimated_cost) || 0), 0);
   const remaining = projectBudget - spent;
-  const percentSpent = projectBudget > 0 ? (spent / projectBudget) * 100 : 0;
-  
-  // Donut SVG logic
-  const circumference = 2 * Math.PI * 65;
-  const offset = circumference - (Math.min(percentSpent, 100) / 100) * circumference;
 
   return (
     <motion.div 
@@ -139,8 +136,8 @@ const ProjectDetails = () => {
           <button type="button" onClick={() => navigate('/dashboard')} className="back-btn-ghost">
             <ChevronLeft size={16} /> Back to Dashboard
           </button>
-          <h1 className="p-title">{project?.name}</h1>
-          <div className="p-meta">{project?.room_type} — Project #{id}</div>
+          <h1 className="p-title">{project?.room_type || 'Room Project'}</h1>
+          <div className="p-meta">{project?.room_type} studio brief • Project #{id}</div>
         </div>
       </motion.div>
 
@@ -148,8 +145,8 @@ const ProjectDetails = () => {
         <motion.div variants={sectionVariants} className="project-sidebar">
           <div className="finance-card">
             <div className="finance-head">
-              <h3>Financial Pulse</h3>
-              <p>Capital Allocated</p>
+              <h3>Budget Overview</h3>
+              <p>Track spend against the approved project ceiling.</p>
             </div>
             
             <div className="budget-details">
@@ -158,11 +155,11 @@ const ProjectDetails = () => {
                 <span className="val">${spent.toLocaleString()}</span>
               </div>
               <div className="budget-item">
-                <span className="lbl">Ceiling</span>
+                <span className="lbl">Budget</span>
                 <span className="val">${projectBudget.toLocaleString()}</span>
               </div>
               <div className="budget-item">
-                <span className="lbl">Residual</span>
+                <span className="lbl">Remaining</span>
                 <span className={`val ${remaining < 0 ? 'negative' : 'positive'}`}>
                   ${remaining.toLocaleString()}
                 </span>
@@ -185,7 +182,7 @@ const ProjectDetails = () => {
 
         <motion.div variants={sectionVariants} className="kanban-board">
           <div className="kanban-header">
-            <h2>Spatial Strategy</h2>
+            <h2>Project Plan</h2>
             <button 
               type="button"
               className="generate-tasks-btn"
@@ -193,19 +190,19 @@ const ProjectDetails = () => {
               disabled={generating}
             >
               {generating ? <Clock size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {generating ? 'Calculating Strategy...' : 'Regenerate Blueprint'}
+              {generating ? 'Refreshing Plan...' : 'Refresh Plan'}
             </button>
           </div>
 
           <div className="kanban-columns">
             <div className="k-col">
               <div className="k-col-head">
-                <span>Task Backlog</span>
+                <span>Open Tasks</span>
                 <span className="count">{recommendations.filter(r => !r.is_completed).length}</span>
               </div>
               <div className="k-col-body">
                 {recommendations.filter(r => !r.is_completed).length === 0 ? (
-                  <div className="empty-kanban">Your strategy is clean. No pending tasks.</div>
+                  <div className="empty-kanban">All current tasks are complete.</div>
                 ) : (
                   <AnimatePresence>
                     {recommendations.filter(r => !r.is_completed).map((rec) => (
@@ -232,7 +229,7 @@ const ProjectDetails = () => {
 
             <div className="k-col">
               <div className="k-col-head">
-                <span>Success Log</span>
+                <span>Completed Tasks</span>
                 <span className="count">{recommendations.filter(r => r.is_completed).length}</span>
               </div>
               <div className="k-col-body">

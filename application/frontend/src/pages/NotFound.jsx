@@ -181,7 +181,7 @@ const NotFound = () => {
             data-magnetic-button
           >
             <Compass size={18} />
-            <span>Explore Styles</span>
+            <span>About Home4U</span>
           </motion.button>
         </motion.div>
 

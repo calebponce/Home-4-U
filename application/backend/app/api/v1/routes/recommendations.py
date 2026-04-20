@@ -10,6 +10,7 @@ from app.schemas.schemas import (
 )
 from app.utils.dependencies import get_current_user
 from app.models.database import User
+from app.services.project_analysis import refresh_project_recommendations
 
 router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
@@ -136,25 +137,39 @@ def generate_recommendations(
             detail="Please calculate style scores first"
         )
     
-    # Generate recommendations based on top styles and budget
-    # This is a simplified version - in production, use OpenAI API
-    top_styles = sorted(scores, key=lambda x: x.score_value, reverse=True)[:3]
-    
-    recommendations = []
-    for style_score in top_styles:
-        if style_score.score_value > 70:
-            rec = Recommendation(
-                room_project_id=project_id,
-                description=f"Consider adding {style_score.style.name} elements to enhance your room's style match.",
-                priority_score=style_score.score_value / 100 * 10,
-                estimated_cost=project.budget * 0.2 if project.budget > 0 else 200
-            )
-            db.add(rec)
-            recommendations.append(rec)
-    
-    db.commit()
-    for rec in recommendations:
-        db.refresh(rec)
-    
-    return recommendations
+    top_styles = sorted(scores, key=lambda x: x.score_value, reverse=True)
+    if not top_styles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please calculate style scores first"
+        )
 
+    db.query(Recommendation).filter(
+        Recommendation.room_project_id == project_id
+    ).delete(synchronize_session=False)
+
+    style_scores = [
+        {
+            "style_id": score.style_id,
+            "style_name": score.style.name,
+            "score_value": score.score_value,
+            "matched_tags": [],
+        }
+        for score in top_styles
+    ]
+    recommendations = refresh_project_recommendations(
+        db,
+        project=project,
+        selected_style=top_styles[0].style,
+        style_scores=style_scores,
+        suggested_tags=[],
+        intensity=60,
+        lighting="warm",
+        budget_tier="medium",
+    )
+
+    db.commit()
+    for recommendation in recommendations:
+        db.refresh(recommendation)
+
+    return recommendations

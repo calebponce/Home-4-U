@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { RoomIcon } from './visuals';
 
 const Stage = ({
@@ -43,18 +44,38 @@ const Stage = ({
   handleDockPrimary,
   dockPrimaryDisabled,
   dockPrimaryLabel,
-}) => (
-  <section
-    className={`virtual-stage phase-${phase} ${doorZooming ? 'door-zoom' : ''} ${roomZooming ? 'room-zoom' : ''} ${phaseTransitioning ? 'phase-transitioning' : ''} ${ambientMotion ? 'ambient-on' : ''} ${phase === 'room' && introRevealing ? 'intro-cam-active' : ''} ${isDragging ? 'is-dragging' : ''}`}
-    onPointerDown={onPointerDown}
-    onPointerMove={onPointerMove}
-    onPointerUp={onPointerUp}
-    onPointerCancel={onPointerUp}
-  >
+}) => {
+  const captionId = useId();
+  const orbitHintId = useId();
+  const stageStatusId = useId();
+  const captionText = phase === 'outside'
+    ? 'Select the entry point to begin the guided tour.'
+    : phase === 'blueprint'
+      ? 'Choose a room to enter.'
+      : 'Drag to rotate. Select hotspots to inspect room insights.';
+  const activeHotspot = hotspots.find((spot) => spot.id === selectedHotspotId) || null;
+  const stageDescriptionIds = [captionId];
+  if (phase === 'room' && showOrbitHint) stageDescriptionIds.push(orbitHintId);
+  if (phase === 'room') stageDescriptionIds.push(stageStatusId);
+
+  return (
+    <section
+      className={`virtual-stage phase-${phase} ${doorZooming ? 'door-zoom' : ''} ${roomZooming ? 'room-zoom' : ''} ${phaseTransitioning ? 'phase-transitioning' : ''} ${ambientMotion ? 'ambient-on' : ''} ${phase === 'room' && introRevealing ? 'intro-cam-active' : ''} ${isDragging ? 'is-dragging' : ''}`}
+      aria-label={phase === 'room' ? `${activeRoom.name} room stage` : phase === 'blueprint' ? 'Room map stage' : 'Tour entry stage'}
+      aria-describedby={stageDescriptionIds.join(' ')}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
     <div className="virtual-grid" />
-    <div className="stage-progress">
+    <div className="stage-progress" aria-label="Tour progress">
       {phaseSteps.map((step, index) => (
-        <div key={step.id} className={`stage-step ${index <= currentPhaseStep ? 'active' : ''} ${index === currentPhaseStep ? 'current' : ''}`}>
+        <div
+          key={step.id}
+          className={`stage-step ${index <= currentPhaseStep ? 'active' : ''} ${index === currentPhaseStep ? 'current' : ''}`}
+          aria-current={index === currentPhaseStep ? 'step' : undefined}
+        >
           <span className="stage-dot">{index + 1}</span>
           <span className="stage-label">{step.label}</span>
         </div>
@@ -85,7 +106,7 @@ const Stage = ({
       </div>
       <div className={`outside-entry-cta ${isEnteringHome ? 'is-hidden' : ''}`}>
         <button type="button" className="house-door-btn" onClick={enterHouse} disabled={isEnteringHome || phaseTransitioning}>
-          Enter Story Home
+          Enter Guided Tour
         </button>
       </div>
     </div>
@@ -99,8 +120,8 @@ const Stage = ({
         >
           <header className="blueprint-head">
             <p className="blueprint-kicker">Phase 2 · Structure</p>
-            <h3>Home4U Tour Blueprint</h3>
-            <p className="blueprint-subtitle">Pick a room to dive into its story — tailored to your space.</p>
+            <h3>Home4U Room Map</h3>
+            <p className="blueprint-subtitle">Choose a room to review its layout context, recommendations, and measurable outcomes.</p>
           </header>
 
           <div className="blueprint-body">
@@ -132,7 +153,7 @@ const Stage = ({
                   style={{ transitionDelay: blueprintMounted ? `${index * 80}ms` : '0ms' }}
                   onMouseEnter={() => setHoveredRoomId(room.id)}
                   onMouseLeave={() => setHoveredRoomId(null)}
-                  aria-current={index === activeIndex ? 'true' : undefined}
+                  aria-current={index === activeIndex ? 'location' : undefined}
                 >
                   <span className="bp-node-main">
                     <span className="bp-node-name blueprint-room-node__label">{blueprintNodeLabels[room.id] || room.name}</span>
@@ -192,27 +213,36 @@ const Stage = ({
         </div>
         <div className="room-chamber">
           <RoomIcon name={activeRoom.icon} className="room-icon room-icon-lg" />
-          <p className="chamber-kicker">Immersive Chapter</p>
+          <p className="chamber-kicker">Immersive Review</p>
           <p className="chamber-sub">{activeRoom.name}</p>
         </div>
       </div>
     </div>
 
-    <div className="virtual-caption">
-      {phase === 'outside' && 'Click the door to begin the story.'}
-      {phase === 'blueprint' && 'Choose a room to enter.'}
-      {phase === 'room' && 'Drag to rotate. Click hotspots for evidence.'}
-    </div>
+    <div id={captionId} className="virtual-caption">{captionText}</div>
     {phase === 'room' && showOrbitHint && (
-      <div className="orbit-hint" aria-live="polite">
-        Drag to rotate · Click hotspots to reveal evidence
+      <div id={orbitHintId} className="orbit-hint" aria-live="polite">
+        Drag to rotate · Select hotspots to inspect details
       </div>
+    )}
+    {phase === 'room' && (
+      <p id={stageStatusId} className="sr-only" role="status" aria-live="polite">
+        {activeHotspot
+          ? `${activeRoom.name} room selected. ${activeHotspot.title} hotspot is active.`
+          : `${activeRoom.name} room selected. No hotspot is active.`}
+      </p>
     )}
     {phase === 'room' && (
       <div className="room-bottom-dock">
         <div className="dock-room-tabs">
           {storyRooms.map((room, idx) => (
-            <button key={room.id} type="button" className={`dock-room-tab ${idx === activeIndex ? 'active' : ''}`} onClick={() => goToRoomIndex(idx)}>
+            <button
+              key={room.id}
+              type="button"
+              className={`dock-room-tab ${idx === activeIndex ? 'active' : ''}`}
+              onClick={() => goToRoomIndex(idx)}
+              aria-current={idx === activeIndex ? 'location' : undefined}
+            >
               <RoomIcon name={room.icon} className="room-icon room-icon-xs" />
               <span>{room.name}</span>
             </button>
@@ -225,12 +255,13 @@ const Stage = ({
       <nav className={`virtual-sticky-dock phase-${phase} ${phaseTransitioning ? 'hidden' : ''}`}>
         <button type="button" className="dock-btn ghost" onClick={handleDockBack} disabled={dockBackDisabled}>← {dockBackLabel}</button>
         {phase === 'room' && (
-          <button type="button" className="dock-btn ghost" onClick={goToOverview} disabled={dockOverviewDisabled}>Tour Overview</button>
+          <button type="button" className="dock-btn ghost" onClick={goToOverview} disabled={dockOverviewDisabled}>Room Map</button>
         )}
         <button type="button" className="dock-btn primary" onClick={handleDockPrimary} disabled={dockPrimaryDisabled}>{dockPrimaryLabel} →</button>
       </nav>
     )}
-  </section>
-);
+    </section>
+  );
+};
 
 export default Stage;

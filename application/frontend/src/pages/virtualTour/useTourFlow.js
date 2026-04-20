@@ -204,17 +204,17 @@ const useTourFlow = ({ navigate }) => {
   const roomComplete = hotspots.length > 0 && visitedCount === hotspots.length;
 
   const phaseSteps = [
-    { id: 'outside', label: 'Arrival' },
-    { id: 'blueprint', label: 'Blueprint' },
-    { id: 'room', label: 'Room' },
+    { id: 'outside', label: 'Overview' },
+    { id: 'blueprint', label: 'Room Map' },
+    { id: 'room', label: 'Room Review' },
   ];
   const currentPhaseStep = phaseSteps.findIndex((step) => step.id === phase);
-  const currentPhaseLabel = phaseSteps[currentPhaseStep]?.label || 'Arrival';
+  const currentPhaseLabel = phaseSteps[currentPhaseStep]?.label || 'Overview';
 
   const hasPrevRoom = activeIndex > 0;
   const hasNextRoom = activeIndex < storyRooms.length - 1;
-  const dockBackLabel = phase === 'room' ? 'Prev Room' : phase === 'blueprint' ? 'Back Outside' : 'Back to Dashboard';
-  const dockPrimaryLabel = phase === 'room' ? 'Next Room' : phase === 'blueprint' ? 'Enter Selected Room' : 'Start Guided Tour';
+  const dockBackLabel = phase === 'room' ? 'Previous Room' : phase === 'blueprint' ? 'Back to Overview' : 'Back to Dashboard';
+  const dockPrimaryLabel = phase === 'room' ? 'Next Room' : phase === 'blueprint' ? 'Open Selected Room' : 'Start Tour';
   const dockBackDisabled = phase === 'room' ? !hasPrevRoom : phaseTransitioning || isEnteringHome;
   const dockPrimaryDisabled = phase === 'room'
     ? !hasNextRoom
@@ -243,7 +243,7 @@ const useTourFlow = ({ navigate }) => {
 
   const narrativeLine = useMemo(() => {
     if (!narrativeEnabled) return null;
-    return activeStoryChapter.narrationText;
+    return activeStoryChapter.narrationText.replace(/^[A-Za-z]+:\s*/, '');
   }, [activeStoryChapter, narrativeEnabled]);
 
   const revealEvidence = activeRoom.id !== 'atrium';
@@ -261,8 +261,8 @@ const useTourFlow = ({ navigate }) => {
     const hotspotCount = Object.values(visitedHotspots).reduce((sum, set) => sum + set.size, 0);
     return [
       { id: 'door', label: 'Tour Started', unlocked: phase !== 'outside' },
-      { id: 'chapters', label: '3 Chapters Explored', unlocked: roomCount >= 3 },
-      { id: 'story', label: 'Full Story Complete', unlocked: roomCount >= storyRooms.length },
+      { id: 'chapters', label: '3 Rooms Reviewed', unlocked: roomCount >= 3 },
+      { id: 'story', label: 'All Rooms Reviewed', unlocked: roomCount >= storyRooms.length },
       { id: 'insights', label: '6 Insights Viewed', unlocked: hotspotCount >= 6 },
     ];
   }, [phase, visitedRooms, visitedHotspots]);

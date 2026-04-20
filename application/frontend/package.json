@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "VITE_API_BASE=/api vite build",
     "test": "npm run test:hooks && npm run test:smoke",
-    "test:hooks": "node --test src/pages/virtualTour/useTourStateReducer.test.js src/pages/virtualTour/useTourPreferences.test.js src/pages/virtualTour/useTourRoomInteractions.test.js",
-    "test:smoke": "vitest run src/App.smoke.test.jsx",
+    "test:hooks": "node --test src/pages/virtualTour/useTourStateReducer.test.js src/pages/virtualTour/useTourPreferences.test.js src/pages/virtualTour/useTourRoomInteractions.test.js src/utils/styleContext.test.js",
+    "test:smoke": "vitest run src/App.smoke.test.jsx src/pages/Dashboard.a11y.test.jsx src/pages/Workspace.a11y.test.jsx src/pages/virtualTour/Accessibility.test.jsx",
     "test:watch": "vitest",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -1,72 +1,73 @@
 :root {
   /* ============================================================
-     HYBRID PALETTE — graphite · steel · slate · brass · stone · paper
-     Public surfaces: Marcelo (mood, atmosphere, large type)
-     Product screens: Adrien (structure, clarity, grid discipline)
+     HYBRID PALETTE — ink · graphite · mist · brass · paper
+     Marcelo influence: atmosphere, staging, negative space
+     Product influence: structure, clarity, disciplined hierarchy
      ============================================================ */
 
-  /* Raw palette — Expanded Ecco Cinematic (Marcelo Exact Extraction) */
-  --color-graphite-950: #8CA6BE; /* Alpine Sky Blue (top gradient) */
-  --color-graphite-900: #9EB5CB; /* Lighter Sky */
-  --color-graphite-800: #DBE4E7; /* Fog/Mist White (horizon) */
-  --color-graphite-700: #ECEDD7; /* Warm Sunlight Glow */
-  --color-steel-600: #789AB7;    /* Deep Sky Edge */
-  --color-steel-500: #9badbd;
-  --color-slate-400: #657788;    /* Muted Blue Text */
-  --color-slate-300: #8FA2B4;
-  --color-brass-500: #2C4614;    /* Deep Moss / Pine Shadow */
-  --color-brass-400: #0E1012;    /* Pure Obsidian (Buttons/Icons) */
-  --color-brass-300: #7BAC23;    /* Vivid Field Grass */
-  --color-stone-200: #C4D3DE;    /* Frosted Glass Shadow */
-  --color-stone-100: #E6EDF0;    /* Frosted Glass Base */
-  --color-paper-50:  #ffffff;    /* Real White for cards */
-  --color-paper-0:   #F3F7F8;
-  --color-success-600: #58811A;
-  --color-danger-500:  #ef4444;
+  /* Core palette — atmospheric haze around restrained product chrome */
+  --color-graphite-950: #0e1012; /* ink */
+  --color-graphite-900: #1c2328; /* shell */
+  --color-graphite-800: #2f3b43; /* raised dark surface */
+  --color-graphite-700: #42535b; /* structured slate */
+  --color-steel-600: #9db7d2;    /* cool bloom */
+  --color-steel-500: #dbe7f3;    /* mist haze */
+  --color-slate-400: #657788;    /* muted copy */
+  --color-slate-300: #9eacb7;    /* light copy */
+  --color-brass-500: #8c6c45;    /* aged brass shadow */
+  --color-brass-400: #b49771;    /* aged brass */
+  --color-brass-300: #ece3cf;    /* sand haze */
+  --color-stone-200: #d7e0e5;    /* frosted surface */
+  --color-stone-100: #edf2f3;    /* lifted surface */
+  --color-paper-50:  #ffffff;    /* paper */
+  --color-paper-0:   #f7f8f6;    /* base field */
+  --color-success-600: #3f6f5a;
+  --color-danger-500:  #dc2626;
 
   /* RGB channel triples */
-  --color-graphite-950-rgb: 140 166 190;
-  --color-graphite-900-rgb: 158 181 203;
-  --color-graphite-800-rgb: 219 228 231;
-  --color-graphite-700-rgb: 236 237 215;
-  --color-steel-600-rgb: 120 154 183;
-  --color-steel-500-rgb: 155 173 189;
+  --color-graphite-950-rgb: 14 16 18;
+  --color-graphite-900-rgb: 28 35 40;
+  --color-graphite-800-rgb: 47 59 67;
+  --color-graphite-700-rgb: 66 83 91;
+  --color-steel-600-rgb: 157 183 210;
+  --color-steel-500-rgb: 219 231 243;
   --color-slate-400-rgb: 101 119 136;
-  --color-slate-300-rgb: 143 162 180;
-  --color-brass-500-rgb: 44 70 20;
-  --color-brass-400-rgb: 14 16 18;
-  --color-brass-300-rgb: 123 172 35;
-  --color-stone-200-rgb: 196 211 222;
-  --color-stone-100-rgb: 230 237 240;
+  --color-slate-300-rgb: 158 172 183;
+  --color-brass-500-rgb: 140 108 69;
+  --color-brass-400-rgb: 180 151 113;
+  --color-brass-300-rgb: 236 227 207;
+  --color-stone-200-rgb: 215 224 229;
+  --color-stone-100-rgb: 237 242 243;
   --color-paper-50-rgb: 255 255 255;
-  --color-paper-0-rgb: 243 247 248;
-  --color-success-600-rgb: 88 129 26;
+  --color-paper-0-rgb: 247 248 246;
+  --color-success-600-rgb: 63 111 90;
+  --color-danger-500-rgb: 220 38 38;
 
   /* ── Semantic roles ────────────────────────────────────────── */
 
   /* Backgrounds */
-  --color-bg-deep:        var(--color-graphite-950);   /* deepest — hero overlays */
-  --color-bg-base:        var(--color-graphite-900);   /* page background */
-  --color-bg-raised:      var(--color-graphite-800);   /* elevated surface */
-  --color-bg-overlay:     var(--color-graphite-700);   /* modals, drawers */
-  --color-bg-light:       var(--color-stone-100);      /* light surface (product screens) */
-  --color-bg-paper:       var(--color-paper-50);       /* near-white (product screens) */
+  --color-bg-deep:        var(--color-graphite-950);
+  --color-bg-base:        var(--color-paper-0);
+  --color-bg-raised:      var(--color-stone-100);
+  --color-bg-overlay:     var(--color-paper-50);
+  --color-bg-light:       var(--color-stone-100);
+  --color-bg-paper:       var(--color-paper-50);
 
   --color-bg-deep-rgb:    var(--color-graphite-950-rgb);
-  --color-bg-base-rgb:    var(--color-graphite-900-rgb);
-  --color-bg-raised-rgb:  var(--color-graphite-800-rgb);
+  --color-bg-base-rgb:    var(--color-paper-0-rgb);
+  --color-bg-raised-rgb:  var(--color-stone-100-rgb);
 
   /* Text */
-  --color-text-primary:   var(--color-paper-50);       /* primary text on dark */
-  --color-text-secondary: var(--color-stone-200);      /* secondary / muted on dark */
-  --color-text-tertiary:  var(--color-slate-400);      /* placeholder / dim */
-  --color-text-dark:      var(--color-graphite-900);   /* text on light bg */
-  --color-text-mid:       var(--color-steel-600);      /* mid-tone label */
+  --color-text-primary:   var(--color-paper-50);
+  --color-text-secondary: var(--color-stone-200);
+  --color-text-tertiary:  var(--color-slate-300);
+  --color-text-dark:      var(--color-graphite-900);
+  --color-text-mid:       var(--color-slate-400);
 
   --color-text-primary-rgb:   var(--color-paper-50-rgb);
   --color-text-secondary-rgb: var(--color-stone-200-rgb);
 
-  /* Accent — brass */
+  /* Accent — reserved for material emphasis rather than the whole shell */
   --color-accent:         var(--color-brass-400);
   --color-accent-strong:  var(--color-brass-500);
   --color-accent-subtle:  var(--color-brass-300);
@@ -74,30 +75,30 @@
   --color-accent-strong-rgb: var(--color-brass-500-rgb);
 
   /* Borders */
-  --color-border:         rgb(var(--color-stone-200-rgb) / 0.14);
-  --color-border-mid:     rgb(var(--color-stone-200-rgb) / 0.22);
-  --color-border-strong:  rgb(var(--color-stone-200-rgb) / 0.4);
-  --color-border-light:   rgb(var(--color-graphite-800-rgb) / 0.18);  /* on light bg */
+  --color-border:         rgb(var(--color-graphite-900-rgb) / 0.08);
+  --color-border-mid:     rgb(var(--color-graphite-900-rgb) / 0.12);
+  --color-border-strong:  rgb(var(--color-graphite-900-rgb) / 0.22);
+  --color-border-light:   rgb(var(--color-paper-50-rgb) / 0.18);
 
   /* ── Legacy aliases (keep existing components compiling) ───── */
   --color-primary-slate:         var(--color-graphite-900);
   --color-primary-slate-rgb:     var(--color-graphite-900-rgb);
   --color-secondary-arctic:      var(--color-paper-50);
   --color-secondary-arctic-rgb:  var(--color-paper-50-rgb);
-  --color-action-emerald:        var(--color-steel-600);
-  --color-action-emerald-rgb:    var(--color-steel-600-rgb);
+  --color-action-emerald:        var(--color-success-600);
+  --color-action-emerald-rgb:    var(--color-success-600-rgb);
   --color-camel-400:             var(--color-brass-400);
   --color-camel-400-rgb:         var(--color-brass-400-rgb);
-  --color-wine-900:              var(--color-steel-600);
-  --color-wine-900-rgb:          var(--color-steel-600-rgb);
-  --color-chocolate-700:         var(--color-graphite-800);
-  --color-chocolate-700-rgb:     var(--color-graphite-800-rgb);
+  --color-wine-900:              var(--color-graphite-800);
+  --color-wine-900-rgb:          var(--color-graphite-800-rgb);
+  --color-chocolate-700:         var(--color-graphite-700);
+  --color-chocolate-700-rgb:     var(--color-graphite-700-rgb);
   --color-coffee-900:            var(--color-graphite-950);
   --color-coffee-900-rgb:        var(--color-graphite-950-rgb);
   --color-apricot-100:           var(--color-paper-50);
   --color-apricot-100-rgb:       var(--color-paper-50-rgb);
-  --color-accent-soft:           var(--color-stone-200);
-  --color-accent-soft-rgb:       var(--color-stone-200-rgb);
+  --color-accent-soft:           var(--color-steel-500);
+  --color-accent-soft-rgb:       var(--color-steel-500-rgb);
   --color-limestone-100:         var(--color-stone-100);
   --color-limestone-200:         var(--color-stone-200);
   --color-stone-300:             var(--color-stone-200);
@@ -108,28 +109,28 @@
 
   --color-brand-400: var(--color-brass-300);
   --color-brand-500: var(--color-brass-400);
-  --color-brand-600: var(--color-brass-500);
-  --color-brand-700: var(--color-graphite-900);
+  --color-brand-600: var(--color-graphite-900);
+  --color-brand-700: var(--color-graphite-950);
 
   --color-primary-200: var(--color-paper-50);
   --color-primary-300: var(--color-stone-200);
   --color-primary-400: var(--color-brass-400);
   --color-primary-500: var(--color-steel-600);
-  --color-primary-600: var(--color-graphite-900);
-  --color-primary-700: var(--color-graphite-950);
+  --color-primary-600: var(--color-graphite-800);
+  --color-primary-700: var(--color-graphite-900);
 
-  --color-bg-950:       var(--color-stone-100);
+  --color-bg-950:       var(--color-paper-0);
   --color-surface-900:  var(--color-paper-50);
   --color-surface-850:  var(--color-stone-200);
-  --color-border-700:   rgb(var(--color-stone-200-rgb) / 0.9);
+  --color-border-700:   rgb(var(--color-graphite-900-rgb) / 0.24);
   --color-text-100:     var(--color-graphite-900);
   --color-text-200:     var(--color-graphite-900);
   --color-text-300:     var(--color-slate-400);
-  --color-text-400:     var(--color-slate-400);
-  --color-text-50:      var(--color-graphite-950);
+  --color-text-400:     var(--color-slate-300);
+  --color-text-50:      var(--color-paper-50);
 
   /* ── Typography ────────────────────────────────────────────── */
-  /* Marcelo direction: display type is larger, looser, editorial */
+  /* Display type stays editorial; UI type stays disciplined */
   --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Cormorant Garamond', 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-serif:   var(--font-display);
@@ -143,7 +144,7 @@
   --text-xl:      1.5625rem;
   --text-2xl:     1.953125rem;
   --text-3xl:     2.44140625rem;
-  --text-display: clamp(2.8rem, 6vw, 5.5rem);    /* Marcelo: big editorial headlines */
+  --text-display: clamp(2.8rem, 6vw, 5.5rem);
   --text-display-sm: clamp(2rem, 4vw, 3.5rem);
 
   --leading-tight:   1.1;
@@ -152,21 +153,20 @@
   --leading-relaxed: 1.65;
 
   /* ── Shadows ────────────────────────────────────────────────── */
-  --shadow-layer-1: 0 1px 2px rgb(var(--color-graphite-950-rgb) / 0.08);
-  --shadow-layer-2: 0 4px 12px rgb(var(--color-graphite-950-rgb) / 0.12);
-  --shadow-layer-3: 0 12px 28px rgb(var(--color-graphite-950-rgb) / 0.16);
-  --shadow-layer-4: 0 28px 56px rgb(var(--color-graphite-950-rgb) / 0.22);
+  --shadow-layer-1: 0 12px 24px -20px rgb(var(--color-graphite-950-rgb) / 0.18);
+  --shadow-layer-2: 0 20px 44px -28px rgb(var(--color-graphite-950-rgb) / 0.2);
+  --shadow-layer-3: 0 26px 58px -34px rgb(var(--color-graphite-950-rgb) / 0.26);
+  --shadow-layer-4: 0 40px 84px -48px rgb(var(--color-graphite-950-rgb) / 0.3);
   --shadow-elevated: var(--shadow-layer-1), var(--shadow-layer-2), var(--shadow-layer-3);
 
   --shadow-glass-atmosphere:
-    0 1px 0 rgba(255, 255, 255, 0.08) inset,
-    0 -1px 0 rgb(var(--color-graphite-950-rgb) / 0.08) inset,
-    0 8px 32px rgb(var(--color-graphite-950-rgb) / 0.18),
-    0 2px 8px rgb(var(--color-graphite-950-rgb) / 0.1);
+    0 1px 0 rgba(255, 255, 255, 0.62) inset,
+    0 -1px 0 rgb(var(--color-graphite-950-rgb) / 0.06) inset,
+    0 26px 54px -38px rgb(var(--color-graphite-950-rgb) / 0.28),
+    0 8px 18px -16px rgb(var(--color-graphite-950-rgb) / 0.18);
 
-  /* Focus ring — brass */
-  --focus-ring:        0 0 0 3px rgb(var(--color-brass-400-rgb) / 0.32);
-  --focus-ring-strong: 0 0 0 4px rgb(var(--color-brass-400-rgb) / 0.42);
+  --focus-ring:        0 0 0 3px rgb(var(--color-brass-400-rgb) / 0.26);
+  --focus-ring-strong: 0 0 0 4px rgb(var(--color-brass-400-rgb) / 0.34);
 
   /* ── Spacing (4px / 8px grid) ────────────────────────────── */
   --space-1:  4px;
@@ -179,13 +179,16 @@
   --space-12: 64px;
 
   /* ── Radius ────────────────────────────────────────────────── */
-  /* Adrien direction: tighter, more architectural */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-sm: 5px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
 
   /* ── Motion ────────────────────────────────────────────────── */
-  --motion-fast: 160ms;
-  --motion-mid:  280ms;
-  --motion-slow: 480ms;
+  --motion-fast: 180ms;
+  --motion-mid:  320ms;
+  --motion-slow: 560ms;
+  --motion-drift: 14s;
+  --motion-float: 7s;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-display: cubic-bezier(0.16, 1, 0.3, 1);
 }

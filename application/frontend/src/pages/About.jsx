@@ -22,6 +22,10 @@ const About = () => {
   const memberModalRef = useRef(null);
   const memberModalCloseRef = useRef(null);
   const previousFocusedRef = useRef(null);
+  const counterIntervalRef = useRef(null);
+  const contactSubmitTimeoutRef = useRef(null);
+  const contactNoticeTimeoutRef = useRef(null);
+  const newsletterNoticeTimeoutRef = useRef(null);
 
   const closeMemberModal = () => setSelectedMember(null);
   const handleLogout = () => {
@@ -34,6 +38,35 @@ const About = () => {
     document.body.dataset.scene = 'about';
 
     setIsLoaded(true);
+    const clearCounterInterval = () => {
+      if (counterIntervalRef.current === null) return;
+      window.clearInterval(counterIntervalRef.current);
+      counterIntervalRef.current = null;
+    };
+
+    const animateCounters = () => {
+      const targets = { users: 1000, projects: 500, styles: 50 };
+      const duration = 2000;
+      const steps = 60;
+      const interval = duration / steps;
+
+      let step = 0;
+      clearCounterInterval();
+      counterIntervalRef.current = window.setInterval(() => {
+        step++;
+        const progress = step / steps;
+        const eased = 1 - Math.pow(1 - progress, 3);
+
+        setAnimatedCounters({
+          users: Math.floor(targets.users * eased),
+          projects: Math.floor(targets.projects * eased),
+          styles: Math.floor(targets.styles * eased)
+        });
+
+        if (step >= steps) clearCounterInterval();
+      }, interval);
+    };
+
     animateCounters();
     
     let rafId = 0;
@@ -54,6 +87,19 @@ const About = () => {
     return () => {
       window.removeEventListener('scroll', onScroll);
       if (rafId) window.cancelAnimationFrame(rafId);
+      clearCounterInterval();
+      if (contactSubmitTimeoutRef.current !== null) {
+        window.clearTimeout(contactSubmitTimeoutRef.current);
+        contactSubmitTimeoutRef.current = null;
+      }
+      if (contactNoticeTimeoutRef.current !== null) {
+        window.clearTimeout(contactNoticeTimeoutRef.current);
+        contactNoticeTimeoutRef.current = null;
+      }
+      if (newsletterNoticeTimeoutRef.current !== null) {
+        window.clearTimeout(newsletterNoticeTimeoutRef.current);
+        newsletterNoticeTimeoutRef.current = null;
+      }
       if (document.body.dataset.scene === 'about') {
         if (prevScene) document.body.dataset.scene = prevScene;
         else delete document.body.dataset.scene;
@@ -61,60 +107,57 @@ const About = () => {
     };
   }, []);
 
-  const animateCounters = () => {
-    const targets = { users: 1000, projects: 500, styles: 50 };
-    const duration = 2000;
-    const steps = 60;
-    const interval = duration / steps;
-    
-    let step = 0;
-    const timer = setInterval(() => {
-      step++;
-      const progress = step / steps;
-      const eased = 1 - Math.pow(1 - progress, 3);
-      
-      setAnimatedCounters({
-        users: Math.floor(targets.users * eased),
-        projects: Math.floor(targets.projects * eased),
-        styles: Math.floor(targets.styles * eased)
-      });
-      
-      if (step >= steps) clearInterval(timer);
-    }, interval);
-  };
-
   const handleContactSubmit = (e) => {
     e.preventDefault();
+    if (contactSubmitTimeoutRef.current !== null) {
+      window.clearTimeout(contactSubmitTimeoutRef.current);
+      contactSubmitTimeoutRef.current = null;
+    }
+    if (contactNoticeTimeoutRef.current !== null) {
+      window.clearTimeout(contactNoticeTimeoutRef.current);
+      contactNoticeTimeoutRef.current = null;
+    }
     setFormStatus('sending');
-    setTimeout(() => {
+    contactSubmitTimeoutRef.current = window.setTimeout(() => {
+      contactSubmitTimeoutRef.current = null;
       setFormStatus('success');
       setContactForm({ name: '', email: '', message: '' });
       setFormNotice('Contact form submissions are unavailable in this preview environment.');
-      setTimeout(() => setFormNotice(''), 3500);
+      contactNoticeTimeoutRef.current = window.setTimeout(() => {
+        contactNoticeTimeoutRef.current = null;
+        setFormNotice('');
+      }, 3500);
     }, 1000);
   };
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
+    if (newsletterNoticeTimeoutRef.current !== null) {
+      window.clearTimeout(newsletterNoticeTimeoutRef.current);
+      newsletterNoticeTimeoutRef.current = null;
+    }
     setNewsletterNotice(`Newsletter signup for ${newsletterEmail} is unavailable in this preview environment.`);
-    setTimeout(() => setNewsletterNotice(''), 3500);
+    newsletterNoticeTimeoutRef.current = window.setTimeout(() => {
+      newsletterNoticeTimeoutRef.current = null;
+      setNewsletterNotice('');
+    }, 3500);
     setNewsletterEmail('');
   };
 
   const features = [
-    { icon: <Home size={28} />, title: 'Room Projects', desc: 'Create and manage projects for any room in your home.' },
-    { icon: <DollarSign size={28} />, title: 'Budget Tracking', desc: 'Set and track your renovation budget with real-time updates.' },
-    { icon: <Palette size={28} />, title: 'Style Exploration', desc: 'Discover various interior design styles for your space.' },
-    { icon: <Lightbulb size={28} />, title: 'Smart Recommendations', desc: 'Get personalized product recommendations based on your style.' },
-    { icon: <CheckSquare size={28} />, title: 'Task Management', desc: 'Track your renovation progress with built-in checklists.' },
-    { icon: <Smartphone size={28} />, title: 'Anywhere Access', desc: 'Access your projects from any device, anytime.' }
+    { icon: <Home size={28} />, title: 'Room Planning', desc: 'Launch room-specific projects with clear scope, milestones, and design context.' },
+    { icon: <DollarSign size={28} />, title: 'Budget Oversight', desc: 'Track approved budgets, estimated costs, and remaining room allocations in one place.' },
+    { icon: <Palette size={28} />, title: 'Style Library', desc: 'Compare interior directions, materials, and signatures before committing to a concept.' },
+    { icon: <Lightbulb size={28} />, title: 'AI Recommendations', desc: 'Generate design suggestions shaped by room type, style direction, and project priorities.' },
+    { icon: <CheckSquare size={28} />, title: 'Project Tracking', desc: 'Move recommendations into action with task planning and completion history.' },
+    { icon: <Smartphone size={28} />, title: 'Cross-device Access', desc: 'Review projects, room previews, and design updates from any modern device.' }
   ];
 
   const steps = [
-    { number: '01', title: 'Create Project', desc: 'Select your room type' },
-    { number: '02', title: 'Set Budget', desc: 'Define spending limits' },
-    { number: '03', title: 'Explore Styles', desc: 'Choose your style' },
-    { number: '04', title: 'Get Recommendations', desc: 'Receive suggestions' }
+    { number: '01', title: 'Create Project', desc: 'Define the room, scope, and project context.' },
+    { number: '02', title: 'Set Budget', desc: 'Establish the spending range and financial guardrails.' },
+    { number: '03', title: 'Choose Style', desc: 'Review direction, materials, and preferred mood.' },
+    { number: '04', title: 'Generate Plan', desc: 'Receive AI-assisted recommendations and next steps.' }
   ];
 
   const teamMembers = [
@@ -190,18 +233,19 @@ const About = () => {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+      transition: { staggerChildren: 0.12, delayChildren: 0.16 }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    hidden: { opacity: 0, y: 24, filter: 'blur(8px)' },
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { type: 'spring', stiffness: 100, damping: 20 }
+      filter: 'blur(0px)',
+      transition: { duration: 0.58, ease: [0.16, 1, 0.3, 1] }
     }
   };
 
@@ -295,21 +339,21 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="hero-content">
-          <motion.span variants={itemVariants} className="hero-badge">Redefining Your Space</motion.span>
+          <motion.span variants={itemVariants} className="hero-badge">Platform Overview</motion.span>
           <motion.h2 variants={itemVariants} className="hero-title">
-            Design Your <span>Editorial Vision</span>
+            Plan interior projects <span>with clarity and control.</span>
           </motion.h2>
           <motion.p variants={itemVariants} className="hero-description">
-            The world's first spatial design assistant. Leverage AI to curate, plan, and execute high-end interior transformations with professional precision.
+            Home4U helps homeowners and design teams organize room plans, compare style directions, track budgets, and produce AI-assisted concept previews without losing operational clarity.
           </motion.p>
           <motion.div variants={itemVariants} className="hero-buttons">
-            <button type="button" onClick={() => navigate('/dashboard')} className="primary-btn">Get Started <ArrowRight size={18} inline /></button>
-            <button type="button" onClick={() => scrollToSection('features')} className="secondary-btn">The Blueprint</button>
+            <button type="button" onClick={() => navigate('/dashboard')} className="primary-btn">Open Dashboard <ArrowRight size={18} /></button>
+            <button type="button" onClick={() => scrollToSection('features')} className="secondary-btn">Review Capabilities</button>
           </motion.div>
           <motion.div variants={itemVariants} className="hero-stats">
-            <div className="hero-stat"><span className="stat-number">6+</span><span className="stat-text">Spatial Archetypes</span></div>
-            <div className="hero-stat"><span className="stat-number">5+</span><span className="stat-text">Artistic Styles</span></div>
-            <div className="hero-stat"><span className="stat-number">∞</span><span className="stat-text">Configurations</span></div>
+            <div className="hero-stat"><span className="stat-number">6+</span><span className="stat-text">Room workflows</span></div>
+            <div className="hero-stat"><span className="stat-number">5+</span><span className="stat-text">Design styles</span></div>
+            <div className="hero-stat"><span className="stat-number">24/7</span><span className="stat-text">Project access</span></div>
           </motion.div>
         </div>
         
@@ -323,12 +367,12 @@ const About = () => {
           <div className="hero-card" data-parallax-card>
             <div className="card-glow"></div>
             <div className="card-content">
-              <div className="card-icon">ST</div>
-              <div className="card-text">Scandinavian Loft</div>
+              <div className="card-icon">SC</div>
+              <div className="card-text">Scandinavian Concept</div>
               <div className="card-progress"><div className="progress-fill"></div></div>
               <div className="card-meta">
-                <span>Invested: $12,400</span>
-                <span>Spatial: Nordic</span>
+                <span>Allocated: $12,400</span>
+                <span>Direction: Nordic</span>
               </div>
             </div>
           </div>
@@ -343,9 +387,9 @@ const About = () => {
         transition={{ duration: 0.8 }}
       >
         <div className="section-header">
-          <h3>Interface</h3>
-          <h2>High-fidelity Studio</h2>
-          <p className="section-subtitle">A seamless workflow designed for professional precision.</p>
+          <h3>Platform</h3>
+          <h2>Operational Workspace</h2>
+          <p className="section-subtitle">A connected workflow for planning, style review, and AI-assisted concept generation.</p>
         </div>
         
         <div className="app-preview-wrapper">
@@ -372,8 +416,8 @@ const About = () => {
                     <span>Projects</span>
                   </div>
                   <div className="nav-item">
-                    <span className="nav-icon">ST</span>
-                    <span>Styles</span>
+                    <span className="nav-icon">WS</span>
+                    <span>Workspace</span>
                   </div>
                   <div className="nav-item">
                     <span className="nav-icon">AI</span>
@@ -384,7 +428,7 @@ const About = () => {
               
               <div className="preview-main">
                 <div className="preview-header-bar">
-                  <h3>My Dashboard</h3>
+                  <h3>Operations Dashboard</h3>
                   <div className="preview-user">User: John D.</div>
                 </div>
                 
@@ -410,7 +454,7 @@ const About = () => {
                 </div>
                 
                 <div className="preview-recommendations">
-                  <h4>Intelligence Feed</h4>
+                  <h4>Recommended Actions</h4>
                   <div className="rec-items">
                     <div className="rec-item">
                       <span className="rec-img">CH</span>
@@ -439,8 +483,8 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="section-header">
-          <h3>Capabilites</h3>
-          <h2>Professional Suite</h2>
+          <h3>Capabilities</h3>
+          <h2>Core Platform</h2>
         </div>
         <div className="features-grid">
           {features.map((feature, index) => (
@@ -467,8 +511,8 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="section-header">
-          <h3>Testimonials</h3>
-          <h2>Professional Review</h2>
+          <h3>Feedback</h3>
+          <h2>User Perspectives</h2>
         </div>
         <div className="testimonials-grid">
           {testimonials.map((testimonial, index) => (
@@ -494,15 +538,15 @@ const About = () => {
         <div className="counter-grid">
           <div className="counter-item scroll-animate">
             <span className="counter-number">{animatedCounters.users || 0}+</span>
-            <span className="counter-label">Happy Users</span>
+            <span className="counter-label">Active Users</span>
           </div>
           <div className="counter-item scroll-animate" style={{ transitionDelay: '0.15s' }}>
             <span className="counter-number">{animatedCounters.projects || 0}+</span>
-            <span className="counter-label">Projects Created</span>
+            <span className="counter-label">Projects Planned</span>
           </div>
           <div className="counter-item scroll-animate" style={{ transitionDelay: '0.3s' }}>
             <span className="counter-number">{animatedCounters.styles || 0}+</span>
-            <span className="counter-label">Design Styles</span>
+            <span className="counter-label">Style Directions</span>
           </div>
         </div>
       </section>
@@ -515,14 +559,14 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="section-header">
-          <h3>The Curators</h3>
-          <h2>Engineering Excellence</h2>
+          <h3>Team</h3>
+          <h2>Built by Home4U</h2>
         </div>
         <div className="team-grid">
           {teamMembers.map((member, index) => (
             <motion.button
               type="button"
-              whileHover={{ y: -10, scale: 1.02 }}
+              whileHover={{ y: -4 }}
               variants={itemVariants}
               key={index} 
               className="team-card"
@@ -533,7 +577,7 @@ const About = () => {
               <div className="team-avatar">{member.emoji}</div>
               <h4>{member.name}</h4>
               <span className="team-role">{member.role}</span>
-              <span className="team-cta">Learn More →</span>
+              <span className="team-cta">View Profile</span>
             </motion.button>
           ))}
         </div>
@@ -591,16 +635,16 @@ const About = () => {
         <div className="company-content">
           <motion.div variants={containerVariants} initial="hidden" whileInView="visible" className="company-text">
             <motion.h3 variants={itemVariants}>Company</motion.h3>
-            <motion.h2 variants={itemVariants}>Home4U Studio</motion.h2>
-            <motion.p variants={itemVariants}>Founded in February 2026, Home4U was born from a simple idea: professional-grade interior design should be an effortless extension of the creative mind.</motion.p>
+            <motion.h2 variants={itemVariants}>Why Home4U</motion.h2>
+            <motion.p variants={itemVariants}>Home4U was created to make interior planning easier to understand, easier to compare, and easier to execute for real households and design-led teams.</motion.p>
             <div className="company-values">
               <motion.div variants={itemVariants} className="value-item">
                 <span className="value-icon">01</span>
-                <div><h4>The Mission</h4><p>Democratize professional spatial excellence.</p></div>
+                <div><h4>Our Mission</h4><p>Make confident room planning accessible without sacrificing design quality.</p></div>
               </motion.div>
               <motion.div variants={itemVariants} className="value-item">
                 <span className="value-icon">02</span>
-                <div><h4>The Values</h4><p>Precision, Aesthetics, Innovation.</p></div>
+                <div><h4>Principles</h4><p>Clarity, measurable decisions, and a workflow users can trust.</p></div>
               </motion.div>
             </div>
           </motion.div>
@@ -626,8 +670,8 @@ const About = () => {
         variants={containerVariants}
       >
         <div className="section-header">
-          <h3>Methodology</h3>
-          <h2>Operational Workflow</h2>
+          <h3>Workflow</h3>
+          <h2>How the platform works</h2>
         </div>
         <div className="steps-container">
           {steps.map((step, index) => (
@@ -690,49 +734,49 @@ const About = () => {
 
       <section className="contact-section">
         <div className="section-header">
-          <h3>Contact Us</h3>
-          <h2>Get In Touch</h2>
+          <h3>Contact</h3>
+          <h2>Talk to the team</h2>
         </div>
         <form className="contact-form" onSubmit={handleContactSubmit}>
           {formNotice && <div className="form-notice">{formNotice}</div>}
           <div className="form-row">
-            <label className="sr-only" htmlFor="contact-name">Your Name</label>
+            <label className="sr-only" htmlFor="contact-name">Full name</label>
             <input 
               id="contact-name"
               type="text" 
-              placeholder="Your Name" 
+              placeholder="Full name"
               value={contactForm.name}
               onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
               required 
             />
-            <label className="sr-only" htmlFor="contact-email">Your Email</label>
+            <label className="sr-only" htmlFor="contact-email">Email address</label>
             <input 
               id="contact-email"
               type="email" 
-              placeholder="Your Email" 
+              placeholder="Email address"
               value={contactForm.email}
               onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
               required 
             />
           </div>
-          <label className="sr-only" htmlFor="contact-message">Your Message</label>
+          <label className="sr-only" htmlFor="contact-message">Project summary</label>
           <textarea 
             id="contact-message"
-            placeholder="Your Message"
+            placeholder="Project summary"
             value={contactForm.message}
             onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
             required
           ></textarea>
           <button type="submit" className="submit-btn" disabled={formStatus === 'sending'}>
-            {formStatus === 'sending' ? 'Sending...' : formStatus === 'success' ? 'Sent!' : 'Send Message →'}
+            {formStatus === 'sending' ? 'Sending...' : formStatus === 'success' ? 'Message sent' : 'Send Inquiry'}
           </button>
         </form>
       </section>
 
       <section className="newsletter-section">
         <div className="newsletter-content">
-          <h2>Stay Updated</h2>
-          <p>Subscribe to our newsletter for design tips and product updates.</p>
+          <h2>Product Updates</h2>
+          <p>Receive release notes, design updates, and platform news.</p>
           <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
             <label className="sr-only" htmlFor="newsletter-email">Email Address</label>
             <input 
@@ -751,9 +795,9 @@ const About = () => {
 
       <section className="cta-section">
         <div className="cta-content">
-          <h2>Ready to Transform Your Space?</h2>
-          <p>Start your interior design journey today.</p>
-          <button type="button" onClick={() => navigate('/dashboard')} className="cta-btn">Go to Dashboard</button>
+          <h2>Ready to review your next room?</h2>
+          <p>Open the workspace and start a new concept preview.</p>
+          <button type="button" onClick={() => navigate('/dashboard')} className="cta-btn">Open Dashboard</button>
         </div>
       </section>
 
@@ -761,7 +805,7 @@ const About = () => {
         <div className="footer-content">
           <div className="footer-brand">
             <h3>Home4U</h3>
-            <p>Your personal interior design assistant</p>
+            <p>Interior planning workspace for modern renovation teams and homeowners.</p>
           </div>
           <div className="footer-links">
             <div className="footer-column">

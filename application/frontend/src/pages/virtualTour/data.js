@@ -331,7 +331,7 @@ const storyChapters = [
   {
     id: 'outside',
     title: 'Outside Arrival',
-    narrationText: 'Narration: Begin at the front door to start a guided story of transformation.',
+    narrationText: 'Guidance: Begin at the front door to start the guided Home4U tour.',
     cameraPath: [
       createWaypoint(-0.45, 56),
       createWaypoint(-0.25, 52),
@@ -342,7 +342,7 @@ const storyChapters = [
   {
     id: 'foyer',
     title: 'The Foyer',
-    narrationText: 'Narration: You are passing through the frosted entry and into the story map of the home.',
+    narrationText: 'Guidance: You are moving through the entry sequence and into the room map of the home.',
     cameraPath: [
       createWaypoint(0, 42),
       createWaypoint(0.2, 35),
@@ -353,7 +353,7 @@ const storyChapters = [
   ...storyRooms.map((room) => ({
     id: room.id,
     title: room.name,
-    narrationText: `Narration: ${room.promise}`,
+    narrationText: `Guidance: ${room.promise}`,
     cameraPath: buildRoomCameraPath(room),
     framework: {
       problem: room.problem,

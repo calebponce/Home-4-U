@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List, Literal
 from datetime import datetime
 
 # User Schemas
@@ -124,6 +124,52 @@ class RecommendationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SuggestedTagDetail(BaseModel):
+    id: int
+    name: str
+    confidence: float = Field(ge=0.0, le=1.0)
+    source: str
+
+
+class StyleScoreDetail(BaseModel):
+    style_id: int
+    style_name: str
+    score_value: float = Field(ge=0.0, le=100.0)
+    matched_tags: List[str] = []
+
+
+class ImageProfile(BaseModel):
+    width: int = Field(default=0, ge=0)
+    height: int = Field(default=0, ge=0)
+    aspect_ratio: float = Field(default=1.0, ge=0.1)
+    average_brightness: float = Field(default=0.0, ge=0.0, le=1.0)
+    average_saturation: float = Field(default=0.0, ge=0.0, le=1.0)
+    warmth_bias: float = Field(default=0.0, ge=-1.0, le=1.0)
+    dominant_hex: Optional[str] = None
+
+
+class ProjectAnalysisRequest(BaseModel):
+    style_id: Optional[int] = None
+    style_slug: Optional[str] = None
+    style_name: Optional[str] = None
+    room_type: Optional[str] = None
+    intensity: int = Field(default=60, ge=0, le=100)
+    lighting: Literal["warm", "cool"] = "warm"
+    budget_tier: Literal["low", "medium", "high"] = "medium"
+    image_profile: Optional[ImageProfile] = None
+    detected_tags: List[str] = []
+
+
+class ProjectAnalysisResponse(BaseModel):
+    project: RoomProjectResponse
+    selected_style: StyleResponse
+    summary: str
+    image_profile: Optional[ImageProfile] = None
+    suggested_tags: List[SuggestedTagDetail]
+    style_scores: List[StyleScoreDetail]
+    recommendations: List[RecommendationResponse]
 
 # ProductItem Schemas
 class ProductItemResponse(BaseModel):

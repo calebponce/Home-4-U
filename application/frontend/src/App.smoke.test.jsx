@@ -1,22 +1,106 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import App from './App';
 
 const useAuthMock = vi.fn();
+const { projectsGetAllMock, stylesGetAllMock, searchStylesMock } = vi.hoisted(() => ({
+  projectsGetAllMock: vi.fn(),
+  stylesGetAllMock: vi.fn(),
+  searchStylesMock: vi.fn(),
+}));
 
 vi.mock('./context/AuthContext', () => ({
   useAuth: () => useAuthMock(),
+}));
+
+vi.mock('./services/api', () => ({
+  authAPI: {
+    signup: vi.fn(),
+    login: vi.fn(),
+  },
+  projectsAPI: {
+    getAll: projectsGetAllMock,
+    getById: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  stylesAPI: {
+    getAll: stylesGetAllMock,
+    getById: vi.fn(),
+    getTags: vi.fn(),
+    getAllTags: vi.fn(),
+  },
+  searchAPI: {
+    searchStyles: searchStylesMock,
+  },
+  recommendationsAPI: {
+    getByProject: vi.fn(),
+    create: vi.fn(),
+    markComplete: vi.fn(),
+    generate: vi.fn(),
+  },
+  healthAPI: {
+    check: vi.fn(),
+  },
+  default: {},
 }));
 
 vi.mock('./components/ApiStatusBanner', () => ({
   default: () => null,
 }));
 
+vi.mock('./pages/Workspace', async () => {
+  const { useLocation } = await import('react-router-dom');
+
+  return {
+    default: function MockWorkspace() {
+      const location = useLocation();
+
+      return (
+        <section>
+          <h1>Mock Workspace</h1>
+          <output data-testid="workspace-route-state">{JSON.stringify({
+            search: location.search,
+            state: location.state,
+          })}</output>
+        </section>
+      );
+    },
+  };
+});
+
+vi.mock('./pages/VirtualTour3D', async () => {
+  const { useLocation } = await import('react-router-dom');
+
+  return {
+    default: function MockVirtualTour3D() {
+      const location = useLocation();
+
+      return (
+        <section>
+          <h1>Mock Virtual Tour</h1>
+          <output data-testid="virtual-tour-route-state">{JSON.stringify({
+            search: location.search,
+            state: location.state,
+          })}</output>
+        </section>
+      );
+    },
+  };
+});
+
 const PathProbe = () => {
-  const { pathname } = useLocation();
-  return <output data-testid="path-probe">{pathname}</output>;
+  const { pathname, search, state } = useLocation();
+  return (
+    <>
+      <output data-testid="path-probe">{pathname}</output>
+      <output data-testid="search-probe">{search}</output>
+      <output data-testid="state-probe">{JSON.stringify(state || null)}</output>
+    </>
+  );
 };
 
 const renderAppAt = (path = '/login') =>
@@ -29,12 +113,28 @@ const renderAppAt = (path = '/login') =>
 
 beforeEach(() => {
   useAuthMock.mockReset();
+  projectsGetAllMock.mockReset();
+  stylesGetAllMock.mockReset();
+  searchStylesMock.mockReset();
   useAuthMock.mockReturnValue({
     user: null,
     token: null,
     loading: false,
     login: vi.fn(),
     logout: vi.fn(),
+  });
+  projectsGetAllMock.mockResolvedValue({ data: [] });
+  stylesGetAllMock.mockResolvedValue({
+    data: [
+      {
+        id: 3,
+        name: 'Scandinavian',
+        description: 'Cozy minimalism with natural materials and calm light.',
+      },
+    ],
+  });
+  searchStylesMock.mockResolvedValue({
+    data: { results: [], total: 0, page: 1, has_more: false },
   });
 });
 
@@ -45,13 +145,13 @@ afterEach(() => {
 describe('App smoke routing', () => {
   it('renders login on /login', () => {
     renderAppAt('/login');
-    expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /sign in to home4u/i })).toBeInTheDocument();
     expect(screen.getByTestId('path-probe')).toHaveTextContent('/login');
   });
 
   it('renders registration mode on /register', () => {
     renderAppAt('/register');
-    expect(screen.getByRole('heading', { name: /create account/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /create your account/i })).toBeInTheDocument();
     expect(screen.getByTestId('path-probe')).toHaveTextContent('/register');
   });
 
@@ -59,15 +159,15 @@ describe('App smoke routing', () => {
     const user = userEvent.setup();
     renderAppAt('/login');
 
-    await user.click(screen.getByRole('button', { name: /create an account/i }));
+    await user.click(screen.getByRole('button', { name: /^create account$/i }));
 
-    expect(await screen.findByRole('heading', { name: /create account/i }, { timeout: 3000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /create your account/i }, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.getByTestId('path-probe')).toHaveTextContent('/register');
   });
 
   it('redirects unauthenticated access from /dashboard to /login', async () => {
     renderAppAt('/dashboard');
-    expect(await screen.findByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /sign in to home4u/i })).toBeInTheDocument();
     expect(screen.getByTestId('path-probe')).toHaveTextContent('/login');
   });
 
@@ -91,7 +191,58 @@ describe('App smoke routing', () => {
     await user.click(await screen.findByRole('button', { name: /^logout$/i }));
 
     expect(logout).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole('heading', { name: /welcome back/i }, { timeout: 5000 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /sign in to home4u/i }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByTestId('path-probe')).toHaveTextContent('/login');
+  });
+
+  it('passes selected style search params and route state from dashboard to workspace', async () => {
+    const user = userEvent.setup();
+
+    useAuthMock.mockReturnValue({
+      user: { full_name: 'Test User' },
+      token: 'fake-token',
+      loading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    renderAppAt('/dashboard?style=scandinavian');
+
+    await user.click(
+      await screen.findByRole('button', { name: /open design workspace/i }, { timeout: 3000 }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('path-probe')).toHaveTextContent('/workspace');
+    });
+    expect(screen.getByTestId('search-probe')).toHaveTextContent('?style=scandinavian');
+    expect(screen.getByTestId('state-probe')).toHaveTextContent('"slug":"scandinavian"');
+    expect(screen.getByTestId('state-probe')).toHaveTextContent('"name":"Scandinavian"');
+  });
+
+  it('passes demo mode, search params, and selected style state from dashboard to virtual tour', async () => {
+    const user = userEvent.setup();
+
+    useAuthMock.mockReturnValue({
+      user: { full_name: 'Test User' },
+      token: 'fake-token',
+      loading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+    });
+
+    renderAppAt('/dashboard?style=scandinavian');
+
+    await user.click(
+      await screen.findByRole('button', { name: /open guided demo/i }, { timeout: 3000 }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('path-probe')).toHaveTextContent('/virtual-tour');
+    });
+    expect(screen.getByTestId('search-probe')).toHaveTextContent('demo=1');
+    expect(screen.getByTestId('search-probe')).toHaveTextContent('style=scandinavian');
+    expect(screen.getByTestId('state-probe')).toHaveTextContent('"demoMode":true');
+    expect(screen.getByTestId('state-probe')).toHaveTextContent('"slug":"scandinavian"');
   });
 });

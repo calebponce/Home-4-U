@@ -107,9 +107,9 @@ const Login = ({ initialMode = 'login' }) => {
         >
           <motion.h2 variants={fadeUp}>
             {isRegister ? (
-              <>Begin your<br /><em>design story.</em></>
+              <>Start your next<br /><em>room project.</em></>
             ) : (
-              <>Where space<br /><em>becomes vision.</em></>
+              <>Interior planning,<br /><em>organized clearly.</em></>
             )}
           </motion.h2>
           <motion.p variants={fadeUp}>
@@ -141,11 +141,11 @@ const Login = ({ initialMode = 'login' }) => {
             exit="exit"
           >
             <div className="auth-form-header">
-              <h3>{isRegister ? 'Create Account' : 'Welcome Back'}</h3>
+              <h3>{isRegister ? 'Create your account' : 'Sign in to Home4U'}</h3>
               <p>
                 {isRegister
-                  ? 'Create your account to begin planning your next interior project.'
-                  : 'Enter your credentials to continue to your workspace.'}
+                  ? 'Create an account to start planning your next room project.'
+                  : 'Enter your credentials to return to your workspace.'}
               </p>
             </div>
 
@@ -200,16 +200,16 @@ const Login = ({ initialMode = 'login' }) => {
             </form>
 
             <div className="auth-switch">
-              {isRegister ? 'Already a member?' : 'New to Home4U?'}
+              {isRegister ? 'Already have an account?' : 'Need an account?'}
               <button onClick={handleAuthModeToggle} type="button">
-                {isRegister ? 'Sign In' : 'Create an Account'}
+                {isRegister ? 'Sign In' : 'Create Account'}
               </button>
             </div>
 
             <div className="auth-exploration">
               <button onClick={() => navigate('/about')} type="button">
                 <Sparkles size={12} aria-hidden="true" />
-                Explore Home4U
+                View Platform Overview
               </button>
             </div>
           </motion.div>

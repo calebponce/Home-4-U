@@ -1,7 +1,8 @@
 /**
  * A high-fidelity spatial narrative engine using Spline camera waypoints and React state-driven context.
  */
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   storyRooms,
   themePresets,
@@ -12,9 +13,11 @@ import Stage from './virtualTour/Stage';
 import Sidebar from './virtualTour/Sidebar';
 import BookingModal from './virtualTour/BookingModal';
 import useTourFlow from './virtualTour/useTourFlow';
+import { resolveStyleContext } from '../utils/styleContext';
 import './VirtualTour3D.css';
 
 const VirtualTour3D = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const {
     phase,
@@ -116,6 +119,24 @@ const VirtualTour3D = () => {
     onBookingInput,
     submitBooking,
   } = useTourFlow({ navigate });
+
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const selectedStyle = (
+    location.state?.selectedStyle && typeof location.state.selectedStyle === 'object'
+      ? location.state.selectedStyle
+      : null
+  );
+  const demoMode = searchParams.get('demo') === '1' || location.state?.demoMode === true;
+  const demoStyle = useMemo(
+    () => resolveStyleContext({ styleKey: searchParams.get('style') || '', style: selectedStyle, defaultName: 'Home4U' }),
+    [searchParams, selectedStyle],
+  );
+
+  useEffect(() => {
+    if (!demoStyle.hasExplicitStyle) return;
+    setThemeMode(demoStyle.themeMode);
+    setMaterialMode(demoStyle.materialMode);
+  }, [demoStyle.hasExplicitStyle, demoStyle.materialMode, demoStyle.themeMode, setMaterialMode, setThemeMode]);
 
   const stageProps = {
     phase,
@@ -229,6 +250,8 @@ const VirtualTour3D = () => {
     achievements,
     narrativeLine,
     setShowProControls,
+    demoMode,
+    demoStyleName: demoStyle.hasExplicitStyle ? demoStyle.name : '',
   };
 
   const bookingModalProps = {
@@ -263,7 +286,7 @@ const VirtualTour3D = () => {
         <button type="button" className="virtual-back-btn" onClick={() => navigate('/dashboard')}>
           ← Back to Dashboard
         </button>
-        <h1>Story Home Tour</h1>
+        <h1>{demoStyle.hasExplicitStyle ? `${demoStyle.name} Guided Demo` : 'Guided Virtual Tour'}</h1>
       </header>
 
       <main className={`virtual-tour-layout ${phase === 'room' ? 'phase-room-layout' : ''}`}>

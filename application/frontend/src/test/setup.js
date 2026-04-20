@@ -30,6 +30,10 @@ if (!window.cancelAnimationFrame) {
   window.cancelAnimationFrame = (id) => clearTimeout(id);
 }
 
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+}
+
 if (!globalThis.IntersectionObserver) {
   globalThis.IntersectionObserver = class IntersectionObserver {
     observe() {}

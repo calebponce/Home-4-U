@@ -24,8 +24,8 @@
     font-family: var(--font-display, serif); 
     line-height: var(--leading-snug);
   }
-  h1 { font-size: var(--text-3xl); font-weight: 800; letter-spacing: -0.02em; }
-  h2 { font-size: var(--text-2xl); font-weight: 750; letter-spacing: -0.01em; }
+  h1 { font-size: var(--text-3xl); font-weight: 650; letter-spacing: -0.03em; }
+  h2 { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.015em; }
   p, li { 
     font-size: var(--text-base); 
     line-height: var(--leading-relaxed); 
@@ -33,7 +33,7 @@
   }
   button, [role="button"] { 
     padding: calc(var(--space-4) * 0.75) var(--space-5); 
-    border-radius: var(--radius-md);
+    border-radius: calc(var(--radius-md) + 2px);
   }
   .page-shell { 
     padding: var(--layout-shell-pad-y) var(--layout-shell-pad-x);

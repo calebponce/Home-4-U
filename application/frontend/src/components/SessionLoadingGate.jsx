@@ -14,9 +14,9 @@ export default function SessionLoadingGate() {
 
       <motion.div
         className="session-gate__card"
-        initial={{ opacity: 0, y: 28, scale: 0.96, filter: 'blur(12px)' }}
-        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-        transition={{ type: 'spring', stiffness: 120, damping: 22, mass: 0.85 }}
+        initial={{ opacity: 0, y: 24, filter: 'blur(12px)' }}
+        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="session-gate__brand">
           <span className="session-gate__logo" aria-hidden="true">

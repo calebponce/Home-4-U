@@ -1,0 +1,149 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import Workspace from './Workspace';
+
+const {
+  stylesGetAllMock,
+  projectCreateMock,
+  projectUpdateMock,
+  projectUploadPhotoMock,
+  projectAnalyzeMock,
+} = vi.hoisted(() => ({
+  stylesGetAllMock: vi.fn(),
+  projectCreateMock: vi.fn(),
+  projectUpdateMock: vi.fn(),
+  projectUploadPhotoMock: vi.fn(),
+  projectAnalyzeMock: vi.fn(),
+}));
+
+vi.mock('../services/api', () => ({
+  projectsAPI: {
+    create: projectCreateMock,
+    update: projectUpdateMock,
+    uploadPhoto: projectUploadPhotoMock,
+    analyze: projectAnalyzeMock,
+  },
+  stylesAPI: {
+    getAll: stylesGetAllMock,
+  },
+}));
+
+vi.mock('../utils/workspaceDesign', () => ({
+  getBudgetAmount: (tier) => ({ low: 900, medium: 2600, high: 6500 }[tier] || 2600),
+  extractImageProfile: vi.fn().mockResolvedValue({
+    width: 800,
+    height: 600,
+    aspect_ratio: 1.333,
+    average_brightness: 0.55,
+    average_saturation: 0.32,
+    warmth_bias: 0.08,
+    dominant_hex: '#b0a79b',
+  }),
+  inferDetectedTags: vi.fn().mockReturnValue(['neutral', 'clean']),
+  renderConceptPreview: vi.fn().mockResolvedValue('data:image/png;base64,concept'),
+}));
+
+describe('Workspace accessibility', () => {
+  beforeEach(() => {
+    stylesGetAllMock.mockReset();
+    projectCreateMock.mockReset();
+    projectUpdateMock.mockReset();
+    projectUploadPhotoMock.mockReset();
+    projectAnalyzeMock.mockReset();
+    stylesGetAllMock.mockResolvedValue({ data: [] });
+    projectCreateMock.mockResolvedValue({
+      data: { id: 17, room_type: 'Living Room', budget: 0, photo_url: null },
+    });
+    projectUpdateMock.mockResolvedValue({
+      data: { id: 17, room_type: 'Living Room', budget: 2600, photo_url: null },
+    });
+    projectUploadPhotoMock.mockResolvedValue({
+      data: { id: 17, room_type: 'Living Room', budget: 2600, photo_url: '/uploads/project_17.png' },
+    });
+    projectAnalyzeMock.mockResolvedValue({
+      data: {
+        project: { id: 17, room_type: 'Living Room', budget: 2600, photo_url: '/uploads/project_17.png' },
+        selected_style: { id: 3, name: 'Scandinavian', description: 'Cozy minimalism with natural materials and calm light.' },
+        summary: 'Scandinavian scored 82% for this living room based on saved design signals.',
+        image_profile: {
+          width: 800,
+          height: 600,
+          aspect_ratio: 1.333,
+          average_brightness: 0.55,
+          average_saturation: 0.32,
+          warmth_bias: 0.08,
+          dominant_hex: '#b0a79b',
+        },
+        suggested_tags: [
+          { id: 1, name: 'neutral', confidence: 0.82, source: 'selected-style' },
+        ],
+        style_scores: [
+          { style_id: 3, style_name: 'Scandinavian', score_value: 82, matched_tags: ['neutral'] },
+        ],
+        recommendations: [
+          { id: 91, room_project_id: 17, description: 'Anchor the living room around neutral cues.', priority_score: 9.4, estimated_cost: 884, is_completed: false, created_at: '2026-01-01T00:00:00Z' },
+        ],
+      },
+    });
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+      matches: query.includes('prefers-reduced-motion'),
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it('announces slider value text and supports keyboard comparison controls', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/workspace',
+            search: '?style=scandinavian',
+            state: {
+              selectedStyle: {
+                name: 'Scandinavian',
+                slug: 'scandinavian',
+                description: 'Cozy minimalism with natural materials and calm light.',
+              },
+            },
+          },
+        ]}
+      >
+        <Workspace />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /living room/i }));
+
+    const generateButton = screen.getByRole('button', { name: /generate plan/i });
+    expect(generateButton).toBeEnabled();
+
+    await user.click(generateButton);
+
+    const slider = await screen.findByRole('slider', { name: /before and after comparison/i }, { timeout: 4000 });
+    expect(slider).toHaveAttribute('aria-valuetext', 'Before 60 percent visible, After 40 percent visible');
+
+    slider.focus();
+    fireEvent.keyDown(slider, { key: 'PageUp', code: 'PageUp' });
+    expect(slider).toHaveAttribute('aria-valuenow', '70');
+    expect(slider).toHaveAttribute('aria-valuetext', 'Before 70 percent visible, After 30 percent visible');
+
+    fireEvent.keyDown(slider, { key: ' ', code: 'Space' });
+    expect(slider).toHaveAttribute('aria-valuenow', '0');
+    expect(slider).toHaveAttribute('aria-valuetext', 'Before 0 percent visible, After 100 percent visible');
+  }, 8000);
+});

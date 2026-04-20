@@ -1,51 +1,107 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback, useId } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Upload, Wand2, CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { projectsAPI, stylesAPI } from '../services/api';
+import { resolveStyleContext, serializeStyleContext, styleSlug } from '../utils/styleContext';
+import {
+  extractImageProfile,
+  getBudgetAmount,
+  inferDetectedTags,
+  renderConceptPreview,
+} from '../utils/workspaceDesign';
 import './Workspace.css';
 
-const fallbackStyles = {
-  modern: {
-    name: 'Modern Studio',
-    description: 'Clean lines, minimal decor, neutral colors with bold accents.',
-  },
-  industrial: {
-    name: 'Industrial Loft',
-    description: 'Raw materials, bold textures, open layouts with character.',
-  },
-  traditional: {
-    name: 'Traditional Classic',
-    description: 'Warm materials, structured symmetry, timeless detailing.',
-  },
-};
+const ROOM_TYPE_OPTIONS = [
+  'Living Room',
+  'Kitchen',
+  'Bedroom',
+  'Bathroom',
+  'Home Office',
+  'Dining Room',
+];
 
 const Workspace = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const styleKey = (params.get('style') || '').toLowerCase();
-  const styleInfo = fallbackStyles[styleKey] || {
-    name: 'Selected Style',
-    description: 'AI will adapt this style to your room layout.',
-  };
+  const selectedStyle = (
+    location.state?.selectedStyle && typeof location.state.selectedStyle === 'object'
+      ? location.state.selectedStyle
+      : null
+  );
+  const [fetchedStyle, setFetchedStyle] = useState(null);
+  const effectiveStyle = fetchedStyle || selectedStyle;
+  const styleInfo = useMemo(
+    () => resolveStyleContext({ styleKey, style: effectiveStyle }),
+    [effectiveStyle, styleKey],
+  );
+  const selectedStyleId = fetchedStyle?.id ?? selectedStyle?.id ?? null;
+
+  useEffect(() => {
+    if (selectedStyle) {
+      setFetchedStyle(selectedStyle);
+      return undefined;
+    }
+    if (!styleKey) {
+      setFetchedStyle(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setFetchedStyle(null);
+
+    stylesAPI.getAll()
+      .then((response) => {
+        if (cancelled) return;
+        const match = (response.data || []).find((style) => (
+          styleSlug(style?.name) === styleKey || String(style?.name || '').toLowerCase() === styleKey
+        ));
+        setFetchedStyle(match ? serializeStyleContext(match) : null);
+      })
+      .catch(() => {
+        if (!cancelled) setFetchedStyle(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedStyle, styleKey]);
 
   const [intensity, setIntensity] = useState(60);
   const [budget, setBudget] = useState('medium');
   const [lighting, setLighting] = useState('warm');
+  const [roomType, setRoomType] = useState('Living Room');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewState, setPreviewState] = useState('before');
-  const [status, setStatus] = useState('AI Preview');
+  const [status, setStatus] = useState('Awaiting upload');
   const [roomImage, setRoomImage] = useState(null);
+  const [roomFile, setRoomFile] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
-  const [revealPct, setRevealPct] = useState(0); // 0=before fully, 100=after fully
+  const [revealPct, setRevealPct] = useState(0); // 0=after fully, 100=before fully
+  const [isRevealDragging, setIsRevealDragging] = useState(false);
   const [showSuccessGlow, setShowSuccessGlow] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisProject, setAnalysisProject] = useState(null);
+  const [workspaceError, setWorkspaceError] = useState('');
   const generateBtnRef = useRef(null);
+  const previewComboRef = useRef(null);
+  const comparisonHandleRef = useRef(null);
   const isMountedRef = useRef(false);
+  const isRevealDraggingRef = useRef(false);
   const generationTimersRef = useRef({
     textInterval: null,
     completionTimeout: null,
     glowTimeout: null,
     revealRaf: null,
   });
+  const revealHintId = useId();
+  const budgetAmount = useMemo(() => getBudgetAmount(budget), [budget]);
+  const selectedScore = useMemo(() => {
+    if (!analysisResult?.style_scores?.length) return null;
+    return analysisResult.style_scores.find((item) => item.style_name === (analysisResult.selected_style?.name || styleInfo.name))
+      || analysisResult.style_scores[0];
+  }, [analysisResult, styleInfo.name]);
 
   const steps = useMemo(() => {
     const uploadDone = !!roomImage;
@@ -53,8 +109,8 @@ const Workspace = () => {
     const reviewDone = generateDone && previewState === 'after';
 
     return [
-      { key: 'upload', label: 'Upload Room', done: uploadDone, icon: Upload },
-      { key: 'generate', label: 'Generate AI Design', done: generateDone, icon: Wand2 },
+      { key: 'upload', label: 'Upload Room Photo', done: uploadDone, icon: Upload },
+      { key: 'generate', label: 'Generate Plan', done: generateDone, icon: Wand2 },
       { key: 'review', label: 'Review Result', done: reviewDone, icon: CheckCircle2 },
     ];
   }, [generatedImage, previewState, roomImage]);
@@ -84,13 +140,33 @@ const Workspace = () => {
     }
   }, []);
 
+  const clampRevealPct = useCallback((value) => {
+    setRevealPct(Math.min(100, Math.max(0, value)));
+  }, []);
+
+  const updateRevealFromClientX = useCallback((clientX) => {
+    const rect = previewComboRef.current?.getBoundingClientRect();
+    if (!rect?.width) return;
+    const nextPct = ((clientX - rect.left) / rect.width) * 100;
+    clampRevealPct(nextPct);
+  }, [clampRevealPct]);
+
+  const stopRevealDrag = useCallback((event) => {
+    if (event?.currentTarget && event.pointerId !== undefined && event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    isRevealDraggingRef.current = false;
+    setIsRevealDragging(false);
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
       clearGenerationTimers();
+      stopRevealDrag();
     };
-  }, [clearGenerationTimers]);
+  }, [clearGenerationTimers, stopRevealDrag]);
 
   useEffect(() => {
     clearGenerationTimers();
@@ -98,20 +174,29 @@ const Workspace = () => {
     setShowSuccessGlow(false);
     setProcessingText('');
     setProcessingLevel(0);
-    setStatus('AI Preview');
+    setStatus('Awaiting upload');
     setPreviewState('before');
-  }, [styleKey, clearGenerationTimers]);
+    setGeneratedImage(null);
+    setAnalysisResult(null);
+    setWorkspaceError('');
+    stopRevealDrag();
+  }, [styleInfo.key, clearGenerationTimers, stopRevealDrag]);
 
-  const loadDemo = (url) => {
+  const loadDemo = (url, nextRoomType) => {
     clearGenerationTimers();
     setIsGenerating(false);
     setShowSuccessGlow(false);
     setProcessingText('');
     setProcessingLevel(0);
+    setWorkspaceError('');
+    setAnalysisResult(null);
+    setAnalysisProject(null);
     setRoomImage(url);
+    setRoomFile(null);
     setGeneratedImage(null);
+    if (nextRoomType) setRoomType(nextRoomType);
     setPreviewState('before');
-    setStatus('AI Preview');
+    setStatus('Sample room loaded');
   };
 
   const [processingText, setProcessingText] = useState('');
@@ -121,91 +206,162 @@ const Workspace = () => {
     const prevScene = document.body.dataset.scene;
     const prevStyle = document.body.dataset.style;
     document.body.dataset.scene = 'workspace';
-    document.body.dataset.style = String(styleKey || '').toLowerCase();
+    document.body.dataset.style = String(styleInfo.key || styleKey || '').toLowerCase();
 
     return () => {
       if (document.body.dataset.scene === 'workspace') {
         if (prevScene) document.body.dataset.scene = prevScene;
         else delete document.body.dataset.scene;
       }
-      if (document.body.dataset.style === String(styleKey || '').toLowerCase()) {
+      if (document.body.dataset.style === String(styleInfo.key || styleKey || '').toLowerCase()) {
         if (prevStyle) document.body.dataset.style = prevStyle;
         else delete document.body.dataset.style;
       }
     };
-  }, [styleKey]);
+  }, [styleInfo.key, styleKey]);
 
-  const handleGenerate = () => {
-    if (isGenerating) return;
-    if (!roomImage) return;
+  useEffect(() => {
+    if (generatedImage && previewState !== 'processing') return;
+    stopRevealDrag();
+  }, [generatedImage, previewState, stopRevealDrag]);
+
+  const revealValueText = useMemo(() => {
+    const beforePct = Math.round(revealPct);
+    const afterPct = Math.max(0, 100 - beforePct);
+    return `Before ${beforePct} percent visible, After ${afterPct} percent visible`;
+  }, [revealPct]);
+
+  const triggerSuccessState = useCallback(() => {
+    setRevealPct(0);
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const start = performance.now();
+      const duration = 800;
+      const animate = (now) => {
+        if (!isMountedRef.current) return;
+        const t = Math.min(1, (now - start) / duration);
+        const easeOutQuart = 1 - Math.pow(1 - t, 4);
+        setRevealPct(60 * easeOutQuart);
+        if (t < 1) {
+          generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
+        } else {
+          generationTimersRef.current.revealRaf = null;
+        }
+      };
+      generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
+    } else {
+      setRevealPct(60);
+    }
+
+    setShowSuccessGlow(true);
+    generationTimersRef.current.glowTimeout = window.setTimeout(() => {
+      generationTimersRef.current.glowTimeout = null;
+      if (!isMountedRef.current) return;
+      setShowSuccessGlow(false);
+    }, 2000);
+  }, []);
+
+  const handleGenerate = async () => {
+    if (isGenerating || !roomImage) return;
+
     clearGenerationTimers();
     setIsGenerating(true);
-    setStatus(`Analyzing layout…`);
+    setWorkspaceError('');
+    setAnalysisResult(null);
+    setGeneratedImage(null);
+    setShowSuccessGlow(false);
     setPreviewState('processing');
-    setProcessingLevel(0);
-    
-    // Progressive status messages shown while the preview is generated.
-    const texts = [
-      "Analyzing spatial geometry...",
-      "Detecting light sources...",
-      "Mapping surface materials...",
-      `Applying ${styleInfo.name} design principles...`,
-      "Optimizing color palette...",
-      "Rendering final output..."
-    ];
-    let i = 0;
-    setProcessingText(texts[0]);
-    setProcessingLevel(0);
-    generationTimersRef.current.textInterval = window.setInterval(() => {
-      if (!isMountedRef.current) return;
-      i++;
-      if (i < texts.length) {
-        setProcessingText(texts[i]);
-        setProcessingLevel(texts.length > 1 ? i / (texts.length - 1) : 1);
-      }
-    }, 450);
+    setProcessingLevel(0.08);
+    setProcessingText('Creating project workspace...');
+    setStatus('Syncing project...');
 
-    generationTimersRef.current.completionTimeout = window.setTimeout(() => {
-      generationTimersRef.current.completionTimeout = null;
-      if (!isMountedRef.current) return;
-      if (generationTimersRef.current.textInterval) {
-        window.clearInterval(generationTimersRef.current.textInterval);
-        generationTimersRef.current.textInterval = null;
+    try {
+      let project = analysisProject;
+      if (!project) {
+        const createdProject = await projectsAPI.create(roomType);
+        project = createdProject.data;
       }
-      setGeneratedImage(roomImage);
-      setRevealPct(0);
-      setStatus('AI Preview');
-      setPreviewState('after');
-      setIsGenerating(false);
+
+      const needsProjectUpdate = (
+        project.room_type !== roomType
+        || Math.round(Number(project.budget || 0)) !== budgetAmount
+      );
+      if (needsProjectUpdate) {
+        setStatus('Updating project brief...');
+        setProcessingText('Saving room type and budget constraints...');
+        setProcessingLevel(0.18);
+        const updatedProject = await projectsAPI.update(project.id, {
+          room_type: roomType,
+          budget: budgetAmount,
+        });
+        project = updatedProject.data;
+      }
+
+      setAnalysisProject(project);
+
+      if (roomFile) {
+        setStatus('Uploading room photo...');
+        setProcessingText('Saving the selected room photo to the backend...');
+        setProcessingLevel(0.32);
+        const photoResponse = await projectsAPI.uploadPhoto(project.id, roomFile);
+        project = photoResponse.data;
+        setAnalysisProject(project);
+      }
+
+      setStatus('Extracting room signals...');
+      setProcessingText('Reading light, color, and composition cues from the room image...');
+      setProcessingLevel(0.5);
+      const imageProfile = roomFile ? await extractImageProfile(roomImage) : null;
+      const detectedTags = inferDetectedTags(imageProfile);
+
+      setStatus('Calculating style scores...');
+      setProcessingText(`Comparing the saved room with ${styleInfo.name} and the rest of the Home4U style library...`);
+      setProcessingLevel(0.72);
+      const analysisResponse = await projectsAPI.analyze(project.id, {
+        style_id: selectedStyleId,
+        style_slug: styleInfo.key || styleKey,
+        style_name: styleInfo.name,
+        room_type: roomType,
+        intensity,
+        lighting,
+        budget_tier: budget,
+        image_profile: imageProfile,
+        detected_tags: detectedTags,
+      });
+      const nextAnalysis = analysisResponse.data;
+      setAnalysisResult(nextAnalysis);
+      setAnalysisProject(nextAnalysis.project);
+
+      setStatus('Rendering concept board...');
+      setProcessingText('Composing a presentation-ready concept board from the backend analysis...');
+      setProcessingLevel(0.9);
+      const conceptBoard = await renderConceptPreview({
+        sourceUrl: roomImage,
+        analysis: nextAnalysis,
+        styleInfo,
+      });
+
+      if (!isMountedRef.current) return;
+      setGeneratedImage(conceptBoard || roomImage);
+      setStatus('Analysis ready');
+      setProcessingText('Plan generated');
       setProcessingLevel(1);
-      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const start = performance.now();
-        const duration = 800;
-        const animate = (now) => {
-          if (!isMountedRef.current) return;
-          const t = Math.min(1, (now - start) / duration);
-          // Easing function for smooth slide
-          const easeOutQuart = 1 - Math.pow(1 - t, 4);
-          setRevealPct(60 * easeOutQuart);
-          if (t < 1) {
-            generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
-          } else {
-            generationTimersRef.current.revealRaf = null;
-          }
-        };
-        generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
-      } else {
-        setRevealPct(60);
+      setPreviewState('after');
+      triggerSuccessState();
+    } catch (error) {
+      const detail = error?.response?.data?.detail;
+      const fallbackMessage = roomFile
+        ? 'The backend could not process this room right now.'
+        : 'Sample rooms can generate a plan, but photo upload is only available for local images.';
+      setWorkspaceError(typeof detail === 'string' ? detail : fallbackMessage);
+      setStatus('Analysis failed');
+      setPreviewState('before');
+      setProcessingText('');
+      setProcessingLevel(0);
+    } finally {
+      if (isMountedRef.current) {
+        setIsGenerating(false);
       }
-
-      // Trigger Success Glow
-      setShowSuccessGlow(true);
-      generationTimersRef.current.glowTimeout = window.setTimeout(() => {
-        generationTimersRef.current.glowTimeout = null;
-        if (!isMountedRef.current) return;
-        setShowSuccessGlow(false);
-      }, 2000);
-    }, 3000); // Simulated processing time for preview mode.
+    }
   };
 
   const handleMagneticMove = (e) => {
@@ -239,12 +395,17 @@ const Workspace = () => {
         <header className="workspace-header">
           <div>
             <p className="workspace-eyebrow">
-              AI Transformation Workspace <span className="badge demo-badge">Preview</span>
+              Design Workspace <span className="badge demo-badge">Live Sync</span>
             </p>
             <h1>{styleInfo.name}</h1>
-            <p className="workspace-sub">{styleInfo.description}</p>
+            <p className="workspace-sub">
+              {styleInfo.description} Upload a room, sync a real project to the backend, and generate a scored concept board with saved recommendations.
+            </p>
           </div>
-          <button type="button" className="back-btn" onClick={() => navigate('/dashboard')}>← Back to Dashboard</button>
+          <button type="button" className="back-btn" onClick={() => navigate('/dashboard')}>
+            <ChevronLeft size={16} />
+            <span>Back to Dashboard</span>
+          </button>
         </header>
 
         <main className="workspace-main">
@@ -265,37 +426,40 @@ const Workspace = () => {
 
         <section className={`workspace-canvas state-${previewState}`} data-tilt>
           <div className="canvas-header">
-            <span>Room Preview</span>
+            <span>Room Review</span>
             <span className="status">{status}</span>
           </div>
           <div className="canvas-body">
             <div
-              className={`preview-combo ${previewState === 'processing' ? 'is-processing' : ''}`}
-              onMouseMove={(e) => {
+              ref={previewComboRef}
+              className={`preview-combo ${previewState === 'processing' ? 'is-processing' : ''} ${generatedImage ? 'compare-enabled' : ''} ${isRevealDragging ? 'is-dragging' : ''}`}
+              onPointerDown={(e) => {
                 if (!generatedImage || previewState === 'processing') return;
-                if (e.buttons !== 1) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = ((e.clientX - rect.left) / rect.width) * 100;
-                setRevealPct(Math.min(100, Math.max(0, pct)));
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                e.preventDefault();
+                e.currentTarget.setPointerCapture?.(e.pointerId);
+                isRevealDraggingRef.current = true;
+                setIsRevealDragging(true);
+                comparisonHandleRef.current?.focus();
+                updateRevealFromClientX(e.clientX);
               }}
-              onTouchMove={(e) => {
-                if (!generatedImage || previewState === 'processing') return;
-                const touch = e.touches[0];
-                const rect = e.currentTarget.getBoundingClientRect();
-                const pct = ((touch.clientX - rect.left) / rect.width) * 100;
-                setRevealPct(Math.min(100, Math.max(0, pct)));
+              onPointerMove={(e) => {
+                if (!isRevealDraggingRef.current) return;
+                updateRevealFromClientX(e.clientX);
               }}
+              onPointerUp={stopRevealDrag}
+              onPointerCancel={stopRevealDrag}
             >
               <div className="preview before">
                 <div className="preview-label badge">Before</div>
                 {roomImage ? (
                   <img src={roomImage} alt="Uploaded room" className="preview-img" />
                 ) : (
-                  <span className="preview-placeholder">Upload a photo of your room to generate an AI design preview.</span>
+                  <span className="preview-placeholder">Upload a room photo to sync a real project and generate a backend-backed concept board.</span>
                 )}
               </div>
               <div className="preview after base">
-                <div className="preview-label badge">{previewState === 'processing' ? 'Processing…' : 'After'}</div>
+                <div className="preview-label badge">{previewState === 'processing' ? 'Processing…' : 'Concept Board'}</div>
                 {previewState === 'processing' && (
                   <div className="processing-overlay" style={{ '--proc': processingLevel }}>
                     <div className="processing-scanner"></div>
@@ -308,10 +472,10 @@ const Workspace = () => {
                   </div>
                 )}
                 {previewState !== 'processing' && generatedImage && (
-                  <img src={generatedImage} alt="Styled room" className="preview-img styled-img" />
+                  <img src={generatedImage} alt="Generated concept board" className="preview-img styled-img" />
                 )}
                 {previewState !== 'processing' && !generatedImage && (
-                  <span className="preview-placeholder">Your styled room will appear here.</span>
+                  <span className="preview-placeholder">Your analyzed concept board will appear here once the backend returns scores and recommendations.</span>
                 )}
               </div>
               {generatedImage && (
@@ -320,25 +484,50 @@ const Workspace = () => {
                     className="reveal-layer"
                     style={{ width: `${revealPct}%` }}
                   >
-                    <img src={roomImage} alt="Before reveal" className="preview-img" />
+                    <img src={roomImage} alt="" aria-hidden="true" className="preview-img" />
                   </div>
                   <div
+                    ref={comparisonHandleRef}
                     className="preview-divider handle"
                     style={{ left: `${revealPct}%` }}
                     role="slider"
-                    aria-label="Reveal comparison"
+                    aria-label="Before and after comparison"
+                    aria-describedby={revealHintId}
+                    aria-orientation="horizontal"
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={Math.round(revealPct)}
+                    aria-valuetext={revealValueText}
                     tabIndex={0}
                     onKeyDown={(e) => {
-                      if (e.key === 'ArrowLeft') setRevealPct((p) => Math.max(0, p - 3));
-                      if (e.key === 'ArrowRight') setRevealPct((p) => Math.min(100, p + 3));
-                      if (e.key === 'Home') setRevealPct(0);
-                      if (e.key === 'End') setRevealPct(100);
-                      if (e.code === 'Space') {
+                      const isSpaceKey = e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space';
+                      if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        clampRevealPct(revealPct - 3);
+                      }
+                      if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        clampRevealPct(revealPct + 3);
+                      }
+                      if (e.key === 'PageDown') {
+                        e.preventDefault();
+                        clampRevealPct(revealPct - 10);
+                      }
+                      if (e.key === 'PageUp') {
+                        e.preventDefault();
+                        clampRevealPct(revealPct + 10);
+                      }
+                      if (e.key === 'Home') {
                         e.preventDefault();
                         setRevealPct(0);
+                      }
+                      if (e.key === 'End') {
+                        e.preventDefault();
+                        setRevealPct(100);
+                      }
+                      if (isSpaceKey || e.key === 'Enter') {
+                        e.preventDefault();
+                        setRevealPct((current) => (current >= 50 ? 0 : 100));
                       }
                     }}
                   >
@@ -347,14 +536,14 @@ const Workspace = () => {
                       <ChevronRight size={16} />
                     </span>
                   </div>
-                  <span className="hold-hint">Drag to compare • Press Space to see Before</span>
+                  <span id={revealHintId} className="hold-hint">Drag to compare • Space toggles full before and after</span>
                 </>
               )}
             </div>
           </div>
           <div className="before-after-bar">
-            <span>Before</span>
-            <span>After</span>
+            <span>Original Room</span>
+            <span>Concept Board</span>
           </div>
         </section>
 
@@ -364,7 +553,16 @@ const Workspace = () => {
               <span>Selected Style</span>
               <span className="pill">{styleInfo.name || styleKey || 'custom'}</span>
             </div>
-            <p className="control-sub">AI will adapt this style to your room layout.</p>
+            <p className="control-sub">This workspace now saves a real project, uploads local room photos, and persists recommendations to the backend.</p>
+          </div>
+
+          <div className="control-group">
+            <label htmlFor="room-type">Room Type</label>
+            <select id="room-type" value={roomType} onChange={(e) => setRoomType(e.target.value)}>
+              {ROOM_TYPE_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
           </div>
 
           <div className="control-group">
@@ -385,12 +583,13 @@ const Workspace = () => {
           </div>
 
           <div className="control-group">
-            <label htmlFor="budget">Budget Focus</label>
+            <label htmlFor="budget">Budget Range</label>
             <select id="budget" value={budget} onChange={(e) => setBudget(e.target.value)}>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
+            <div className="budget-note">Backed by an estimated project budget of ${budgetAmount.toLocaleString()}.</div>
           </div>
 
           <div className="control-group toggle-group">
@@ -417,14 +616,15 @@ const Workspace = () => {
 
           <div className="control-group actions">
             <div className="demo-rooms-section">
-              <span className="demo-rooms-label">Try a Sample Room</span>
+              <span className="demo-rooms-label">Load Sample Room</span>
               <div className="demo-rooms-buttons">
-                <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-1598928506311-c55dd12966c4?auto=format&fit=crop&q=80&w=800')}>Living Room</button>
-                <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=800')}>Kitchen</button>
+                <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-1598928506311-c55dd12966c4?auto=format&fit=crop&q=80&w=800', 'Living Room')}>Living Room</button>
+                <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=800', 'Kitchen')}>Kitchen</button>
               </div>
+              <p className="control-sub compact">Sample rooms stay local for preview, but they still generate a saved backend plan.</p>
             </div>
             <label className="secondary upload-btn">
-              Upload My Room
+              Upload Room Photo
               <input
                 type="file"
                 accept="image/*"
@@ -436,13 +636,17 @@ const Workspace = () => {
                   setShowSuccessGlow(false);
                   setProcessingText('');
                   setProcessingLevel(0);
+                  setWorkspaceError('');
+                  setAnalysisResult(null);
+                  setAnalysisProject(null);
+                  setRoomFile(file);
                   const reader = new FileReader();
                   reader.onload = (ev) => {
                     if (!isMountedRef.current) return;
                     setRoomImage(ev.target?.result || null);
                     setGeneratedImage(null);
                     setPreviewState('before');
-                    setStatus('AI Preview');
+                    setStatus('Room loaded');
                   };
                   reader.readAsDataURL(file);
                 }}
@@ -457,12 +661,68 @@ const Workspace = () => {
               disabled={isGenerating || !roomImage}
               onMouseLeave={handleMagneticLeave}
             >
-              {isGenerating ? 'Generating…' : 'Generate Preview'}
+              {isGenerating ? 'Syncing…' : 'Generate Plan'}
             </button>
             <button type="button" className="secondary ghost" disabled aria-disabled="true" title="Feature coming soon">
-              Full AI Engine Coming Soon
+              Product sourcing stays in the roadmap
             </button>
+            {workspaceError && (
+              <p className="workspace-error" role="alert">{workspaceError}</p>
+            )}
           </div>
+
+          <div className="control-group">
+            <div className="control-head">
+              <span>Project Sync</span>
+              <span className="metric-pill">{analysisProject ? `#${analysisProject.id}` : 'Not saved yet'}</span>
+            </div>
+            <p className="control-sub">
+              {analysisProject
+                ? `Room type and budget are now linked to project #${analysisProject.id}.`
+                : 'The next analysis run will create a real project record in the backend.'}
+            </p>
+            {analysisProject && (
+              <button type="button" className="secondary-link-btn" onClick={() => navigate(`/project/${analysisProject.id}`)}>
+                Open Project Plan
+              </button>
+            )}
+          </div>
+
+          {analysisResult && (
+            <div className="control-group analysis-group">
+              <div className="control-head">
+                <span>Analysis Snapshot</span>
+                <span className="metric-pill">{Math.round(selectedScore?.score_value || 0)}% Match</span>
+              </div>
+              <p className="control-sub">{analysisResult.summary}</p>
+              {analysisResult.image_profile?.dominant_hex && (
+                <div className="analysis-chip-row">
+                  <span className="analysis-chip">Dominant tone {analysisResult.image_profile.dominant_hex}</span>
+                  <span className="analysis-chip">Brightness {Math.round((analysisResult.image_profile.average_brightness || 0) * 100)}%</span>
+                </div>
+              )}
+              {!!analysisResult.suggested_tags?.length && (
+                <div className="analysis-chip-row">
+                  {analysisResult.suggested_tags.slice(0, 4).map((tag) => (
+                    <span key={tag.id} className="analysis-chip">{tag.name}</span>
+                  ))}
+                </div>
+              )}
+              {!!analysisResult.recommendations?.length && (
+                <div className="analysis-list">
+                  {analysisResult.recommendations.slice(0, 3).map((recommendation) => (
+                    <div key={recommendation.id} className="analysis-list-item">
+                      <span className="analysis-list-score">{recommendation.priority_score.toFixed(1)}</span>
+                      <div>
+                        <p>{recommendation.description}</p>
+                        <span>${Number(recommendation.estimated_cost).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </aside>
         </main>
       </div>

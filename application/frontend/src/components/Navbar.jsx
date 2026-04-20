@@ -6,6 +6,7 @@ import { LayoutDashboard, Compass, Brush, Presentation, LogOut, Menu, X, Chevron
 import './Navbar.css';
 
 const MotionNavLink = motion(NavLink);
+const easeDisplay = [0.16, 1, 0.3, 1];
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,25 +36,31 @@ const Navbar = () => {
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Workspace', path: '/workspace', icon: Brush },
-    { name: 'Explore Styles', path: '/about', icon: Compass },
+    { name: 'About', path: '/about', icon: Compass },
     { name: 'Virtual Tour', path: '/virtual-tour', icon: Presentation },
   ];
 
   const containerVariants = {
-    hidden: { opacity: 0, y: -20 },
+    hidden: { opacity: 0, y: -14, filter: 'blur(10px)' },
     visible: { 
       opacity: 1, 
       y: 0, 
+      filter: 'blur(0px)',
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1
+        staggerChildren: 0.07,
+        delayChildren: 0.12
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 }
+    hidden: { opacity: 0, y: -8, filter: 'blur(8px)' },
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: 'blur(0px)',
+      transition: { duration: 0.48, ease: easeDisplay }
+    }
   };
 
   useEffect(() => {
@@ -120,9 +127,9 @@ const Navbar = () => {
   return (
     <motion.nav 
       className={`navbar glassmorphism-elevated ${isScrolled ? 'shrunk' : ''}`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      initial={{ opacity: 0, y: -28, filter: 'blur(12px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.72, ease: easeDisplay }}
     >
       <div className="navbar-container">
         {/* Brand */}
@@ -130,16 +137,16 @@ const Navbar = () => {
           <motion.div 
             layoutId="global-brand-logo" 
             className="brand-stack"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            whileHover={{ y: -1 }}
+            transition={{ duration: 0.24, ease: easeDisplay }}
           >
             <div className="brand-glow" />
             <div className="brand-icon" aria-hidden="true"><Home size={16} strokeWidth={2.3} /></div>
             <motion.span 
               className="brand-text" 
-              initial={{ opacity: 0, scaleX: 0.8 }}
-              animate={{ opacity: 1, scaleX: 1 }}
-              transition={{ delay: 0.15 }}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.16, duration: 0.42, ease: easeDisplay }}
             >
               Home4U
             </motion.span>
@@ -164,28 +171,15 @@ const Navbar = () => {
                     className={({ isActive }) => 
                       `nav-item ${isActive ? 'active' : ''}`
                     }
-                    whileHover={{ 
-                      scale: 1.05, 
-                      y: -2,
-                      backgroundColor: 'rgba(255,255,255,0.12)'
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ y: 0 }}
+                    transition={{ duration: 0.24, ease: easeDisplay }}
                   >
-                    <motion.div 
-                      className="nav-icon-container"
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ type: 'spring', stiffness: 500 }}
-                    >
+                    <motion.div className="nav-icon-container">
                       <Icon size={20} />
                     </motion.div>
                     <span className="nav-text">{item.name}</span>
-                    <motion.div 
-                      className="nav-glow"
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileHover={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.1 }}
-                    />
+                    <motion.div className="nav-glow" />
                   </MotionNavLink>
                 </motion.li>
               );
@@ -202,8 +196,9 @@ const Navbar = () => {
                 type="button"
                 className="user-menu-trigger"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                whileTap={{ scale: 0.97 }}
-                whileHover={{ scale: 1.02 }}
+                whileTap={{ y: 0 }}
+                whileHover={{ y: -1 }}
+                transition={{ duration: 0.24, ease: easeDisplay }}
               >
                 <div className="user-avatar" aria-hidden="true">
                   {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
@@ -215,13 +210,13 @@ const Navbar = () => {
                 {userMenuOpen && (
                   <motion.ul 
                     className="user-menu-dropdown"
-                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                    transition={{ type: 'spring', stiffness: 400 }}
+                    initial={{ opacity: 0, y: -8, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -8, filter: 'blur(8px)' }}
+                    transition={{ duration: 0.26, ease: easeDisplay }}
                   >
                     <motion.li>
-                      <button type="button" className="user-menu-item" onClick={handleLogout}>
+                      <button type="button" className="user-menu-item logout" onClick={handleLogout}>
                         <LogOut size={18} />
                         <span>Logout</span>
                       </button>
@@ -239,8 +234,9 @@ const Navbar = () => {
           ref={mobileToggleRef}
           className="mobile-toggle"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ scale: 1.05 }}
+          whileTap={{ y: 0 }}
+          whileHover={{ y: -1 }}
+          transition={{ duration: 0.24, ease: easeDisplay }}
           aria-label="Toggle navigation menu"
           aria-expanded={isMobileMenuOpen}
           aria-controls="mobile-nav-dialog"
@@ -265,10 +261,10 @@ const Navbar = () => {
               ref={mobileMenuRef}
               id="mobile-nav-dialog"
               className="navbar-mobile glassmorphism-elevated"
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              initial={{ opacity: 0, x: 36, filter: 'blur(12px)' }}
+              animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, x: 32, filter: 'blur(10px)' }}
+              transition={{ duration: 0.42, ease: easeDisplay }}
               role="dialog"
               aria-modal="true"
               aria-label="Primary navigation menu"

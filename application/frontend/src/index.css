@@ -1,26 +1,27 @@
-/* ── Google Fonts — Hybrid direction ──────────────────────────
-   Cormorant Garamond: Marcelo's editorial serif (display type)
-   Inter: Adrien's product UI sans-serif
-   ─────────────────────────────────────────────────────────── */
+/* ── Google Fonts — editorial display + restrained product UI ── */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary: var(--color-brass-400);
-  --primary-hover: var(--color-brass-500);
-  --secondary: var(--color-steel-600);
+  --primary: var(--color-graphite-950);
+  --primary-hover: var(--color-graphite-800);
+  --secondary: var(--color-slate-400);
   --secondary-light: var(--color-brass-300);
   --danger: var(--color-danger-500);
-  --background: var(--color-graphite-950);
+  --background: var(--color-bg-base);
   --card-bg: var(--color-paper-50);
-  --text: var(--color-graphite-900);
-  --text-secondary: var(--color-slate-400);
-  --border: rgb(var(--color-graphite-900-rgb) / 0.10);
+  --text: var(--color-text-dark);
+  --text-secondary: var(--color-text-mid);
+  --border: rgb(var(--color-graphite-900-rgb) / 0.1);
 
-  /* Glass — light surface for Adrien product screens */
-  --glass-bg:     rgb(var(--color-paper-50-rgb) / 0.82);
-  --glass-blur:   blur(14px);
-  --glass-border: 1px solid rgb(var(--color-stone-200-rgb) / 0.6);
+  --glass-bg:     rgb(var(--color-paper-50-rgb) / 0.72);
+  --glass-blur:   blur(20px);
+  --glass-border: 1px solid rgb(var(--color-graphite-900-rgb) / 0.08);
   --glass-shadow: var(--shadow-glass-atmosphere);
+
+  --page-haze-warm: rgb(246 216 194 / 0.72);
+  --page-haze-cool: rgb(219 231 243 / 0.84);
+  --page-haze-sand: rgb(236 227 207 / 0.66);
+  --page-haze-ink: rgb(var(--color-graphite-950-rgb) / 0.06);
 }
 
 * {
@@ -32,12 +33,59 @@
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
-  background: var(--color-graphite-950);
-  color: var(--color-graphite-900);
+  background-color: var(--background);
+  background-image:
+    radial-gradient(circle at 12% 18%, var(--page-haze-warm) 0%, transparent 34%),
+    radial-gradient(circle at 86% 14%, var(--page-haze-cool) 0%, transparent 38%),
+    radial-gradient(circle at 52% 108%, var(--page-haze-sand) 0%, transparent 42%),
+    radial-gradient(circle at 48% -8%, var(--page-haze-ink) 0%, transparent 44%),
+    linear-gradient(180deg, rgb(var(--color-paper-50-rgb) / 0.96) 0%, var(--color-paper-0) 62%, var(--color-stone-100) 100%);
+  background-repeat: no-repeat;
+  background-size: 148% 148%, 152% 152%, 136% 136%, 120% 120%, 100% 100%;
+  background-position: 0% 0%, 100% 0%, 50% 100%, 50% 0%, 0 0;
+  animation: page-atmosphere var(--motion-drift) var(--ease-display) infinite alternate;
+  color: var(--text);
   line-height: var(--leading-normal);
   min-height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+body[data-scene='login'] {
+  --page-haze-warm: rgb(240 160 111 / 0.58);
+  --page-haze-cool: rgb(219 231 243 / 0.72);
+  --page-haze-sand: rgb(236 227 207 / 0.54);
+}
+
+body[data-scene='dashboard'] {
+  --page-haze-warm: rgb(246 216 194 / 0.5);
+  --page-haze-cool: rgb(219 231 243 / 0.76);
+  --page-haze-sand: rgb(236 227 207 / 0.5);
+  --page-haze-ink: rgb(var(--color-graphite-950-rgb) / 0.04);
+}
+
+body[data-scene='workspace'],
+body[data-scene='project'] {
+  --page-haze-warm: rgb(236 227 207 / 0.42);
+  --page-haze-cool: rgb(215 224 229 / 0.46);
+  --page-haze-sand: rgb(236 227 207 / 0.34);
+  --page-haze-ink: rgb(var(--color-graphite-950-rgb) / 0.08);
+}
+
+body[data-scene='about'],
+body[data-scene='notfound'] {
+  --page-haze-warm: rgb(246 216 194 / 0.62);
+  --page-haze-cool: rgb(219 231 243 / 0.58);
+  --page-haze-sand: rgb(236 227 207 / 0.72);
+}
+
+@keyframes page-atmosphere {
+  0% {
+    background-position: 0% 0%, 100% 0%, 50% 100%, 50% 0%, 0 0;
+  }
+  100% {
+    background-position: 8% 4%, 94% 10%, 48% 96%, 52% 6%, 0 0;
+  }
 }
 
 /* Vertical rhythm — display serif vs UI sans */
@@ -77,10 +125,10 @@ p {
 }
 
 .glass-depth {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: color-mix(in srgb, var(--color-paper-50) 82%, transparent);
-  border: 1px solid rgb(var(--color-stone-300-rgb) / 0.38);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--color-paper-50) 78%, transparent);
+  border: 1px solid rgb(var(--color-graphite-900-rgb) / 0.08);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -119,25 +167,26 @@ textarea {
 }
 
 button {
-  background-color: var(--color-graphite-900);
+  background-color: var(--primary);
   color: var(--color-paper-50);
-  border: 1px solid rgb(var(--color-graphite-900-rgb) / 0.0);
+  border: 1px solid rgb(var(--color-graphite-950-rgb) / 0.08);
   padding: 0.75rem 1.5rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
   transition:
-    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 280ms ease,
-    border-color 280ms ease;
+    transform var(--motion-mid) var(--ease-standard),
+    box-shadow var(--motion-mid) var(--ease-standard),
+    background-color var(--motion-mid) ease,
+    border-color var(--motion-mid) ease,
+    color var(--motion-mid) ease;
   box-shadow: var(--shadow-layer-1);
 }
 
 button:hover:not(:disabled) {
-  background-color: var(--color-graphite-800);
+  background-color: var(--primary-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-layer-2);
 }
@@ -145,7 +194,7 @@ button:hover:not(:disabled) {
 /* Magnetic nudge — transform driven by App.jsx pointer logic */
 button[data-magnetic-button] {
   position: relative;
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.22s var(--ease-standard);
   will-change: transform;
 }
 
@@ -156,7 +205,7 @@ button:active:not(:disabled) {
 button:disabled {
   background-color: var(--color-primary-300);
   color: var(--text-secondary);
-  border-color: rgb(var(--color-stone-300-rgb) / 0.7);
+  border-color: rgb(var(--color-graphite-900-rgb) / 0.08);
   cursor: not-allowed;
   box-shadow: none;
   opacity: 1;
@@ -173,20 +222,24 @@ select,
 textarea {
   padding: 0.75rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 1rem;
   width: 100%;
   margin-bottom: 1rem;
-  background: rgb(var(--color-paper-50-rgb) / 0.92);
+  background: rgb(var(--color-paper-50-rgb) / 0.82);
   color: var(--text);
-  transition: all var(--motion-fast) ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
-  border-color: var(--primary);
+  border-color: rgb(var(--color-graphite-900-rgb) / 0.2);
   box-shadow: var(--focus-ring);
   background: var(--color-paper-50);
 }
@@ -198,12 +251,10 @@ textarea:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: radial-gradient(
-    circle at 10% 20%,
-    rgb(var(--color-camel-400-rgb) / 0.14) 0%,
-    var(--background) 45%,
-    var(--color-paper-50) 100%
-  );
+  background:
+    radial-gradient(circle at 12% 22%, rgb(240 160 111 / 0.14) 0%, transparent 32%),
+    radial-gradient(circle at 88% 16%, rgb(var(--color-steel-500-rgb) / 0.48) 0%, transparent 38%),
+    linear-gradient(180deg, rgb(var(--color-paper-50-rgb) / 0.84), rgb(var(--color-paper-0-rgb) / 0.92));
 }
 
 .auth-card {

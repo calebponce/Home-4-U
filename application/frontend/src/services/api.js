@@ -42,6 +42,14 @@ export const projectsAPI = {
   create: (room_type) => api.post('/projects/', { room_type }),
   update: (id, data) => api.put(`/projects/${id}`, data),
   delete: (id) => api.delete(`/projects/${id}`),
+  uploadPhoto: (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post(`/projects/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  analyze: (id, data) => api.post(`/projects/${id}/analysis`, data),
 };
 
 // Styles API
