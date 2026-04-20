@@ -155,6 +155,10 @@ For production systemd deployments, these backend variables can be supplied thro
 to `5` failed attempts per email+IP, `20` failed attempts per source IP, and a `300` second window
 if the rate-limit variables are not supplied.
 
+Public repository docs and smoke-test examples should use a single `HOME4U_PUBLIC_URL` value
+backed by a stable domain or Elastic IP. Avoid committing the temporary EC2 public hostname
+into repo documentation.
+
 
 Do not include secrets or credentials in this file.
 
