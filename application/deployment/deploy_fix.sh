@@ -54,6 +54,11 @@ elif [ -n "$PUBLIC_DNS" ]; then
 elif [ -n "$PUBLIC_IP" ]; then
     SERVER_NAMES="$PUBLIC_IP"
 fi
+TLS_CERT_DIR=""
+TLS_STATUS="disabled"
+if [ -n "$PUBLIC_DNS" ]; then
+    TLS_CERT_DIR="/etc/letsencrypt/live/$PUBLIC_DNS"
+fi
 
 echo "=========================================================="
 echo "  🚀 Home4U PRODUCTION DEPLOY — $TIMESTAMP"
@@ -144,7 +149,17 @@ echo "▶ Phase 4: Validating Infrastructure..."
 
 # Update Nginx config
 TMP_NGINX_CONF="$(mktemp)"
-sed "s/__SERVER_NAMES__/$SERVER_NAMES/g" "$DEPLOY_DIR/nginx.conf" > "$TMP_NGINX_CONF"
+NGINX_TEMPLATE="$DEPLOY_DIR/nginx.conf"
+if [ -n "$TLS_CERT_DIR" ] \
+  && [ -f "$TLS_CERT_DIR/fullchain.pem" ] \
+  && [ -f "$TLS_CERT_DIR/privkey.pem" ]; then
+    NGINX_TEMPLATE="$DEPLOY_DIR/nginx-ssl.conf"
+    TLS_STATUS="enabled ($PUBLIC_DNS)"
+fi
+sed \
+  -e "s/__SERVER_NAMES__/$SERVER_NAMES/g" \
+  -e "s/__TLS_HOSTNAME__/$PUBLIC_DNS/g" \
+  "$NGINX_TEMPLATE" > "$TMP_NGINX_CONF"
 
 if [ -d "/etc/nginx/conf.d" ]; then
     # Disable distro default site to avoid `server_name _` conflicts.
@@ -159,7 +174,7 @@ fi
 rm -f "$TMP_NGINX_CONF"
 
 sudo nginx -t && sudo systemctl reload nginx
-echo "  ✓ Nginx re-orchestrated (server_name: $SERVER_NAMES)"
+echo "  ✓ Nginx re-orchestrated (server_name: $SERVER_NAMES, TLS: $TLS_STATUS)"
 
 # ── Step 5: Global Health Gate ──────────────────────────────────────
 echo ""

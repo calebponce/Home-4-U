@@ -11,13 +11,20 @@ from sqlalchemy.orm import Session
 _logger = logging.getLogger(__name__)
 
 # Configuration — reads from env, falls back to a dev-only default.
+_ENV = os.getenv("HOME4U_ENV", "development")
 _DEFAULT_SECRET = "home4u-dev-only-secret-CHANGE-ME"
 SECRET_KEY = os.getenv("HOME4U_SECRET_KEY", _DEFAULT_SECRET)
 
 if SECRET_KEY == _DEFAULT_SECRET:
-    _logger.warning(
-        "⚠️  Using default SECRET_KEY. Set HOME4U_SECRET_KEY env var in production!"
-    )
+    if _ENV == "production":
+        _logger.error(
+            "⚠️  Production is using the default SECRET_KEY. Set HOME4U_SECRET_KEY "
+            "or provide it through /etc/home4u/home4u.env before public deployment."
+        )
+    else:
+        _logger.warning(
+            "⚠️  Using default SECRET_KEY. Set HOME4U_SECRET_KEY env var in production!"
+        )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -35,10 +42,9 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -53,4 +59,3 @@ def decode_token(token: str) -> Optional[int]:
         return int(user_id)
     except JWTError:
         return None
-

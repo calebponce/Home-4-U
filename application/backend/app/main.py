@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import traceback
 from pathlib import Path
@@ -12,6 +13,37 @@ from app.api.v1.router import api_router
 from app.core.database import init_db
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_cors_origins() -> list[str]:
+    """Return explicitly allowed cross-origin callers for direct backend access."""
+    configured = os.getenv("HOME4U_CORS_ORIGINS", "").strip()
+    if configured:
+        return [origin.strip() for origin in configured.split(",") if origin.strip()]
+
+    if os.getenv("HOME4U_ENV", "development") == "production":
+        # Production traffic is expected to arrive through the same-origin nginx /api proxy.
+        return []
+
+    return [
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+        "http://127.0.0.1:4173",
+        "http://localhost:4173",
+    ]
+
+
+def _apply_standard_headers(response, elapsed: float) -> None:
+    """Attach diagnostic and baseline security headers to API responses."""
+    response.headers["X-Response-Time"] = f"{elapsed:.4f}s"
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=()",
+    )
 
 # ---------------------------------------------------------------------------
 # FastAPI Application
@@ -38,7 +70,7 @@ async def global_error_handler(request: Request, call_next):
     try:
         response = await call_next(request)
         elapsed = time.perf_counter() - start
-        response.headers["X-Response-Time"] = f"{elapsed:.4f}s"
+        _apply_standard_headers(response, elapsed)
         return response
     except Exception as exc:
         elapsed = time.perf_counter() - start
@@ -51,13 +83,15 @@ async def global_error_handler(request: Request, call_next):
             exc,
             traceback.format_exc(),
         )
-        return JSONResponse(
+        response = JSONResponse(
             status_code=500,
             content={
                 "detail": "Internal server error. Our team has been notified.",
                 "type": type(exc).__name__,
             },
         )
+        _apply_standard_headers(response, elapsed)
+        return response
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +99,7 @@ async def global_error_handler(request: Request, call_next):
 # ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_parse_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

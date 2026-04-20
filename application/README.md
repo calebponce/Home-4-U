@@ -140,11 +140,20 @@ Environment Variables:
     Backend supports:
     DATABASE_URL=              # optional; defaults to local SQLite in development
     HOME4U_SECRET_KEY=         # recommended in production
+    HOME4U_CORS_ORIGINS=       # optional comma-separated direct backend origins
+    HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS=    # optional failed attempts per email+IP window
+    HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS= # optional failed attempts per source IP window
+    HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS= # optional sliding window size
     HOME4U_ENV=                # optional; set to production to move default SQLite outside repo
     HOME4U_DATA_DIR=           # optional; used with HOME4U_ENV=production
 
     Frontend supports:
     VITE_API_BASE=             # optional; defaults to /api
+
+For production systemd deployments, these backend variables can be supplied through an optional
+`/etc/home4u/home4u.env` file referenced by the repo service unit. Login throttling defaults
+to `5` failed attempts per email+IP, `20` failed attempts per source IP, and a `300` second window
+if the rate-limit variables are not supplied.
 
 
 Do not include secrets or credentials in this file.

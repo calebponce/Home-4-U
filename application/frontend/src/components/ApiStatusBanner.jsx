@@ -19,7 +19,7 @@ export default function ApiStatusBanner() {
         <span className="api-status-banner__dot" aria-hidden="true" />
         <p className="api-status-banner__text">
           <strong>Connection notice.</strong> {message}
-          {detail ? ` (${String(detail).slice(0, 80)})` : ''}
+          {detail ? ` ${String(detail).slice(0, 80)}.` : ''}
         </p>
         <button type="button" className="api-status-banner__retry" onClick={() => refresh()}>
           Retry

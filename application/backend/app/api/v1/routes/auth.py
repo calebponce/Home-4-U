@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -9,6 +9,7 @@ from app.models.database import User
 from app.schemas.schemas import UserCreate, UserResponse, Token
 from app.utils.auth import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.utils.dependencies import get_current_user
+from app.utils.login_rate_limit import get_request_ip, login_rate_limiter
 
 router = APIRouter(tags=["Authentication"])
 
@@ -41,20 +42,36 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
     """Authenticate user and return access token."""
     email = _normalize_email(form_data.username)
+    client_ip = get_request_ip(request)
+
+    retry_after = login_rate_limiter.retry_after(client_ip, email)
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Try again in a few minutes.",
+            headers={"Retry-After": str(retry_after)},
+        )
 
     # Find user by email (case-insensitive)
     user = db.query(User).filter(func.lower(User.email) == email).first()
     
     if not user or not verify_password(form_data.password, user.password_hash):
+        login_rate_limiter.register_failure(client_ip, email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    login_rate_limiter.reset_identity(client_ip, email)
+
     # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(

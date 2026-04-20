@@ -495,6 +495,7 @@ def generate_documentation() -> None:
 | Backend app | FastAPI/Uvicorn on `127.0.0.1:8000` | `start_backend.sh` runs without `--reload` |
 | Default development database | SQLite file at `application/backend/home4u.db` | Override with `DATABASE_URL` if needed |
 | Production edge | Nginx reverse proxy | Strips `/api` before forwarding to backend |
+| Production backend service | systemd unit `home4u-backend` | Supports optional `/etc/home4u/home4u.env` for secrets and CORS |
 
 ---
 
@@ -601,6 +602,10 @@ Frontend URLs:
 - Development defaults to SQLite via [database.py](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/backend/app/core/database.py).
 - `HOME4U_ENV=production` moves the default SQLite path outside the repo so deployments do not lose local data on `git pull`.
 - `DATABASE_URL` can override the default database connection for other relational database deployments.
+- `HOME4U_SECRET_KEY` should be supplied in production rather than relying on the repo default.
+- `HOME4U_CORS_ORIGINS` can be used to allow direct cross-origin backend access when the app is not using the same-origin `/api` proxy.
+- `HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS`, and `HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS` tune failed-login throttling; defaults are `5`, `20`, and `300`.
+- The production systemd unit supports an optional `/etc/home4u/home4u.env` file for backend environment variables.
 - The backend currently starts without requiring an AI provider key; Workspace analysis is implemented through deterministic backend scoring rather than an external model call.
 
 ---

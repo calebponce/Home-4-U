@@ -47,7 +47,8 @@ def health():
             status_code=503,
             content={
                 "status": "degraded",
-                "db": str(exc),
+                "db": "unavailable",
+                "detail": "Database connection failed",
                 **diagnostics,
             },
         )

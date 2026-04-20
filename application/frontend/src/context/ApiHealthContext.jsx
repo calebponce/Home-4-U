@@ -10,19 +10,20 @@ export const ApiHealthProvider = ({ children }) => {
   const [checkedAt, setCheckedAt] = useState(null);
 
   const check = useCallback(async () => {
+    let timeoutId = null;
     try {
       const controller = new AbortController();
-      const t = setTimeout(() => controller.abort(), 8000);
+      timeoutId = window.setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${API_BASE}/health`, { signal: controller.signal });
-      clearTimeout(t);
       const data = await res.json().catch(() => ({}));
       const ok = res.ok && data.status === 'ok';
       setStatus(ok ? 'ok' : data.status === 'degraded' ? 'degraded' : 'error');
-      setDetail(data.db ?? null);
-      setCheckedAt(Date.now());
-    } catch {
+      setDetail(typeof data.detail === 'string' ? data.detail : null);
+    } catch (error) {
       setStatus('offline');
-      setDetail(null);
+      setDetail(error?.name === 'AbortError' ? 'Health check timed out' : null);
+    } finally {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
       setCheckedAt(Date.now());
     }
   }, []);
