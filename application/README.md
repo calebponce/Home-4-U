@@ -157,7 +157,7 @@ if the rate-limit variables are not supplied.
 
 Public repository docs and smoke-test examples should use a single `HOME4U_PUBLIC_URL` value
 backed by a stable domain or Elastic IP. Avoid committing the temporary EC2 public hostname
-into repo documentation.
+into repo documentation. The current stable public base URL is `http://18.225.42.247/`.
 
 
 Do not include secrets or credentials in this file.
