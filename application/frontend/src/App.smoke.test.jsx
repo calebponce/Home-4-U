@@ -72,26 +72,6 @@ vi.mock('./pages/Workspace', async () => {
   };
 });
 
-vi.mock('./pages/VirtualTour3D', async () => {
-  const { useLocation } = await import('react-router-dom');
-
-  return {
-    default: function MockVirtualTour3D() {
-      const location = useLocation();
-
-      return (
-        <section>
-          <h1>Mock Virtual Tour</h1>
-          <output data-testid="virtual-tour-route-state">{JSON.stringify({
-            search: location.search,
-            state: location.state,
-          })}</output>
-        </section>
-      );
-    },
-  };
-});
-
 const PathProbe = () => {
   const { pathname, search, state } = useLocation();
   return (
@@ -220,9 +200,7 @@ describe('App smoke routing', () => {
     expect(screen.getByTestId('state-probe')).toHaveTextContent('"name":"Scandinavian"');
   });
 
-  it('passes demo mode, search params, and selected style state from dashboard to virtual tour', async () => {
-    const user = userEvent.setup();
-
+  it('redirects the retired walkthrough route into workspace for authenticated sessions', async () => {
     useAuthMock.mockReturnValue({
       user: { full_name: 'Test User' },
       token: 'fake-token',
@@ -231,18 +209,10 @@ describe('App smoke routing', () => {
       logout: vi.fn(),
     });
 
-    renderAppAt('/dashboard?style=scandinavian');
-
-    await user.click(
-      await screen.findByRole('button', { name: /preview this style/i }, { timeout: 3000 }),
-    );
+    renderAppAt('/virtual-tour');
 
     await waitFor(() => {
-      expect(screen.getByTestId('path-probe')).toHaveTextContent('/virtual-tour');
+      expect(screen.getByTestId('path-probe')).toHaveTextContent('/workspace');
     });
-    expect(screen.getByTestId('search-probe')).toHaveTextContent('demo=1');
-    expect(screen.getByTestId('search-probe')).toHaveTextContent('style=scandinavian');
-    expect(screen.getByTestId('state-probe')).toHaveTextContent('"demoMode":true');
-    expect(screen.getByTestId('state-probe')).toHaveTextContent('"slug":"scandinavian"');
   });
 });

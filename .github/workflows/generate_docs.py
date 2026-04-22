@@ -271,7 +271,7 @@ def get_frontend_routes() -> list[dict[str, str]]:
         "/about": "Public page that renders inside the authenticated shell when a session exists.",
         "/dashboard": "Primary authenticated landing page.",
         "/project/:id": "Project plan view for a saved room project.",
-        "/virtual-tour": "Protected 3D tour experience.",
+        "/virtual-tour": "Legacy route that now redirects to `/workspace`.",
         "/workspace": "Protected design workspace with project sync and analysis.",
         "/": "Redirects to `/dashboard`.",
         "*": "Catch-all not-found route.",
@@ -282,6 +282,8 @@ def get_frontend_routes() -> list[dict[str, str]]:
         access = "Protected" if "ProtectedRoute" in element else "Public"
         if path == "/about":
             access = "Public / Auth-aware"
+        elif path == "/virtual-tour":
+            access = "Redirect"
         routes.append(
             {
                 "path": path,
@@ -516,7 +518,7 @@ def generate_documentation() -> None:
 ## Current Feature Map
 
 - Authentication: signup, login, JWT session validation, and `/auth/me` checks.
-- Dashboard flow: protected dashboard, style selection, workspace launch, and guided virtual-tour launch.
+- Dashboard flow: protected dashboard, style selection, project creation, and workspace launch.
 - Workspace flow: project creation, budget and room-type updates, local photo upload, project analysis, concept-board rendering, and saved recommendations.
 - Project management: recommendation retrieval, completion tracking, and plan refresh.
 - Discovery: public style catalog plus fuzzy style search.

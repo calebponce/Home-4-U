@@ -122,7 +122,7 @@ Create an account and sign in.
 
 Open the Dashboard and choose a design style.
 
-Launch the Workspace or Virtual Tour from the selected style context.
+Launch the Workspace from the selected style context.
 
 Upload a room image or load a sample room in Workspace.
 

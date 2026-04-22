@@ -14,7 +14,6 @@ import SessionLoadingGate from './components/SessionLoadingGate'
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const ProjectDetails = lazy(() => import('./pages/ProjectDetails'))
 const About = lazy(() => import('./pages/About'))
-const VirtualTour3D = lazy(() => import('./pages/VirtualTour3D'))
 const Workspace = lazy(() => import('./pages/Workspace'))
 
 const RouteChunkFallback = () => (
@@ -270,16 +269,7 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route
-            path="/virtual-tour"
-            element={
-              <ProtectedRoute>
-                <Suspense fallback={<RouteChunkFallback />}>
-                  <VirtualTour3D />
-                </Suspense>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/virtual-tour" element={<Navigate to="/workspace" replace />} />
           <Route
             path="/workspace"
             element={

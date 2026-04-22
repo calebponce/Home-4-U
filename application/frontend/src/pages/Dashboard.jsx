@@ -324,37 +324,12 @@ const Dashboard = () => {
     drawerStageTimeoutsRef.current = [];
   }, []);
 
-  function navigateToWalkthrough(style, { demoMode = false } = {}) {
-    const selectedStyle = style ? serializeStyleContext(style) : null;
-    const params = new URLSearchParams();
-
-    if (demoMode) {
-      params.set('demo', '1');
-    }
-
-    if (selectedStyle?.slug) {
-      params.set('style', selectedStyle.slug);
-    }
-
-    const query = params.toString();
-    navigate(`/virtual-tour${query ? `?${query}` : ''}`, {
-      state: {
-        ...(demoMode ? { demoMode: true } : {}),
-        ...(selectedStyle ? { selectedStyle } : {}),
-      },
-    });
-  }
-
   function navigateToWorkspace(style) {
     const selectedStyle = serializeStyleContext(style);
     const slug = selectedStyle?.slug || '';
     const query = slug ? `?style=${encodeURIComponent(slug)}` : '';
 
     navigate(`/workspace${query}`, selectedStyle ? { state: { selectedStyle } } : undefined);
-  }
-
-  function navigateToGuidedDemo(style) {
-    navigateToWalkthrough(style, { demoMode: true });
   }
 
   function openDrawer(style, triggerEl) {
@@ -1114,7 +1089,6 @@ const Dashboard = () => {
                       </button>
                       <div className="init-secondary">
                         <button type="button" className="studio-btn studio-btn--secondary studio-btn--compact" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
-                        <button type="button" className="studio-btn studio-btn--secondary studio-btn--compact" onClick={() => navigateToGuidedDemo(initStyle)}>Preview This Style</button>
                       </div>
                     </div>
                     <div className="init-stats">
@@ -1369,7 +1343,6 @@ const Dashboard = () => {
                     Open Design Workspace
                   </button>
                   <div className="drawer-actions-inline">
-                    <button type="button" className="drawer-secondary studio-btn studio-btn--secondary studio-btn--compact" onClick={() => navigateToGuidedDemo(selectedStyleDrawer)}>Preview This Style</button>
                     <button type="button" className="drawer-tertiary" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
                   </div>
                 </div>

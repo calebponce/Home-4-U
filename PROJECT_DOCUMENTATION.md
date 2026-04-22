@@ -117,6 +117,11 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── update_tokens_marcelo.py
 │   │   └── vite.config.js
 │   └── README.md
+├── docs
+│   └── mockups
+│       ├── home4u-product-tour-concept.png
+│       ├── home4u-product-tour-flow.png
+│       └── home4u-redesign-concept.svg
 ├── milestones
 │   ├── M1
 │   │   ├── feedback
@@ -213,7 +218,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 ## Current Feature Map
 
 - Authentication: signup, login, JWT session validation, and `/auth/me` checks.
-- Dashboard flow: protected dashboard, style selection, workspace launch, and guided virtual-tour launch.
+- Dashboard flow: protected dashboard, style selection, project creation, and workspace launch.
 - Workspace flow: project creation, budget and room-type updates, local photo upload, project analysis, concept-board rendering, and saved recommendations.
 - Project management: recommendation retrieval, completion tracking, and plan refresh.
 - Discovery: public style catalog plus fuzzy style search.
@@ -234,6 +239,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | GET | `/projects/{project_id}` | Protected | `projects.py::get_project` | - |
 | PUT | `/projects/{project_id}` | Protected | `projects.py::update_project` | - |
 | DELETE | `/projects/{project_id}` | Protected | `projects.py::delete_project` | - |
+| GET | `/projects/{project_id}/analysis` | Protected | `projects.py::get_project_analysis` | - |
 | POST | `/projects/{project_id}/analysis` | Protected | `projects.py::analyze_project` | Persists room tags, style scores, and recommendations for Workspace. |
 | POST | `/projects/{project_id}/photo` | Protected | `projects.py::upload_project_photo` | Accepts JPG, PNG, and WebP uploads up to 5MB. |
 | POST | `/recommendations/` | Protected | `recommendations.py::create_recommendation` | Uses a required `project_id` query parameter. |
@@ -257,7 +263,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | `/about` | Public / Auth-aware | About | Public page that renders inside the authenticated shell when a session exists. |
 | `/dashboard` | Protected | Dashboard | Primary authenticated landing page. |
 | `/project/:id` | Protected | ProjectDetails | Project plan view for a saved room project. |
-| `/virtual-tour` | Protected | VirtualTour3D | Protected 3D tour experience. |
+| `/virtual-tour` | Redirect | Navigate | Legacy route that now redirects to `/workspace`. |
 | `/workspace` | Protected | Workspace | Protected design workspace with project sync and analysis. |
 | `/` | Public | Navigate | Redirects to `/dashboard`. |
 | `*` | Public | NotFound | Catch-all not-found route. |
@@ -410,5 +416,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-04-21 03:05:39*
+*Last Updated: 2026-04-20 20:05:11*
 *This document is maintained by the repository documentation generator.*

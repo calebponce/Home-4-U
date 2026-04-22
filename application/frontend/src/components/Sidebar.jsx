@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Compass, Brush, Presentation, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Volume2, VolumeX, Home } from 'lucide-react';
+import { LayoutDashboard, Compass, Brush, Settings, LogOut, PanelLeftClose, PanelLeftOpen, Volume2, VolumeX, Home } from 'lucide-react';
 import { useAmbience } from '../context/AmbienceContext';
 import './Sidebar.css';
 
@@ -20,7 +20,6 @@ const Sidebar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Workspace', path: '/workspace', icon: <Brush size={20} /> },
     { name: 'About', path: '/about', icon: <Compass size={20} /> },
-    { name: 'Walkthrough', path: '/virtual-tour', icon: <Presentation size={20} /> },
   ];
 
   return (

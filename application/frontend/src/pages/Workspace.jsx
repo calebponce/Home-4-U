@@ -391,23 +391,6 @@ const Workspace = () => {
     }
   };
 
-  const handleOpenLinkedWalkthrough = () => {
-    if (!analysisProject) return;
-
-    const walkthroughParams = new URLSearchParams();
-    const linkedStyle = analysisResult?.selected_style?.name || styleInfo.name;
-    const linkedStyleSlug = linkedStyle ? styleSlug(linkedStyle) : '';
-    if (linkedStyleSlug) walkthroughParams.set('style', linkedStyleSlug);
-    walkthroughParams.set('project', String(analysisProject.id));
-
-    navigate(`/virtual-tour?${walkthroughParams.toString()}`, {
-      state: {
-        ...(analysisResult?.selected_style ? { selectedStyle: analysisResult.selected_style } : {}),
-        projectId: analysisProject.id,
-      },
-    });
-  };
-
   return (
     <div
       className={`workspace ${showSuccessGlow ? 'success-glow-active' : ''}`}
@@ -731,21 +714,9 @@ const Workspace = () => {
                 : 'The next analysis run will create a real project record in the backend.'}
             </p>
             {analysisProject && (
-              <>
-                <button type="button" className="secondary-link-btn" onClick={() => navigate(`/project/${analysisProject.id}`)}>
-                  Open Project Plan
-                </button>
-                <button
-                  type="button"
-                  className="secondary-link-btn"
-                  onClick={handleOpenLinkedWalkthrough}
-                  disabled={!analysisResult?.shopping_plan?.length}
-                  aria-disabled={!analysisResult?.shopping_plan?.length}
-                  title={analysisResult?.shopping_plan?.length ? 'Open the linked walkthrough for this saved project' : 'Run analysis to open a linked walkthrough'}
-                >
-                  {analysisResult?.shopping_plan?.length ? 'Open Linked Walkthrough' : 'Run Analysis To Link Walkthrough'}
-                </button>
-              </>
+              <button type="button" className="secondary-link-btn" onClick={() => navigate(`/project/${analysisProject.id}`)}>
+                Open Project Plan
+              </button>
             )}
           </div>
 

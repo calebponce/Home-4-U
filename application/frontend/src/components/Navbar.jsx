@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Compass, Brush, Presentation, LogOut, Menu, X, ChevronDown, Home } from 'lucide-react';
+import { LayoutDashboard, Compass, Brush, LogOut, Menu, X, ChevronDown, Home } from 'lucide-react';
 import './Navbar.css';
 
 const MotionNavLink = motion(NavLink);
@@ -37,7 +37,6 @@ const Navbar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Workspace', path: '/workspace', icon: Brush },
     { name: 'About', path: '/about', icon: Compass },
-    { name: 'Walkthrough', path: '/virtual-tour', icon: Presentation },
   ];
 
   const containerVariants = {

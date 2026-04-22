@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowUpRight,
@@ -67,20 +67,12 @@ const getShoppingLaneKey = (index) => {
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const [project, setProject] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState('');
   const [generating, setGenerating] = useState(false);
-  const purchaseSpotlightRef = useRef(null);
-  const shoppingLaneRefs = useRef({});
-  const walkthroughSearch = new URLSearchParams(location.search);
-  const walkthroughLane = walkthroughSearch.get('lane') || '';
-  const walkthroughRoom = walkthroughSearch.get('room') || '';
-  const walkthroughHotspot = walkthroughSearch.get('hotspot') || '';
-  const isWalkthroughLinked = walkthroughSearch.get('from') === 'walkthrough';
   const shoppingPlan = analysis?.shopping_plan || [];
 
   const fetchData = useCallback(async () => {
@@ -127,14 +119,6 @@ const ProjectDetails = () => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (loading || !isWalkthroughLinked || !shoppingPlan.length) return;
-    const target = walkthroughLane === 'buy-first'
-      ? purchaseSpotlightRef.current
-      : shoppingLaneRefs.current[walkthroughLane];
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [loading, isWalkthroughLinked, shoppingPlan.length, walkthroughLane]);
 
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
@@ -233,22 +217,6 @@ const ProjectDetails = () => {
         total: Math.round((lane.total || 0) * 100) / 100,
       }));
   })();
-  const hasFocusedLane = SHOPPING_LANES.some((lane) => lane.key === walkthroughLane);
-  const handleOpenWalkthrough = () => {
-    const params = new URLSearchParams();
-    const linkedStyle = analysis?.selected_style?.name || selectedStyleName;
-    const linkedStyleSlug = linkedStyle ? styleSlug(linkedStyle) : '';
-    if (linkedStyleSlug) params.set('style', linkedStyleSlug);
-    params.set('project', String(id));
-
-    navigate(`/virtual-tour?${params.toString()}`, {
-      state: {
-        ...(analysis?.selected_style ? { selectedStyle: analysis.selected_style } : {}),
-        projectId: Number(id),
-      },
-    });
-  };
-
   return (
     <motion.div
       className="project-details"
@@ -384,15 +352,6 @@ const ProjectDetails = () => {
               >
                 Open Workspace
               </button>
-              {analysis && (
-                <button
-                  type="button"
-                  className="feature-secondary"
-                  onClick={handleOpenWalkthrough}
-                >
-                  Open Walkthrough
-                </button>
-              )}
               <button
                 type="button"
                 className="feature-secondary"
@@ -410,13 +369,6 @@ const ProjectDetails = () => {
               <div className="purchase-board-copy">
                 <h2>Purchase Board</h2>
                 <p>Move from saved design signals to a room-by-room buying sequence.</p>
-                {isWalkthroughLinked && (
-                  <p className="purchase-context-note">
-                    Linked from walkthrough
-                    {walkthroughRoom ? ` · ${walkthroughRoom}` : ''}
-                    {walkthroughHotspot ? ` · ${walkthroughHotspot}` : ''}
-                  </p>
-                )}
               </div>
                 <div className="purchase-board-summary">
                   <span className="shopping-total">{formatCurrency(shoppingTotal)}</span>
@@ -430,8 +382,7 @@ const ProjectDetails = () => {
               <>
                 {nextPurchase && (
                   <section
-                    ref={purchaseSpotlightRef}
-                    className={`purchase-spotlight ${nextPurchase.is_completed ? 'completed' : ''} ${isWalkthroughLinked && walkthroughLane === 'buy-first' ? 'is-focused' : ''}`}
+                    className={`purchase-spotlight ${nextPurchase.is_completed ? 'completed' : ''}`}
                   >
                     <div className="purchase-spotlight-copy">
                       <p className="project-eyebrow">
@@ -504,10 +455,7 @@ const ProjectDetails = () => {
                   {purchaseBoard.map((lane) => (
                     <section
                       key={lane.key}
-                      ref={(node) => {
-                        if (node) shoppingLaneRefs.current[lane.key] = node;
-                      }}
-                      className={`shopping-lane ${hasFocusedLane && walkthroughLane === lane.key ? 'is-focused' : ''}`}
+                      className="shopping-lane"
                     >
                       <div className="shopping-lane-head">
                         <div className="shopping-lane-copy">
