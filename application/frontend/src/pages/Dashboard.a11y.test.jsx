@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
 const useAuthMock = vi.fn();
-const { projectsGetAllMock, stylesGetAllMock } = vi.hoisted(() => ({
+const { projectsGetAllMock, stylesGetAllMock, searchStylesMock } = vi.hoisted(() => ({
   projectsGetAllMock: vi.fn(),
   stylesGetAllMock: vi.fn(),
+  searchStylesMock: vi.fn(),
 }));
 
 vi.mock('../context/AuthContext', () => ({
@@ -29,7 +30,7 @@ vi.mock('../services/api', () => ({
     getAllTags: vi.fn(),
   },
   searchAPI: {
-    searchStyles: vi.fn(),
+    searchStyles: searchStylesMock,
   },
 }));
 
@@ -38,6 +39,7 @@ describe('Dashboard accessibility', () => {
     useAuthMock.mockReset();
     projectsGetAllMock.mockReset();
     stylesGetAllMock.mockReset();
+    searchStylesMock.mockReset();
 
     useAuthMock.mockReturnValue({
       user: { full_name: 'Test User' },
@@ -57,6 +59,9 @@ describe('Dashboard accessibility', () => {
           detected: ['Soft daylight detected'],
         },
       ],
+    });
+    searchStylesMock.mockResolvedValue({
+      data: { results: [], total: 0, page: 1, has_more: false },
     });
   });
 
@@ -87,5 +92,30 @@ describe('Dashboard accessibility', () => {
     await user.click(naturalWoodChip);
 
     expect(naturalWoodChip).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('searches the rendered dashboard styles even when backend search misses them', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+
+    const searchInput = await screen.findByRole('searchbox', { name: /search design styles/i });
+    await user.type(searchInput, 'japanese');
+
+    await waitFor(() => {
+      expect(searchStylesMock).toHaveBeenCalledWith('japanese', 20, 1);
+    });
+
+    const resultsGrid = await waitFor(() => {
+      const grid = container.querySelector('.search-gallery-grid');
+      expect(grid).not.toBeNull();
+      return grid;
+    });
+
+    expect(within(resultsGrid).getByRole('heading', { name: 'Japanese' })).toBeInTheDocument();
+    expect(screen.queryByText(/no results found/i)).not.toBeInTheDocument();
   });
 });

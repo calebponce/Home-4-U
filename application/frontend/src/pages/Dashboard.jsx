@@ -238,6 +238,101 @@ const mergeStylesWithDefaults = (incoming = []) => {
   return Array.from(merged.values());
 };
 
+const scoreSearchField = (query, value, weight) => {
+  if (!value) return 0;
+
+  const normalizedValue = String(value).toLowerCase();
+  const tokens = query.split(/\s+/).filter(Boolean);
+
+  if (!normalizedValue || !tokens.length) return 0;
+  if (normalizedValue === query) return weight * 2;
+  if (normalizedValue.includes(query)) return weight;
+  if (tokens.every((token) => normalizedValue.includes(token))) return weight * 0.85;
+  if (tokens.some((token) => normalizedValue.includes(token))) return weight * 0.4;
+  return 0;
+};
+
+const buildLocalStyleSearchResults = (styles, query, limit = 20) => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return { results: [], total: 0 };
+  }
+
+  const matches = styles
+    .map((style) => {
+      const { previewFeatures } = resolveStyleElements(style);
+      const tags = [
+        ...(Array.isArray(style.materials) ? style.materials : []),
+        ...(Array.isArray(previewFeatures) ? previewFeatures : []),
+      ]
+        .filter(Boolean)
+        .map((item) => String(item));
+
+      const score =
+        scoreSearchField(normalizedQuery, style.name, 6) +
+        scoreSearchField(normalizedQuery, style.description, 3) +
+        scoreSearchField(normalizedQuery, style.signature, 2) +
+        tags.reduce((sum, tag) => sum + scoreSearchField(normalizedQuery, tag, 2), 0);
+
+      if (!score) return null;
+
+      return {
+        id: `local-${styleSlug(style.name) || normalizeStyleName(style.name) || style.id}`,
+        type: 'style',
+        title: style.name,
+        snippet: style.description || style.signature || '',
+        tags: Array.from(new Set(tags)).slice(0, 4),
+        score: Number(score.toFixed(3)),
+        rank: 0,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score);
+
+  const results = matches.slice(0, limit).map((result, index) => ({
+    ...result,
+    rank: index + 1,
+  }));
+
+  return { results, total: matches.length };
+};
+
+const getSearchResultKey = (result) =>
+  normalizeStyleName(result?.title) || `${result?.type || 'result'}-${result?.id}`;
+
+const mergeSearchResults = (localResults, remoteResults, limit = 20) => {
+  const merged = new Map();
+
+  localResults.forEach((result) => {
+    merged.set(getSearchResultKey(result), result);
+  });
+
+  remoteResults.forEach((result) => {
+    const key = getSearchResultKey(result);
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, result);
+      return;
+    }
+
+    merged.set(key, {
+      ...existing,
+      ...result,
+      tags: result.tags?.length ? result.tags : existing.tags,
+      snippet: result.snippet || existing.snippet,
+      score: Math.max(existing.score || 0, result.score || 0),
+    });
+  });
+
+  return Array.from(merged.values())
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .slice(0, limit)
+    .map((result, index) => ({
+      ...result,
+      rank: index + 1,
+    }));
+};
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const formatLoadError = (err) => {
@@ -277,6 +372,7 @@ const Dashboard = () => {
   const [showNewProject, setShowNewProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchRevision, setSearchRevision] = useState(0);
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [searchMeta, setSearchMeta] = useState({ total: 0, page: 1, hasMore: false });
@@ -686,7 +782,8 @@ const Dashboard = () => {
 
   // Debounced search hitting backend /search
   useEffect(() => {
-    if (!searchTerm) {
+    const trimmedQuery = searchTerm.trim();
+    if (!trimmedQuery) {
       setSearchResults([]);
       setSearching(false);
       setSearchError(null);
@@ -694,26 +791,58 @@ const Dashboard = () => {
       return;
     }
 
+    let cancelled = false;
     const handle = setTimeout(async () => {
+      const localSearch = buildLocalStyleSearchResults(styles, trimmedQuery, 20);
       try {
+        if (cancelled) return;
         setSearching(true);
         setSearchError(null);
-        const res = await searchAPI.searchStyles(searchTerm.trim(), 20, 1);
-        setSearchResults(res.data?.results || []);
+        setSearchResults(localSearch.results);
         setSearchMeta({
-          total: res.data?.total || 0,
+          total: localSearch.total,
+          page: 1,
+          hasMore: false,
+        });
+
+        const res = await searchAPI.searchStyles(trimmedQuery, 20, 1);
+        if (cancelled) return;
+
+        const remoteResults = res.data?.results || [];
+        const mergedResults = mergeSearchResults(localSearch.results, remoteResults, 20);
+        const remoteKeys = new Set(remoteResults.map(getSearchResultKey));
+        const localUniqueCount = localSearch.results.filter((result) => !remoteKeys.has(getSearchResultKey(result))).length;
+
+        setSearchResults(mergedResults);
+        setSearchMeta({
+          total: Math.max(
+            mergedResults.length,
+            (res.data?.total || remoteResults.length) + localUniqueCount,
+          ),
           page: res.data?.page || 1,
-          hasMore: res.data?.has_more || false,
+          hasMore: Boolean(res.data?.has_more),
         });
       } catch (err) {
-        setSearchError(err?.response?.data?.detail || 'Search failed');
+        if (cancelled) return;
+        setSearchResults(localSearch.results);
+        setSearchMeta({
+          total: localSearch.total,
+          page: 1,
+          hasMore: false,
+        });
+        setSearchError(localSearch.total ? null : (err?.response?.data?.detail || 'Search failed'));
       } finally {
-        setSearching(false);
+        if (!cancelled) {
+          setSearching(false);
+        }
       }
     }, 350);
 
-    return () => clearTimeout(handle);
-  }, [searchTerm]);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [searchRevision, searchTerm, styles]);
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
@@ -984,7 +1113,15 @@ const Dashboard = () => {
               <button
                 type="button"
                 className="cta-secondary studio-btn studio-btn--secondary studio-btn--compact"
-                onClick={() => setSearchTerm(searchTerm.trim())}
+                onClick={() => {
+                  const trimmedQuery = searchTerm.trim();
+                  if (!trimmedQuery) return;
+                  if (trimmedQuery !== searchTerm) {
+                    setSearchTerm(trimmedQuery);
+                    return;
+                  }
+                  setSearchRevision((revision) => revision + 1);
+                }}
                 disabled={!searchTerm.trim()}
               >
                 {searching ? 'Searching…' : 'Search'}
@@ -1017,7 +1154,7 @@ const Dashboard = () => {
                 <AnimatePresence>
                   {searchResults.map((r, idx) => (
                     <motion.div 
-                      key={`${r.type}-${r.id}`} 
+                      key={`${r.type}-${getSearchResultKey(r)}`} 
                       className="search-gallery-card"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1118,13 +1255,14 @@ const Dashboard = () => {
               ) : (
                 styles.map((style, index) => (
                   <div 
-                    key={style.id} 
+                    key={styleSlug(style.name) || canonicalStyleKey(style.name) || style.id} 
                     className="style-preview-card reveal-on-scroll"
                     data-parallax-card
                     style={{ '--index': index, '--delay': `${0.05 + index * 0.04}s` }}
                   >
                   {/** resolve per-card emoji with unique fallback */} 
                   {(() => {
+                    const styleCardKey = styleSlug(style.name) || canonicalStyleKey(style.name) || String(style.id);
                     const styleMonogram = resolveStyleMonogram(style);
                     const { key: styleKey, previewFeatures } = resolveStyleElements(style);
                     const palette = Array.isArray(style.palette) && style.palette.length
@@ -1136,7 +1274,8 @@ const Dashboard = () => {
                           'var(--color-secondary-arctic)',
                         ].slice(0, 4);
                     const materials = Array.isArray(style.materials) && style.materials.length ? style.materials.slice(0, 2) : [];
-                    const styleTags = (materials.length ? materials : previewFeatures).slice(0, 3);
+                    const styleSummary = style.signature || style.description || 'A modern interior style.';
+                    const styleTags = (materials.length ? materials : previewFeatures).slice(0, 2);
                     return (
                       <button
                         type="button"
@@ -1156,26 +1295,14 @@ const Dashboard = () => {
                             <span className="style-monogram">{styleMonogram}</span>
                           </div>
                           <div className="style-card-headtext">
-                            <span className="style-card-kicker">Style Direction</span>
                             <h3 className="style-card-title">{style.name}</h3>
-                            <p className="style-card-desc">
-                              {style.description || 'A modern interior style.'}
-                            </p>
+                            <p className="style-card-desc" title={styleSummary}>{styleSummary}</p>
                             <div className="style-card-details">
                               <div className="style-palette" aria-label={`${style.name} palette`}>
                                 {palette.map((color, i) => (
-                                  <span key={`${style.id}-sw-${i}`} className="style-swatch" style={{ '--swatch': color }} aria-hidden="true" />
+                                  <span key={`${styleCardKey}-sw-${i}`} className="style-swatch" style={{ '--swatch': color }} aria-hidden="true" />
                                 ))}
                               </div>
-                              {style.signature ? (
-                                <span className="style-signature" title={style.signature}>
-                                  {style.signature}
-                                </span>
-                              ) : materials.length ? (
-                                <span className="style-signature" title={materials.join(' + ')}>
-                                  {materials.join(' + ')}
-                                </span>
-                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -1183,7 +1310,7 @@ const Dashboard = () => {
                         <div className="style-chips" aria-label="Style highlights">
                           {styleTags.map((item, i) => (
                             <span
-                              key={`${style.id}-chip-${i}`}
+                              key={`${styleCardKey}-chip-${i}`}
                               className="style-chip"
                               title={item}
                             >
@@ -1195,7 +1322,6 @@ const Dashboard = () => {
                         <div className="style-cta-strip" aria-hidden="true">
                           <span className="cta-left">
                             <span className="cta-label">Open Brief</span>
-                            <span className="cta-tag">{style.name}</span>
                           </span>
                           <span className="cta-arrow">→</span>
                         </div>
