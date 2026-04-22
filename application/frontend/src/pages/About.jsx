@@ -8,6 +8,7 @@ import './About.css';
 const About = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const isAuthenticated = Boolean(token);
   const [isLoaded, setIsLoaded] = useState(false);
   const [animatedCounters, setAnimatedCounters] = useState({});
   const [openFaq, setOpenFaq] = useState(null);
@@ -314,23 +315,19 @@ const About = () => {
         <div className="shape shape-3"></div>
       </div>
 
+      {!isAuthenticated && (
       <header className="about-header">
         <div className="header-content">
-          <button type="button" className="logo" onClick={() => navigate('/dashboard')} aria-label="Go to dashboard">
+          <button type="button" className="logo" onClick={() => navigate('/about')} aria-label="Go to about page">
             <Home size={16} aria-hidden="true" /> Home4U Studio
           </button>
           <nav className="header-nav">
-            {token ? (
-              <>
-                <button type="button" onClick={() => navigate('/dashboard')} className="nav-link">Dashboard</button>
-                <button type="button" onClick={handleLogout} className="logout-btn">Logout</button>
-              </>
-            ) : (
-              <button type="button" onClick={() => navigate('/login')} className="nav-link">Login</button>
-            )}
+            <button type="button" onClick={() => navigate('/login')} className="nav-link">Login</button>
+            <button type="button" onClick={() => navigate('/register')} className="nav-link">Sign Up</button>
           </nav>
         </div>
       </header>
+      )}
 
       <motion.section 
         className="hero-section"
@@ -347,7 +344,13 @@ const About = () => {
             Home4U helps homeowners and design teams organize room plans, compare style directions, track budgets, and produce AI-assisted concept previews without losing operational clarity.
           </motion.p>
           <motion.div variants={itemVariants} className="hero-buttons">
-            <button type="button" onClick={() => navigate('/dashboard')} className="primary-btn">Open Dashboard <ArrowRight size={18} /></button>
+            <button
+              type="button"
+              onClick={() => navigate(isAuthenticated ? '/dashboard' : '/register')}
+              className="primary-btn"
+            >
+              {isAuthenticated ? 'Open Dashboard' : 'Create Account'} <ArrowRight size={18} />
+            </button>
             <button type="button" onClick={() => scrollToSection('features')} className="secondary-btn">Review Capabilities</button>
           </motion.div>
           <motion.div variants={itemVariants} className="hero-stats">
@@ -795,9 +798,15 @@ const About = () => {
 
       <section className="cta-section">
         <div className="cta-content">
-          <h2>Ready to review your next room?</h2>
-          <p>Open the workspace and start a new concept preview.</p>
-          <button type="button" onClick={() => navigate('/dashboard')} className="cta-btn">Open Dashboard</button>
+          <h2>{isAuthenticated ? 'Ready to review your next room?' : 'Ready to start your first room review?'}</h2>
+          <p>{isAuthenticated ? 'Open the workspace and start a new concept preview.' : 'Create an account or sign in to launch the workspace and start a concept preview.'}</p>
+          <button
+            type="button"
+            onClick={() => navigate(isAuthenticated ? '/dashboard' : '/register')}
+            className="cta-btn"
+          >
+            {isAuthenticated ? 'Open Dashboard' : 'Create Account'}
+          </button>
         </div>
       </section>
 
@@ -810,8 +819,12 @@ const About = () => {
           <div className="footer-links">
             <div className="footer-column">
               <h4>Navigation</h4>
-              <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
-              {token ? (
+              {isAuthenticated ? (
+                <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
+              ) : (
+                <button type="button" onClick={() => navigate('/register')}>Sign Up</button>
+              )}
+              {isAuthenticated ? (
                 <button type="button" onClick={handleLogout}>Logout</button>
               ) : (
                 <button type="button" onClick={() => navigate('/login')}>Login</button>

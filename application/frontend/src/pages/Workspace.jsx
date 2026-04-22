@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback, useId } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Upload, Wand2, CheckCircle2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Upload, Wand2, CheckCircle2, ChevronLeft, ChevronRight, Sparkles, ArrowUpRight } from 'lucide-react';
 import { projectsAPI, stylesAPI } from '../services/api';
 import { resolveStyleContext, serializeStyleContext, styleSlug } from '../utils/styleContext';
 import {
@@ -84,6 +84,7 @@ const Workspace = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analysisProject, setAnalysisProject] = useState(null);
   const [workspaceError, setWorkspaceError] = useState('');
+  const shoppingPlanRef = useRef(null);
   const generateBtnRef = useRef(null);
   const previewComboRef = useRef(null);
   const comparisonHandleRef = useRef(null);
@@ -102,6 +103,7 @@ const Workspace = () => {
     return analysisResult.style_scores.find((item) => item.style_name === (analysisResult.selected_style?.name || styleInfo.name))
       || analysisResult.style_scores[0];
   }, [analysisResult, styleInfo.name]);
+  const workspaceTone = String(styleInfo.key || styleKey || 'default').toLowerCase();
 
   const steps = useMemo(() => {
     const uploadDone = !!roomImage;
@@ -389,20 +391,60 @@ const Workspace = () => {
     }
   };
 
+  const handleOpenLinkedWalkthrough = () => {
+    if (!analysisProject) return;
+
+    const walkthroughParams = new URLSearchParams();
+    const linkedStyle = analysisResult?.selected_style?.name || styleInfo.name;
+    const linkedStyleSlug = linkedStyle ? styleSlug(linkedStyle) : '';
+    if (linkedStyleSlug) walkthroughParams.set('style', linkedStyleSlug);
+    walkthroughParams.set('project', String(analysisProject.id));
+
+    navigate(`/virtual-tour?${walkthroughParams.toString()}`, {
+      state: {
+        ...(analysisResult?.selected_style ? { selectedStyle: analysisResult.selected_style } : {}),
+        projectId: analysisProject.id,
+      },
+    });
+  };
+
   return (
-    <div className={`workspace ${showSuccessGlow ? 'success-glow-active' : ''}`} onMouseMove={handleMagneticMove}>
+    <div
+      className={`workspace ${showSuccessGlow ? 'success-glow-active' : ''}`}
+      data-style={workspaceTone}
+      onMouseMove={handleMagneticMove}
+    >
+      <div className="workspace-atmosphere" aria-hidden="true">
+        <span className="workspace-orb workspace-orb-a"></span>
+        <span className="workspace-orb workspace-orb-b"></span>
+        <span className="workspace-orb workspace-orb-c"></span>
+      </div>
       <div className="page-shell workspace-shell">
         <header className="workspace-header">
-          <div>
+          <div className="workspace-header-copy">
             <p className="workspace-eyebrow">
-              Design Workspace <span className="badge demo-badge">Live Sync</span>
+              Design Workspace <span className="badge demo-badge">Studio Live</span>
             </p>
             <h1>{styleInfo.name}</h1>
             <p className="workspace-sub">
               {styleInfo.description} Upload a room, sync a real project to the backend, and generate a scored concept board with saved recommendations.
             </p>
+            <div className="workspace-hero-metrics studio-hero-metrics" aria-label="Workspace overview">
+              <div className="hero-metric-card studio-hero-card">
+                <span className="hero-metric-label studio-hero-label">Budget Rail</span>
+                <strong className="studio-hero-value">${budgetAmount.toLocaleString()}</strong>
+              </div>
+              <div className="hero-metric-card studio-hero-card">
+                <span className="hero-metric-label studio-hero-label">Lighting Bias</span>
+                <strong className="studio-hero-value">{lighting === 'warm' ? 'Warm ambient' : 'Cool focus'}</strong>
+              </div>
+              <div className="hero-metric-card studio-hero-card">
+                <span className="hero-metric-label studio-hero-label">System State</span>
+                <strong className="studio-hero-value">{analysisResult ? `${Math.round(selectedScore?.score_value || 0)}% aligned` : 'Ready to scan'}</strong>
+              </div>
+            </div>
           </div>
-          <button type="button" className="back-btn" onClick={() => navigate('/dashboard')}>
+          <button type="button" className="back-btn studio-btn studio-btn--ghost" onClick={() => navigate('/dashboard')}>
             <ChevronLeft size={16} />
             <span>Back to Dashboard</span>
           </button>
@@ -663,8 +705,15 @@ const Workspace = () => {
             >
               {isGenerating ? 'Syncing…' : 'Generate Plan'}
             </button>
-            <button type="button" className="secondary ghost" disabled aria-disabled="true" title="Feature coming soon">
-              Product sourcing stays in the roadmap
+            <button
+              type="button"
+              className="secondary-link-btn"
+              onClick={() => shoppingPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              disabled={!analysisResult?.shopping_plan?.length}
+              aria-disabled={!analysisResult?.shopping_plan?.length}
+              title={analysisResult?.shopping_plan?.length ? 'Jump to the shopping plan' : 'Run analysis to unlock sourcing'}
+            >
+              {analysisResult?.shopping_plan?.length ? 'Open Shopping Plan' : 'Run Analysis To Unlock Sourcing'}
             </button>
             {workspaceError && (
               <p className="workspace-error" role="alert">{workspaceError}</p>
@@ -682,9 +731,21 @@ const Workspace = () => {
                 : 'The next analysis run will create a real project record in the backend.'}
             </p>
             {analysisProject && (
-              <button type="button" className="secondary-link-btn" onClick={() => navigate(`/project/${analysisProject.id}`)}>
-                Open Project Plan
-              </button>
+              <>
+                <button type="button" className="secondary-link-btn" onClick={() => navigate(`/project/${analysisProject.id}`)}>
+                  Open Project Plan
+                </button>
+                <button
+                  type="button"
+                  className="secondary-link-btn"
+                  onClick={handleOpenLinkedWalkthrough}
+                  disabled={!analysisResult?.shopping_plan?.length}
+                  aria-disabled={!analysisResult?.shopping_plan?.length}
+                  title={analysisResult?.shopping_plan?.length ? 'Open the linked walkthrough for this saved project' : 'Run analysis to open a linked walkthrough'}
+                >
+                  {analysisResult?.shopping_plan?.length ? 'Open Linked Walkthrough' : 'Run Analysis To Link Walkthrough'}
+                </button>
+              </>
             )}
           </div>
 
@@ -696,15 +757,15 @@ const Workspace = () => {
               </div>
               <p className="control-sub">{analysisResult.summary}</p>
               {analysisResult.image_profile?.dominant_hex && (
-                <div className="analysis-chip-row">
-                  <span className="analysis-chip">Dominant tone {analysisResult.image_profile.dominant_hex}</span>
-                  <span className="analysis-chip">Brightness {Math.round((analysisResult.image_profile.average_brightness || 0) * 100)}%</span>
+                <div className="analysis-chip-row studio-chip-row">
+                  <span className="analysis-chip studio-chip">Dominant tone {analysisResult.image_profile.dominant_hex}</span>
+                  <span className="analysis-chip studio-chip">Brightness {Math.round((analysisResult.image_profile.average_brightness || 0) * 100)}%</span>
                 </div>
               )}
               {!!analysisResult.suggested_tags?.length && (
-                <div className="analysis-chip-row">
+                <div className="analysis-chip-row studio-chip-row">
                   {analysisResult.suggested_tags.slice(0, 4).map((tag) => (
-                    <span key={tag.id} className="analysis-chip">{tag.name}</span>
+                    <span key={tag.id} className="analysis-chip studio-chip">{tag.name}</span>
                   ))}
                 </div>
               )}
@@ -719,6 +780,89 @@ const Workspace = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {!!analysisResult.shopping_plan?.length && (
+                <div ref={shoppingPlanRef} className="shopping-plan">
+                  <div className="control-head">
+                    <span>Shopping Plan</span>
+                    <span className="metric-pill">
+                      ${analysisResult.shopping_plan.reduce((sum, item) => sum + Number(item.estimated_cost || 0), 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="control-sub">
+                    Start with these purchases to move the room toward the {analysisResult.selected_style?.name || styleInfo.name} look while staying near the selected budget.
+                  </p>
+                  <div className="shopping-plan-list">
+                    {analysisResult.shopping_plan.map((item) => (
+                      <article key={item.key} className="shopping-plan-card">
+                        <div className="shopping-plan-topline">
+                          <span className="shopping-plan-step">{item.priority_label}</span>
+                          <span className="shopping-plan-category">{item.category}</span>
+                        </div>
+                        <h4>{item.label}</h4>
+                        <p>{item.purchase_reason}</p>
+                        <div className="shopping-plan-meta">
+                          <span>{item.room_zone}</span>
+                          <span>${Number(item.estimated_cost).toLocaleString()}</span>
+                          <span>{Math.round((item.budget_share || 0) * 100)}% of budget</span>
+                        </div>
+                        <div className="shopping-plan-query">
+                          <span>Look for</span>
+                          <strong>{item.search_query}</strong>
+                        </div>
+                        {!!item.products?.length && (
+                          <div className="shopping-product-grid">
+                            {item.products.slice(0, 2).map((product) => (
+                              <article key={product.key} className="shopping-product-card">
+                                <div className={`shopping-product-thumb ${product.image_url ? 'has-image' : 'is-placeholder'}`}>
+                                  {product.image_url ? (
+                                    <img src={product.image_url} alt={product.name} loading="lazy" />
+                                  ) : (
+                                    <span>{product.retailer.slice(0, 1)}</span>
+                                  )}
+                                </div>
+                                <div className="shopping-product-copy">
+                                  <div className="shopping-product-topline">
+                                    <span className="shopping-product-badge">{product.match_label}</span>
+                                    <span className="shopping-product-retailer">{product.retailer}</span>
+                                  </div>
+                                  <h5>{product.name}</h5>
+                                  <p>{product.match_reason}</p>
+                                  <div className="shopping-product-meta">
+                                    <span>{product.price_label}</span>
+                                    <span>${Number(product.estimated_cost).toLocaleString()}</span>
+                                  </div>
+                                  <a
+                                    href={product.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="shopping-product-link"
+                                  >
+                                    <span>View Pick</span>
+                                    <ArrowUpRight size={14} />
+                                  </a>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                        <div className="shopping-plan-sources">
+                          {item.sources.map((source) => (
+                            <a
+                              key={`${item.key}-${source.retailer}`}
+                              href={source.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="shopping-source-link"
+                            >
+                              Search {source.retailer}
+                            </a>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

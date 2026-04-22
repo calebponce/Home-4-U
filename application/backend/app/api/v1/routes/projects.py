@@ -14,7 +14,11 @@ from app.schemas.schemas import (
     RoomProjectUpdate,
     RoomProjectResponse,
 )
-from app.services.project_analysis import analyze_project_design, resolve_style_for_analysis
+from app.services.project_analysis import (
+    analyze_project_design,
+    load_saved_project_analysis,
+    resolve_style_for_analysis,
+)
 from app.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/projects", tags=["RoomProjects"])
@@ -70,6 +74,29 @@ def get_project(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
     return project
+
+
+@router.get("/{project_id}/analysis", response_model=ProjectAnalysisResponse)
+def get_project_analysis(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return the latest saved analysis snapshot for a project, if one exists."""
+    project = (
+        db.query(RoomProject)
+        .filter(RoomProject.id == project_id, RoomProject.user_id == current_user.id)
+        .first()
+    )
+
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    payload = load_saved_project_analysis(db, project=project)
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project analysis not found")
+
+    return payload
 
 
 @router.put("/{project_id}", response_model=RoomProjectResponse)

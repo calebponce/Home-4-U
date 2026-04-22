@@ -6,20 +6,24 @@
    ============================================================ */
 
 .about-page {
-  --primary:          var(--color-brass-400);
-  --primary-light:    var(--color-brass-300);
-  --secondary:        var(--color-steel-600);
-  --bg:               var(--color-graphite-950);
-  --surface:          var(--color-graphite-900);
-  --text:             var(--color-paper-50);
-  --muted:            rgb(var(--color-stone-200-rgb) / 0.62);
-  --rule:             rgb(var(--color-paper-50-rgb) / 0.12);
-  --rule-strong:      rgb(var(--color-paper-50-rgb) / 0.22);
+  --primary:          var(--color-studio-glow);
+  --primary-light:    var(--color-studio-soft);
+  --secondary:        var(--color-studio-warm);
+  --bg:               var(--color-studio-bg-start);
+  --surface:          var(--color-studio-surface-soft);
+  --surface-strong:   var(--color-studio-surface-strong);
+  --text:             var(--color-studio-text);
+  --muted:            var(--color-studio-muted);
+  --rule:             var(--color-studio-border);
+  --rule-strong:      var(--color-studio-border-strong);
   --pad-x:            clamp(2rem, 7vw, 8rem);
   --max:              1600px;
 
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 16% 14%, rgb(var(--color-studio-glow-rgb) / 0.16), transparent 30%),
+    radial-gradient(circle at 84% 20%, rgb(var(--color-studio-warm-rgb) / 0.08), transparent 24%),
+    linear-gradient(180deg, var(--color-studio-bg-end) 0%, var(--bg) 42%, rgb(var(--color-graphite-950-rgb) / 1) 100%);
   color: var(--text);
   font-family: var(--font-sans);
   overflow-x: hidden;
@@ -60,7 +64,7 @@
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.24em;
-  color: rgb(var(--color-paper-50-rgb) / 0.75);
+  color: rgb(var(--color-paper-50-rgb) / 0.88);
   background: none;
   border: none;
   cursor: pointer;
@@ -79,7 +83,7 @@
 .nav-link, .logout-btn {
   background: none;
   border: none;
-  color: rgb(var(--color-paper-50-rgb) / 0.65);
+  color: rgb(var(--color-paper-50-rgb) / 0.84);
   padding: 0.35rem 0.75rem;
   border-radius: 0;
   font-size: 0.72rem;
@@ -1494,7 +1498,7 @@
   font-size: 0.58rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgb(var(--color-paper-50-rgb) / 0.35);
+  color: rgb(var(--color-paper-50-rgb) / 0.6);
   margin-bottom: 0.5rem;
 }
 
@@ -1617,41 +1621,41 @@
 }
 
 /* ============================================================
-   ABOUT — Product shell override
-   Keeps the editorial layout, but aligns it with the lighter
-   paper / haze system used across the app.
+   ABOUT — Studio shell alignment
+   Keeps the editorial layout, but brings it into the same
+   dark navy system used across the redesigned product routes.
    ============================================================ */
 
 .about-page {
-  --bg: var(--color-paper-0);
-  --surface: rgb(var(--color-paper-50-rgb) / 0.72);
-  --surface-strong: rgb(var(--color-paper-50-rgb) / 0.92);
-  --text: var(--color-graphite-900);
-  --muted: rgb(var(--color-slate-400-rgb) / 0.88);
-  --rule: rgb(var(--color-graphite-900-rgb) / 0.08);
-  --rule-strong: rgb(var(--color-graphite-900-rgb) / 0.14);
+  --bg: var(--color-studio-bg-start);
+  --surface: var(--color-studio-surface-soft);
+  --surface-strong: var(--color-studio-surface-strong);
+  --text: var(--color-studio-text);
+  --muted: var(--color-studio-muted);
+  --rule: var(--color-studio-border);
+  --rule-strong: var(--color-studio-border-strong);
   background:
-    radial-gradient(circle at 16% 14%, rgb(var(--color-steel-600-rgb) / 0.12), transparent 30%),
-    radial-gradient(circle at 84% 20%, rgb(var(--color-brass-400-rgb) / 0.12), transparent 26%),
-    linear-gradient(180deg, rgb(var(--color-paper-50-rgb) / 0.94), rgb(var(--color-paper-0-rgb) / 0.98));
+    radial-gradient(circle at 16% 14%, rgb(var(--color-studio-glow-rgb) / 0.16), transparent 30%),
+    radial-gradient(circle at 84% 20%, rgb(var(--color-studio-warm-rgb) / 0.08), transparent 24%),
+    linear-gradient(180deg, var(--color-studio-bg-end) 0%, var(--bg) 42%, rgb(var(--color-graphite-950-rgb) / 1) 100%);
   color: var(--text);
 }
 
 .about-header {
-  background: rgb(var(--color-paper-50-rgb) / 0.74);
+  background: rgb(8 16 29 / 0.78);
   border-bottom: 1px solid var(--rule);
-  box-shadow: 0 20px 40px -38px rgb(var(--color-graphite-950-rgb) / 0.22);
+  box-shadow: 0 20px 40px -38px rgb(4 8 16 / 0.44);
 }
 
 .logo,
 .nav-link,
 .logout-btn {
-  color: rgb(var(--color-graphite-900-rgb) / 0.76);
+  color: rgb(var(--color-paper-50-rgb) / 0.72);
 }
 
 .nav-link:hover,
 .logout-btn:hover {
-  color: var(--color-graphite-950);
+  color: var(--text);
 }
 
 .about-page .hero-section {
@@ -1661,36 +1665,43 @@
 
 .about-page .hero-section::before {
   background:
-    radial-gradient(circle at 14% 16%, rgb(var(--color-steel-600-rgb) / 0.22), transparent 28%),
-    radial-gradient(circle at 78% 72%, rgb(var(--color-brass-400-rgb) / 0.18), transparent 24%),
-    linear-gradient(135deg, rgb(var(--color-paper-50-rgb) / 0.92), rgb(var(--color-paper-0-rgb) / 0.96));
+    radial-gradient(circle at 14% 16%, rgb(var(--color-steel-600-rgb) / 0.24), transparent 28%),
+    radial-gradient(circle at 78% 72%, rgb(var(--color-paper-50-rgb) / 0.08), transparent 22%),
+    linear-gradient(
+      160deg,
+      rgb(6 12 22 / 0.82) 0%,
+      rgb(8 17 31 / 0.34) 42%,
+      rgb(7 14 24 / 0.72) 100%
+    ),
+    url('https://images.unsplash.com/photo-1615873968403-89e068629265?auto=format&fit=crop&q=90&w=2800')
+      center / cover no-repeat;
 }
 
 .about-page .hero-section::after {
-  background: linear-gradient(90deg, rgb(var(--color-brass-400-rgb) / 0.5), transparent 58%);
-  opacity: 0.85;
+  background: linear-gradient(90deg, rgb(var(--color-steel-600-rgb) / 0.62), transparent 58%);
+  opacity: 0.88;
 }
 
 .about-page .hero-badge {
   padding: 0.52rem 0.9rem;
   border-radius: 999px;
   border: 1px solid var(--rule);
-  background: rgb(var(--color-paper-50-rgb) / 0.7);
-  color: rgb(var(--color-graphite-900-rgb) / 0.66);
-  box-shadow: 0 12px 30px -26px rgb(var(--color-graphite-950-rgb) / 0.18);
+  background: rgb(15 28 47 / 0.68);
+  color: rgb(var(--color-paper-50-rgb) / 0.72);
+  box-shadow: 0 12px 30px -26px rgb(4 8 16 / 0.34);
 }
 
 .about-page .hero-badge::before {
   width: 18px;
-  background: rgb(var(--color-brass-400-rgb) / 0.88);
+  background: rgb(var(--color-steel-600-rgb) / 0.94);
 }
 
 .about-page .hero-title {
-  color: var(--color-graphite-950);
+  color: var(--text);
 }
 
 .about-page .hero-title span {
-  color: var(--color-brass-500);
+  color: var(--primary-light);
 }
 
 .about-page .hero-description {
@@ -1730,10 +1741,14 @@
 .about-page .cta-btn,
 .about-page .submit-btn,
 .about-page .newsletter-form button {
-  background: linear-gradient(135deg, rgb(var(--color-graphite-900-rgb) / 0.96), rgb(var(--color-graphite-800-rgb) / 0.94));
-  color: var(--color-paper-50);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-steel-600-rgb) / 0.96),
+    rgb(var(--color-steel-500-rgb) / 0.9)
+  );
+  color: var(--color-graphite-950);
   border: 1px solid transparent;
-  box-shadow: 0 20px 44px -30px rgb(var(--color-graphite-950-rgb) / 0.34);
+  box-shadow: 0 20px 44px -30px rgb(var(--color-steel-600-rgb) / 0.34);
 }
 
 .about-page .primary-btn:hover,
@@ -1741,17 +1756,17 @@
 .about-page .submit-btn:hover,
 .about-page .newsletter-form button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 24px 52px -34px rgb(var(--color-graphite-950-rgb) / 0.34);
+  box-shadow: 0 24px 52px -34px rgb(var(--color-steel-600-rgb) / 0.38);
 }
 
 .about-page .secondary-btn {
-  background: rgb(var(--color-paper-50-rgb) / 0.68);
+  background: rgb(var(--color-graphite-800-rgb) / 0.64);
   border: 1px solid var(--rule-strong);
-  color: var(--color-graphite-900);
+  color: var(--text);
 }
 
 .about-page .secondary-btn:hover {
-  background: rgb(var(--color-paper-50-rgb) / 0.92);
+  background: rgb(var(--color-graphite-700-rgb) / 0.84);
   transform: translateY(-1px);
 }
 
@@ -1759,12 +1774,12 @@
   padding: 1rem 1.1rem;
   border-radius: 18px;
   border: 1px solid var(--rule);
-  background: rgb(var(--color-paper-50-rgb) / 0.62);
-  box-shadow: 0 18px 36px -32px rgb(var(--color-graphite-950-rgb) / 0.22);
+  background: rgb(12 24 42 / 0.68);
+  box-shadow: 0 18px 36px -32px rgb(4 8 16 / 0.34);
 }
 
 .about-page .hero-stat .stat-number {
-  color: var(--color-graphite-950);
+  color: var(--text);
 }
 
 .about-page .hero-stat .stat-text {
@@ -1774,19 +1789,19 @@
 .about-page .hero-card {
   border-radius: 28px;
   border: 1px solid var(--rule);
-  background: linear-gradient(180deg, rgb(var(--color-paper-50-rgb) / 0.92), rgb(var(--color-stone-100-rgb) / 0.9));
-  box-shadow: 0 28px 60px -42px rgb(var(--color-graphite-950-rgb) / 0.28);
+  background: linear-gradient(180deg, rgb(14 24 42 / 0.94), rgb(10 18 31 / 0.92));
+  box-shadow: 0 28px 60px -42px rgb(4 8 16 / 0.4);
 }
 
 .about-page .card-glow {
   background:
-    radial-gradient(circle at 22% 22%, rgb(var(--color-steel-600-rgb) / 0.2), transparent 36%),
-    radial-gradient(circle at 78% 78%, rgb(var(--color-brass-400-rgb) / 0.18), transparent 34%);
+    radial-gradient(circle at 22% 22%, rgb(var(--color-steel-600-rgb) / 0.22), transparent 36%),
+    radial-gradient(circle at 78% 78%, rgb(var(--color-paper-50-rgb) / 0.06), transparent 34%);
 }
 
 .about-page .card-text,
 .about-page .card-meta {
-  color: rgb(var(--color-graphite-900-rgb) / 0.78);
+  color: rgb(var(--color-paper-50-rgb) / 0.76);
 }
 
 .app-preview-section,
@@ -1803,7 +1818,7 @@
   border: 1px solid var(--rule);
   border-radius: 28px;
   background: var(--surface);
-  box-shadow: 0 24px 54px -42px rgb(var(--color-graphite-950-rgb) / 0.2);
+  box-shadow: 0 24px 54px -42px rgb(4 8 16 / 0.34);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
@@ -1814,7 +1829,7 @@
 .cta-content h2,
 .about-footer h3,
 .about-footer h4 {
-  color: var(--color-graphite-950);
+  color: var(--text);
 }
 
 .section-header h3,
@@ -1847,7 +1862,7 @@
   border-radius: 22px;
   border: 1px solid var(--rule);
   background: var(--surface-strong);
-  box-shadow: 0 18px 42px -34px rgb(var(--color-graphite-950-rgb) / 0.16);
+  box-shadow: 0 18px 42px -34px rgb(4 8 16 / 0.28);
 }
 
 .team-card,
@@ -1868,16 +1883,16 @@
 .testimonial-card:hover,
 .step-card:hover {
   transform: translateY(-2px);
-  border-color: rgb(var(--color-brass-400-rgb) / 0.24);
-  box-shadow: 0 24px 52px -38px rgb(var(--color-graphite-950-rgb) / 0.18);
+  border-color: rgb(var(--color-steel-600-rgb) / 0.26);
+  box-shadow: 0 24px 52px -38px rgb(var(--color-steel-600-rgb) / 0.2);
 }
 
 .preview-sidebar,
 .preview-main,
 .preview-card,
 .rec-item {
-  background: rgb(var(--color-paper-50-rgb) / 0.82);
-  color: rgb(var(--color-graphite-900-rgb) / 0.84);
+  background: rgb(14 24 42 / 0.86);
+  color: rgb(var(--color-paper-50-rgb) / 0.82);
 }
 
 .contact-form input,
@@ -1885,41 +1900,41 @@
 .newsletter-form input {
   border-radius: calc(var(--radius-md) + 2px);
   border: 1px solid var(--rule-strong);
-  background: rgb(var(--color-paper-50-rgb) / 0.9);
-  color: var(--color-graphite-900);
+  background: rgb(11 20 35 / 0.92);
+  color: var(--text);
 }
 
 .contact-form input::placeholder,
 .contact-form textarea::placeholder,
 .newsletter-form input::placeholder {
-  color: rgb(var(--color-slate-400-rgb) / 0.72);
+  color: rgb(var(--color-steel-500-rgb) / 0.56);
 }
 
 .contact-form input:focus,
 .contact-form textarea:focus,
 .newsletter-form input:focus {
-  border-color: rgb(var(--color-brass-400-rgb) / 0.42);
-  box-shadow: 0 0 0 4px rgb(var(--color-brass-300-rgb) / 0.34);
+  border-color: rgb(var(--color-steel-600-rgb) / 0.46);
+  box-shadow: 0 0 0 4px rgb(var(--color-steel-600-rgb) / 0.18);
 }
 
 .form-notice {
   border-radius: 16px;
-  background: rgb(var(--color-paper-50-rgb) / 0.84);
+  background: rgb(13 24 42 / 0.82);
   border: 1px solid var(--rule);
-  color: rgb(var(--color-graphite-900-rgb) / 0.82);
+  color: rgb(var(--color-paper-50-rgb) / 0.82);
 }
 
 .about-footer {
-  background: rgb(var(--color-paper-50-rgb) / 0.62);
+  background: rgb(8 16 29 / 0.78);
   border-top: 1px solid var(--rule);
 }
 
 .footer-column button {
-  color: rgb(var(--color-graphite-900-rgb) / 0.76);
+  color: rgb(var(--color-paper-50-rgb) / 0.76);
 }
 
 .footer-column button:hover {
-  color: var(--color-graphite-950);
+  color: var(--text);
 }
 
 @media (max-width: 768px) {

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
+from urllib.parse import quote_plus, urlparse
 
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.database import (
+    ProductItem,
     Recommendation,
     ResemblanceScore,
     RoomProject,
@@ -40,6 +42,277 @@ LIGHTING_TAGS = {
 LOW_INTENSITY_TAGS = ("simple", "functional", "clean", "neutral")
 HIGH_INTENSITY_TAGS = ("colorful", "patterns", "iconic", "ornate", "eclectic")
 
+RETAILER_SEARCH_URLS = {
+    "IKEA": "https://www.ikea.com/us/en/search/?q={query}",
+    "Target": "https://www.target.com/s?searchTerm={query}",
+    "Wayfair": "https://www.wayfair.com/keyword.php?keyword={query}",
+    "Amazon": "https://www.amazon.com/s?k={query}",
+}
+
+ROOM_SHOPPING_BLUEPRINTS = {
+    "living room": [
+        {
+            "key": "hero-seating",
+            "label": "Main seating anchor",
+            "category": "Furniture",
+            "room_zone": "Conversation area",
+            "item_term": "sofa",
+            "retailers": ("IKEA", "Wayfair", "Target"),
+        },
+        {
+            "key": "lighting-layer",
+            "label": "Lighting layer",
+            "category": "Lighting",
+            "room_zone": "Ambient corners",
+            "item_term": "floor lamp",
+            "retailers": ("IKEA", "Target", "Amazon"),
+        },
+        {
+            "key": "textile-layer",
+            "label": "Texture layer",
+            "category": "Textiles",
+            "room_zone": "Floor plane",
+            "item_term": "area rug",
+            "retailers": ("Wayfair", "Target", "IKEA"),
+        },
+        {
+            "key": "accent-finishing",
+            "label": "Accent finish",
+            "category": "Decor",
+            "room_zone": "Shelves and tables",
+            "item_term": "throw pillows decor",
+            "retailers": ("Target", "Amazon", "IKEA"),
+        },
+    ],
+    "bedroom": [
+        {
+            "key": "bed-anchor",
+            "label": "Bed anchor",
+            "category": "Furniture",
+            "room_zone": "Sleeping zone",
+            "item_term": "bed frame",
+            "retailers": ("Wayfair", "IKEA", "Target"),
+        },
+        {
+            "key": "bedside-lighting",
+            "label": "Bedside lighting",
+            "category": "Lighting",
+            "room_zone": "Nightstands",
+            "item_term": "bedside lamp",
+            "retailers": ("Target", "IKEA", "Amazon"),
+        },
+        {
+            "key": "bedding-layer",
+            "label": "Bedding layer",
+            "category": "Textiles",
+            "room_zone": "Bed surface",
+            "item_term": "duvet cover set",
+            "retailers": ("Target", "Amazon", "Wayfair"),
+        },
+        {
+            "key": "finish-storage",
+            "label": "Storage accent",
+            "category": "Storage",
+            "room_zone": "Perimeter",
+            "item_term": "nightstand dresser decor",
+            "retailers": ("IKEA", "Wayfair", "Target"),
+        },
+    ],
+    "home office": [
+        {
+            "key": "desk-anchor",
+            "label": "Desk anchor",
+            "category": "Furniture",
+            "room_zone": "Work zone",
+            "item_term": "desk",
+            "retailers": ("IKEA", "Wayfair", "Target"),
+        },
+        {
+            "key": "task-chair",
+            "label": "Task chair",
+            "category": "Furniture",
+            "room_zone": "Primary seat",
+            "item_term": "office chair",
+            "retailers": ("Amazon", "Target", "Wayfair"),
+        },
+        {
+            "key": "task-lighting",
+            "label": "Task lighting",
+            "category": "Lighting",
+            "room_zone": "Desk surface",
+            "item_term": "desk lamp",
+            "retailers": ("Target", "Amazon", "IKEA"),
+        },
+        {
+            "key": "focus-finish",
+            "label": "Focus finish",
+            "category": "Decor",
+            "room_zone": "Shelving and wall",
+            "item_term": "desk organizer wall shelf",
+            "retailers": ("IKEA", "Amazon", "Target"),
+        },
+    ],
+    "kitchen": [
+        {
+            "key": "seating-anchor",
+            "label": "Seating anchor",
+            "category": "Furniture",
+            "room_zone": "Island or breakfast zone",
+            "item_term": "counter stool",
+            "retailers": ("Target", "Wayfair", "Amazon"),
+        },
+        {
+            "key": "pendant-lighting",
+            "label": "Pendant lighting",
+            "category": "Lighting",
+            "room_zone": "Prep zone",
+            "item_term": "pendant light",
+            "retailers": ("Wayfair", "Target", "Amazon"),
+        },
+        {
+            "key": "runner-layer",
+            "label": "Runner layer",
+            "category": "Textiles",
+            "room_zone": "Walk path",
+            "item_term": "kitchen runner rug",
+            "retailers": ("Target", "Amazon", "Wayfair"),
+        },
+        {
+            "key": "counter-finish",
+            "label": "Counter finish",
+            "category": "Decor",
+            "room_zone": "Countertop and shelf",
+            "item_term": "kitchen canisters tray decor",
+            "retailers": ("Target", "Amazon", "IKEA"),
+        },
+    ],
+    "bathroom": [
+        {
+            "key": "mirror-anchor",
+            "label": "Mirror or vanity anchor",
+            "category": "Fixtures",
+            "room_zone": "Vanity wall",
+            "item_term": "bathroom mirror vanity",
+            "retailers": ("Wayfair", "Target", "Amazon"),
+        },
+        {
+            "key": "vanity-lighting",
+            "label": "Vanity lighting",
+            "category": "Lighting",
+            "room_zone": "Vanity wall",
+            "item_term": "bathroom vanity light",
+            "retailers": ("Wayfair", "Amazon", "Target"),
+        },
+        {
+            "key": "soft-goods",
+            "label": "Soft goods",
+            "category": "Textiles",
+            "room_zone": "Floor and shower",
+            "item_term": "bath mat shower curtain",
+            "retailers": ("Target", "Amazon", "Wayfair"),
+        },
+        {
+            "key": "storage-finish",
+            "label": "Storage finish",
+            "category": "Storage",
+            "room_zone": "Toilet and vanity",
+            "item_term": "bathroom storage organizer",
+            "retailers": ("IKEA", "Target", "Amazon"),
+        },
+    ],
+    "dining room": [
+        {
+            "key": "table-anchor",
+            "label": "Dining anchor",
+            "category": "Furniture",
+            "room_zone": "Centerpiece",
+            "item_term": "dining table chairs",
+            "retailers": ("Wayfair", "IKEA", "Target"),
+        },
+        {
+            "key": "pendant-anchor",
+            "label": "Pendant anchor",
+            "category": "Lighting",
+            "room_zone": "Above table",
+            "item_term": "dining pendant light",
+            "retailers": ("Wayfair", "Target", "Amazon"),
+        },
+        {
+            "key": "rug-layer",
+            "label": "Rug layer",
+            "category": "Textiles",
+            "room_zone": "Under table",
+            "item_term": "dining room rug",
+            "retailers": ("Wayfair", "Target", "Amazon"),
+        },
+        {
+            "key": "sideboard-finish",
+            "label": "Storage finish",
+            "category": "Storage",
+            "room_zone": "Perimeter",
+            "item_term": "sideboard buffet decor",
+            "retailers": ("Wayfair", "IKEA", "Target"),
+        },
+    ],
+}
+
+DEFAULT_SHOPPING_BLUEPRINT = [
+    {
+        "key": "hero-piece",
+        "label": "Hero piece",
+        "category": "Furniture",
+        "room_zone": "Primary zone",
+        "item_term": "statement furniture",
+        "retailers": ("Wayfair", "IKEA", "Target"),
+    },
+    {
+        "key": "lighting-layer",
+        "label": "Lighting layer",
+        "category": "Lighting",
+        "room_zone": "Ambient zone",
+        "item_term": "accent lighting",
+        "retailers": ("Target", "Amazon", "IKEA"),
+    },
+    {
+        "key": "soft-layer",
+        "label": "Soft layer",
+        "category": "Textiles",
+        "room_zone": "Comfort layer",
+        "item_term": "rug textiles",
+        "retailers": ("Target", "Wayfair", "Amazon"),
+    },
+    {
+        "key": "finishing-layer",
+        "label": "Finishing layer",
+        "category": "Decor",
+        "room_zone": "Accent zone",
+        "item_term": "decor accessories",
+        "retailers": ("Target", "Amazon", "IKEA"),
+    },
+]
+
+BUDGET_LANGUAGE = {
+    "low": "affordable",
+    "medium": "mid-range",
+    "high": "premium",
+}
+
+PRODUCT_MATCH_LABELS = ("Best Fit", "Best Value", "Alternate Pick")
+MATCH_STOP_WORDS = {
+    "the",
+    "and",
+    "for",
+    "with",
+    "room",
+    "style",
+    "plan",
+    "layer",
+    "anchor",
+    "finish",
+    "zone",
+    "main",
+}
+
 
 @dataclass
 class SuggestedTagRecord:
@@ -52,6 +325,329 @@ def _normalize_key(value: str | None) -> str:
     return "".join(ch for ch in (value or "").strip().lower() if ch.isalnum())
 
 
+def _get_shopping_blueprint(room_type: str) -> list[dict]:
+    room_key = (room_type or "").strip().lower()
+    for candidate, blueprints in ROOM_SHOPPING_BLUEPRINTS.items():
+        if candidate in room_key:
+            return blueprints
+    return DEFAULT_SHOPPING_BLUEPRINT
+
+
+def _build_shopping_query(
+    *,
+    selected_style: Style,
+    room_label: str,
+    blueprint: dict,
+    primary_tags: list[str],
+    budget_tier: str,
+) -> str:
+    qualifiers = [selected_style.name.lower(), room_label.lower(), blueprint["item_term"]]
+    qualifiers.extend(primary_tags[:2])
+    qualifiers.append(BUDGET_LANGUAGE.get(budget_tier, "mid-range"))
+    return " ".join(part for part in qualifiers if part).replace("  ", " ").strip()
+
+
+def _build_shopping_sources(search_query: str, retailers: tuple[str, ...]) -> list[dict]:
+    encoded = quote_plus(search_query)
+    sources = []
+    for retailer in retailers:
+        template = RETAILER_SEARCH_URLS.get(retailer)
+        if template is None:
+            continue
+        sources.append(
+            {
+                "retailer": retailer,
+                "search_query": search_query,
+                "url": template.format(query=encoded),
+            }
+        )
+    return sources
+
+
+def _retailer_from_url(url: str | None) -> str:
+    if not url:
+        return "Retailer"
+    host = (urlparse(url).netloc or "").lower()
+    if "amazon." in host:
+        return "Amazon"
+    if "target." in host:
+        return "Target"
+    if "ikea." in host:
+        return "IKEA"
+    if "wayfair." in host:
+        return "Wayfair"
+    return host.replace("www.", "").split(".")[0].title() if host else "Retailer"
+
+
+def _format_price_label(estimated_cost: float) -> str:
+    amount = max(0.0, float(estimated_cost or 0.0))
+    floor = max(0, int(round(amount * 0.85 / 10.0) * 10))
+    ceiling = max(floor + 20, int(round(amount * 1.15 / 10.0) * 10))
+    return f"${floor}-${ceiling}"
+
+
+def _tokenize_match_terms(*values: str) -> set[str]:
+    tokens: set[str] = set()
+    for value in values:
+        for raw in (value or "").replace("-", " ").lower().split():
+            token = "".join(ch for ch in raw if ch.isalnum())
+            if len(token) < 3 or token in MATCH_STOP_WORDS:
+                continue
+            tokens.add(token)
+    return tokens
+
+
+def _build_search_product_matches(
+    *,
+    shopping_item: dict,
+    selected_style: Style,
+) -> list[dict]:
+    matches = []
+    for index, source in enumerate(shopping_item["sources"][:3]):
+        adjusted_cost = round(float(shopping_item["estimated_cost"] or 0.0) * (0.92 + index * 0.08), 2)
+        matches.append(
+            {
+                "key": f"{shopping_item['key']}-search-{index + 1}",
+                "name": f"{selected_style.name} {shopping_item['label']}",
+                "retailer": source["retailer"],
+                "estimated_cost": adjusted_cost,
+                "price_label": _format_price_label(adjusted_cost),
+                "url": source["url"],
+                "image_url": None,
+                "match_reason": (
+                    f"Search {source['retailer']} for a {shopping_item['category'].lower()} pick that supports the "
+                    f"{shopping_item['room_zone'].lower()} and keeps the {selected_style.name.lower()} direction intact."
+                ),
+                "match_label": PRODUCT_MATCH_LABELS[min(index, len(PRODUCT_MATCH_LABELS) - 1)],
+                "source_kind": "search",
+            }
+        )
+    return matches
+
+
+def _build_product_matches(
+    *,
+    shopping_item: dict,
+    selected_style: Style,
+) -> list[dict]:
+    query_terms = _tokenize_match_terms(
+        selected_style.name,
+        shopping_item["label"],
+        shopping_item["category"],
+        shopping_item["room_zone"],
+        shopping_item["search_query"],
+    )
+    target_cost = float(shopping_item["estimated_cost"] or 0.0)
+    ranked_catalog_matches: list[tuple[float, ProductItem]] = []
+
+    for product in selected_style.product_items or []:
+        product_terms = _tokenize_match_terms(product.name)
+        overlap = len(query_terms & product_terms)
+        if overlap == 0 and query_terms:
+            continue
+        cost_delta = abs(float(product.estimated_cost or 0.0) - target_cost)
+        closeness = 1 / (1 + (cost_delta / max(target_cost, 120.0)))
+        ranked_catalog_matches.append((overlap * 2.0 + closeness, product))
+
+    ranked_catalog_matches.sort(key=lambda item: item[0], reverse=True)
+    matches: list[dict] = []
+    for index, (_, product) in enumerate(ranked_catalog_matches[:3]):
+        retailer = _retailer_from_url(product.url)
+        matches.append(
+            {
+                "key": f"{shopping_item['key']}-catalog-{product.id}",
+                "name": product.name,
+                "retailer": retailer,
+                "estimated_cost": round(float(product.estimated_cost or 0.0), 2),
+                "price_label": _format_price_label(float(product.estimated_cost or 0.0)),
+                "url": product.url or shopping_item["sources"][0]["url"],
+                "image_url": product.image_url,
+                "match_reason": (
+                    f"Catalog match for the {shopping_item['category'].lower()} layer with a price point close to "
+                    "this step's budget."
+                ),
+                "match_label": PRODUCT_MATCH_LABELS[min(index, len(PRODUCT_MATCH_LABELS) - 1)],
+                "source_kind": "catalog",
+            }
+        )
+
+    if len(matches) < 3:
+        existing_retailers = {match["retailer"] for match in matches}
+        for fallback in _build_search_product_matches(shopping_item=shopping_item, selected_style=selected_style):
+            if fallback["retailer"] in existing_retailers:
+                continue
+            matches.append(fallback)
+            existing_retailers.add(fallback["retailer"])
+            if len(matches) == 3:
+                break
+
+    return matches
+
+
+def _infer_budget_tier_from_value(budget_value: float | None) -> str:
+    amount = float(budget_value or 0.0)
+    if amount and amount <= 1500:
+        return "low"
+    if amount >= 4500:
+        return "high"
+    return "medium"
+
+
+def build_project_shopping_plan(
+    *,
+    project: RoomProject,
+    selected_style: Style,
+    recommendations: list[Recommendation],
+    suggested_tags: list[SuggestedTagRecord],
+    budget_tier: str,
+) -> list[dict]:
+    """Translate saved recommendations into a shoppable first-pass buying plan."""
+    budget_value = float(project.budget or DEFAULT_BUDGET_BY_TIER.get(budget_tier, 2600.0))
+    room_label = (project.room_type or "Room").strip()
+    primary_tags = [
+        record.tag.name.replace("-", " ")
+        for record in sorted(suggested_tags, key=lambda item: item.confidence, reverse=True)[:3]
+    ]
+    blueprints = _get_shopping_blueprint(room_label)
+
+    shopping_plan = []
+    for index, recommendation in enumerate(recommendations):
+        blueprint = blueprints[min(index, len(blueprints) - 1)]
+        search_query = _build_shopping_query(
+            selected_style=selected_style,
+            room_label=room_label,
+            blueprint=blueprint,
+            primary_tags=primary_tags,
+            budget_tier=budget_tier,
+        )
+        estimated_cost = round(float(recommendation.estimated_cost or 0.0), 2)
+        shopping_plan.append(
+            {
+                "key": f"{blueprint['key']}-{index + 1}",
+                "label": blueprint["label"],
+                "category": blueprint["category"],
+                "room_zone": blueprint["room_zone"],
+                "priority_label": f"Step {index + 1}",
+                "purchase_reason": recommendation.description,
+                "estimated_cost": estimated_cost,
+                "budget_share": round(min(1.0, estimated_cost / budget_value), 2) if budget_value else 0.0,
+                "is_completed": bool(recommendation.is_completed),
+                "search_query": search_query,
+                "sources": _build_shopping_sources(search_query, blueprint["retailers"]),
+            }
+        )
+        shopping_plan[-1]["products"] = _build_product_matches(
+            shopping_item=shopping_plan[-1],
+            selected_style=selected_style,
+        )
+
+    return shopping_plan
+
+
+def load_saved_project_analysis(
+    db: Session,
+    *,
+    project: RoomProject,
+) -> dict | None:
+    """Rebuild the latest saved analysis payload from persisted project data."""
+    saved_scores = (
+        db.query(ResemblanceScore)
+        .options(
+            selectinload(ResemblanceScore.style).selectinload(Style.style_tags).selectinload(StyleTag.tag),
+            selectinload(ResemblanceScore.style).selectinload(Style.product_items),
+        )
+        .filter(ResemblanceScore.room_project_id == project.id)
+        .all()
+    )
+    if not saved_scores:
+        return None
+
+    saved_room_tags = (
+        db.query(RoomTag)
+        .options(selectinload(RoomTag.tag))
+        .filter(RoomTag.room_project_id == project.id)
+        .all()
+    )
+    saved_recommendations = (
+        db.query(Recommendation)
+        .filter(Recommendation.room_project_id == project.id)
+        .order_by(Recommendation.priority_score.desc(), Recommendation.created_at.asc())
+        .all()
+    )
+
+    suggested_records = [
+        SuggestedTagRecord(
+            tag=room_tag.tag,
+            confidence=0.82 if room_tag.is_confirmed else 0.64,
+            source="saved-analysis",
+        )
+        for room_tag in saved_room_tags
+        if room_tag.tag is not None
+    ]
+    suggested_records.sort(key=lambda item: item.confidence, reverse=True)
+
+    ranked_scores = sorted(saved_scores, key=lambda item: item.score_value, reverse=True)
+    selected_style = ranked_scores[0].style
+    if selected_style is None:
+        return None
+
+    style_scores_payload = []
+    for score in ranked_scores:
+        style = score.style
+        if style is None:
+            continue
+        style_tag_names = {
+            style_tag.tag.name.lower(): style_tag.tag.name
+            for style_tag in style.style_tags
+            if style_tag.tag is not None
+        }
+        matched_names = [
+            record.tag.name
+            for record in suggested_records
+            if record.tag.name.lower() in style_tag_names
+        ][:4]
+        style_scores_payload.append(
+            {
+                "style_id": style.id,
+                "style_name": style.name,
+                "score_value": round(float(score.score_value or 0.0), 1),
+                "matched_tags": matched_names,
+            }
+        )
+
+    suggested_tags_payload = [
+        {
+            "id": record.tag.id,
+            "name": record.tag.name,
+            "confidence": round(record.confidence, 2),
+            "source": record.source,
+        }
+        for record in suggested_records
+    ]
+
+    summary = (
+        f"{selected_style.name} scored {ranked_scores[0].score_value:.0f}% for this {project.room_type.lower()} "
+        f"based on {len(suggested_tags_payload)} saved design signals."
+    )
+
+    return {
+        "project": project,
+        "selected_style": selected_style,
+        "summary": summary,
+        "image_profile": None,
+        "suggested_tags": suggested_tags_payload,
+        "style_scores": style_scores_payload,
+        "recommendations": saved_recommendations,
+        "shopping_plan": build_project_shopping_plan(
+            project=project,
+            selected_style=selected_style,
+            recommendations=saved_recommendations,
+            suggested_tags=suggested_records,
+            budget_tier=_infer_budget_tier_from_value(project.budget),
+        ),
+    }
+
+
 def resolve_style_for_analysis(
     db: Session,
     *,
@@ -62,7 +658,10 @@ def resolve_style_for_analysis(
     """Resolve a style from id, slug, or name."""
     styles = (
         db.query(Style)
-        .options(selectinload(Style.style_tags).selectinload(StyleTag.tag))
+        .options(
+            selectinload(Style.style_tags).selectinload(StyleTag.tag),
+            selectinload(Style.product_items),
+        )
         .all()
     )
 
@@ -103,7 +702,10 @@ def analyze_project_design(
     available_tags = {tag.name.lower(): tag for tag in db.query(Tag).all()}
     all_styles = (
         db.query(Style)
-        .options(selectinload(Style.style_tags).selectinload(StyleTag.tag))
+        .options(
+            selectinload(Style.style_tags).selectinload(StyleTag.tag),
+            selectinload(Style.product_items),
+        )
         .all()
     )
 
@@ -274,6 +876,13 @@ def analyze_project_design(
         "suggested_tags": suggested_tags_payload,
         "style_scores": style_scores_payload,
         "recommendations": recommendations,
+        "shopping_plan": build_project_shopping_plan(
+            project=project,
+            selected_style=selected_style,
+            recommendations=recommendations,
+            suggested_tags=list(suggested_map.values()),
+            budget_tier=budget_tier,
+        ),
     }
 
 

@@ -160,7 +160,7 @@ const Login = ({ initialMode = 'login' }) => {
             )}
 
             <form onSubmit={handleSubmit} className="modern-form">
-              <div className="input-floating">
+              <label className="input-floating" htmlFor="email">
                 <input
                   type="email"
                   id="email"
@@ -170,10 +170,10 @@ const Login = ({ initialMode = 'login' }) => {
                   required
                   autoComplete="email"
                 />
-                <label htmlFor="email">Email Address</label>
-              </div>
+                <span className="input-floating-label">Email Address</span>
+              </label>
 
-              <div className="input-floating">
+              <label className="input-floating" htmlFor="password">
                 <input
                   type="password"
                   id="password"
@@ -183,8 +183,8 @@ const Login = ({ initialMode = 'login' }) => {
                   required
                   autoComplete={isRegister ? 'new-password' : 'current-password'}
                 />
-                <label htmlFor="password">Password</label>
-              </div>
+                <span className="input-floating-label">Password</span>
+              </label>
 
               <button
                 type="submit"

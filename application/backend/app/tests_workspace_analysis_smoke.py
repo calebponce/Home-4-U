@@ -86,6 +86,20 @@ def test_workspace_analysis():
         assert payload["style_scores"][0]["score_value"] >= 70
         assert len(payload["suggested_tags"]) >= 3
         assert len(payload["recommendations"]) >= 3
+        assert len(payload["shopping_plan"]) >= 3
+        assert payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
+        assert len(payload["shopping_plan"][0]["products"]) >= 1
+        assert payload["shopping_plan"][0]["products"][0]["url"].startswith("https://")
+
+        saved_response = client.get(
+            f"/projects/{project.id}/analysis",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert saved_response.status_code == 200, saved_response.text
+        saved_payload = saved_response.json()
+        assert saved_payload["selected_style"]["name"] == "Scandinavian"
+        assert saved_payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
+        assert len(saved_payload["shopping_plan"][0]["products"]) >= 1
     finally:
         db.close()
 

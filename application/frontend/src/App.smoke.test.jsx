@@ -234,7 +234,7 @@ describe('App smoke routing', () => {
     renderAppAt('/dashboard?style=scandinavian');
 
     await user.click(
-      await screen.findByRole('button', { name: /open guided demo/i }, { timeout: 3000 }),
+      await screen.findByRole('button', { name: /preview this style/i }, { timeout: 3000 }),
     );
 
     await waitFor(() => {

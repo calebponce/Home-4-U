@@ -16,6 +16,21 @@ import useTourFlow from './virtualTour/useTourFlow';
 import { resolveStyleContext } from '../utils/styleContext';
 import './VirtualTour3D.css';
 
+const ROOM_PURCHASE_LANES = Object.freeze({
+  atrium: 'buy-first',
+  pain: 'buy-first',
+  solution: 'layer-next',
+  transform: 'layer-next',
+  proof: 'finish-out',
+  action: 'finish-out',
+});
+
+const PURCHASE_BRIDGE_LABELS = Object.freeze({
+  'buy-first': 'Open Buy First Picks',
+  'layer-next': 'Open Layer Next Picks',
+  'finish-out': 'Open Finish Out Picks',
+});
+
 const VirtualTour3D = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -126,11 +141,34 @@ const VirtualTour3D = () => {
       ? location.state.selectedStyle
       : null
   );
+  const linkedProjectId = useMemo(() => {
+    const stateProjectId = Number(location.state?.projectId);
+    if (Number.isFinite(stateProjectId) && stateProjectId > 0) return stateProjectId;
+
+    const searchProjectId = Number(searchParams.get('project'));
+    if (Number.isFinite(searchProjectId) && searchProjectId > 0) return searchProjectId;
+
+    return null;
+  }, [location.state?.projectId, searchParams]);
   const demoMode = searchParams.get('demo') === '1' || location.state?.demoMode === true;
   const demoStyle = useMemo(
     () => resolveStyleContext({ styleKey: searchParams.get('style') || '', style: selectedStyle, defaultName: 'Home4U' }),
     [searchParams, selectedStyle],
   );
+  const walkthroughPurchaseLane = ROOM_PURCHASE_LANES[activeRoom?.id] || 'buy-first';
+  const purchaseBridgeLabel = PURCHASE_BRIDGE_LABELS[walkthroughPurchaseLane] || 'Open Matching Picks';
+
+  const openPurchaseStep = () => {
+    if (!linkedProjectId) return;
+
+    const nextParams = new URLSearchParams();
+    nextParams.set('from', 'walkthrough');
+    nextParams.set('lane', walkthroughPurchaseLane);
+    nextParams.set('room', activeRoom.name);
+    if (selectedHotspot?.title) nextParams.set('hotspot', selectedHotspot.title);
+
+    navigate(`/project/${linkedProjectId}?${nextParams.toString()}`);
+  };
 
   useEffect(() => {
     if (!demoStyle.hasExplicitStyle) return;
@@ -165,9 +203,12 @@ const VirtualTour3D = () => {
     blueprintNodeLabels,
     hotspots,
     selectedHotspotId,
+    focusCue,
     openHotspot,
     activeRoom,
     hotspotTransitioning,
+    isGeneratingPlan,
+    transformSweepTick,
     roomShellRef,
     roomAtmoRef,
     roomIllustration,
@@ -252,6 +293,9 @@ const VirtualTour3D = () => {
     setShowProControls,
     demoMode,
     demoStyleName: demoStyle.hasExplicitStyle ? demoStyle.name : '',
+    linkedProjectId,
+    purchaseBridgeLabel,
+    openPurchaseStep,
   };
 
   const bookingModalProps = {
@@ -265,6 +309,12 @@ const VirtualTour3D = () => {
     bookingForm,
     onBookingInput,
   };
+  const phaseDescriptions = {
+    outside: 'Start with the room overview before stepping inside.',
+    blueprint: 'Choose a room and begin the walkthrough.',
+    room: 'Look around, compare ideas, and decide what to change next.',
+  };
+  const activePhaseDescription = phaseDescriptions[phase] || phaseDescriptions.outside;
 
   return (
     <div
@@ -282,16 +332,33 @@ const VirtualTour3D = () => {
         '--mat-roof': materialPresets[materialMode].roof,
       }}
     >
-      <header className="virtual-tour-header">
-        <button type="button" className="virtual-back-btn" onClick={() => navigate('/dashboard')}>
-          ← Back to Dashboard
-        </button>
-        <h1>{demoStyle.hasExplicitStyle ? `${demoStyle.name} Guided Demo` : 'Guided Virtual Tour'}</h1>
-      </header>
+      <main className="virtual-tour-shell">
+        <section className="virtual-tour-hero">
+          <div className="virtual-tour-hero-copy">
+            <p className="virtual-tour-kicker">Walkthrough</p>
+            <h1>{demoStyle.hasExplicitStyle ? `${demoStyle.name} Walkthrough` : 'Home4U Walkthrough'}</h1>
+            <p className="virtual-tour-lead">{activePhaseDescription}</p>
+          </div>
+          <div className="virtual-tour-hero-metrics studio-hero-metrics" aria-label="Tour overview">
+            <div className="virtual-tour-metric studio-hero-card">
+              <span className="studio-hero-label">Current phase</span>
+              <strong className="studio-hero-value">{currentPhaseLabel}</strong>
+            </div>
+            <div className="virtual-tour-metric studio-hero-card">
+              <span className="studio-hero-label">Rooms</span>
+              <strong className="studio-hero-value">{activeIndex + 1} / {storyRooms.length}</strong>
+            </div>
+            <div className="virtual-tour-metric studio-hero-card">
+              <span className="studio-hero-label">Mode</span>
+              <strong className="studio-hero-value">{demoMode ? 'Style Demo' : 'Live Tour'}</strong>
+            </div>
+          </div>
+        </section>
 
-      <main className={`virtual-tour-layout ${phase === 'room' ? 'phase-room-layout' : ''}`}>
-        <Stage {...stageProps} />
-        <Sidebar {...sidebarProps} />
+        <section className={`virtual-tour-layout ${phase === 'room' ? 'phase-room-layout' : ''}`}>
+          <Stage {...stageProps} />
+          <Sidebar {...sidebarProps} />
+        </section>
       </main>
       <BookingModal {...bookingModalProps} />
     </div>

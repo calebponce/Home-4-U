@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { DollarSign, FolderKanban, Home, Palette, PlayCircle, SearchX } from 'lucide-react';
+import { DollarSign, FolderKanban, Home, Palette, SearchX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { projectsAPI, stylesAPI, searchAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -21,55 +21,6 @@ const marceloItem = {
   initial: { opacity: 0, y: 22, filter: 'blur(10px)' },
   animate: { opacity: 1, y: 0, filter: 'blur(0px)', transition: marceloTransition }
 };
-
-// Room data for the interactive house tour
-const tourRooms = [
-  {
-    id: 1,
-    name: 'Design Studio',
-    emoji: '🎨',
-    description: 'Our expert designers craft personalized interior concepts tailored to your vision.',
-    services: ['Custom Design Concepts', 'Color Palettes', '3D Visualizations', 'Style Consulting'],
-    color: '#FF6B6B',
-    motifs: ['🧩', '📐', '🖌️', '🧠']
-  },
-  {
-    id: 2,
-    name: 'Budget Room',
-    emoji: '💰',
-    description: 'Smart budgeting tools help you maximize your renovation budget without compromising quality.',
-    services: ['Cost Estimation', 'Vendor Discounts', 'DIY Guides', 'Expense Tracking'],
-    color: '#4ECDC4',
-    motifs: ['📊', '💳', '🧾', '🪙']
-  },
-  {
-    id: 3,
-    name: 'Furniture Gallery',
-    emoji: '🛋️',
-    description: 'Curated furniture collections from top brands at competitive prices.',
-    services: ['Furniture Sourcing', 'Custom Orders', 'Delivery & Setup', 'Quality Guarantee'],
-    color: '#45B7D1',
-    motifs: ['🪑', '🛏️', '💡', '🪴']
-  },
-  {
-    id: 4,
-    name: 'Moodboard Lab',
-    emoji: '✨',
-    description: 'Create beautiful moodboards to visualize your dream space before committing.',
-    services: ['Drag & Drop Interface', 'Image Library', 'Shareable Boards', 'Export Options'],
-    color: '#96CEB4',
-    motifs: ['🖼️', '🎞️', '📌', '🪄']
-  },
-  {
-    id: 5,
-    name: 'Project Hub',
-    emoji: '📋',
-    description: 'Manage all your renovation projects in one place with progress tracking.',
-    services: ['Project Tracking', 'Task Lists', 'Timeline Views', 'Collaboration Tools'],
-    color: '#FFEAA7',
-    motifs: ['📅', '✅', '📎', '🧭']
-  }
-];
 
 // Default styles with rich visuals
 const defaultStyles = [
@@ -341,8 +292,6 @@ const Dashboard = () => {
   const [drawerStages, setDrawerStages] = useState({ preview: false, compat: false, dna: false });
   const [hoveredTrait, setHoveredTrait] = useState('');
   const [selectedTrait, setSelectedTrait] = useState('');
-  const [tourMode, setTourMode] = useState(false);
-  const [isEnteringTour, setIsEnteringTour] = useState(false);
   const drawerTitleId = useId();
   const drawerDescriptionId = useId();
   const drawerHintId = useId();
@@ -354,16 +303,9 @@ const Dashboard = () => {
   const parallaxRef = useRef(null);
   const heroInViewRef = useRef(true);
   const initPanelRef = useRef(null);
-  const enterTourTimeoutRef = useRef(null);
   const initLoadingTimeoutRef = useRef(null);
   const drawerFocusTimeoutRef = useRef(null);
   const drawerStageTimeoutsRef = useRef([]);
-
-  const clearEnterTourTimeout = useCallback(() => {
-    if (enterTourTimeoutRef.current === null) return;
-    window.clearTimeout(enterTourTimeoutRef.current);
-    enterTourTimeoutRef.current = null;
-  }, []);
 
   const clearInitLoadingTimeout = useCallback(() => {
     if (initLoadingTimeoutRef.current === null) return;
@@ -382,19 +324,25 @@ const Dashboard = () => {
     drawerStageTimeoutsRef.current = [];
   }, []);
 
-  function startTour() {
-    clearEnterTourTimeout();
-    setIsEnteringTour(true);
-    enterTourTimeoutRef.current = window.setTimeout(() => {
-      enterTourTimeoutRef.current = null;
-      setTourMode(true);
-      setIsEnteringTour(false);
-      navigate('/virtual-tour');
-    }, 600);
-  }
+  function navigateToWalkthrough(style, { demoMode = false } = {}) {
+    const selectedStyle = style ? serializeStyleContext(style) : null;
+    const params = new URLSearchParams();
 
-  function exitTour() {
-    setTourMode(false);
+    if (demoMode) {
+      params.set('demo', '1');
+    }
+
+    if (selectedStyle?.slug) {
+      params.set('style', selectedStyle.slug);
+    }
+
+    const query = params.toString();
+    navigate(`/virtual-tour${query ? `?${query}` : ''}`, {
+      state: {
+        ...(demoMode ? { demoMode: true } : {}),
+        ...(selectedStyle ? { selectedStyle } : {}),
+      },
+    });
   }
 
   function navigateToWorkspace(style) {
@@ -406,19 +354,7 @@ const Dashboard = () => {
   }
 
   function navigateToGuidedDemo(style) {
-    const selectedStyle = serializeStyleContext(style);
-    const params = new URLSearchParams({ demo: '1' });
-
-    if (selectedStyle?.slug) {
-      params.set('style', selectedStyle.slug);
-    }
-
-    navigate(`/virtual-tour?${params.toString()}`, {
-      state: {
-        demoMode: true,
-        ...(selectedStyle ? { selectedStyle } : {}),
-      },
-    });
+    navigateToWalkthrough(style, { demoMode: true });
   }
 
   function openDrawer(style, triggerEl) {
@@ -465,14 +401,12 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => () => {
-    clearEnterTourTimeout();
     clearInitLoadingTimeout();
     clearDrawerFocusTimeout();
     clearDrawerStageTimeouts();
   }, [
     clearDrawerFocusTimeout,
     clearDrawerStageTimeouts,
-    clearEnterTourTimeout,
     clearInitLoadingTimeout,
   ]);
 
@@ -512,30 +446,52 @@ const Dashboard = () => {
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     let rafId = 0;
     let pointer = { x: 0, y: 0, active: false };
+    let rect = null;
+    let needsMeasure = true;
     let io = null;
+    const lastValues = { progress: '', mx: '', my: '' };
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const measure = () => {
+      rect = root.getBoundingClientRect();
+      needsMeasure = false;
+      return rect;
+    };
 
     const tick = () => {
       rafId = 0;
       if (!heroInViewRef.current) return;
 
-      const rect = root.getBoundingClientRect();
-      if (!rect.height) return;
+      const nextRect = needsMeasure || !rect ? measure() : rect;
+      if (!nextRect.height) return;
 
       // 0 -> 1 as the hero scrolls past the top of the viewport; used for fade + depth.
-      const progress = clamp((-rect.top) / rect.height, 0, 1);
+      const progress = clamp((-nextRect.top) / nextRect.height, 0, 1);
 
       let mx = 0;
       let my = 0;
-      if (pointer.active && rect.width > 0 && rect.height > 0) {
-        mx = clamp(((pointer.x - rect.left) / rect.width - 0.5) * 2, -1, 1);
-        my = clamp(((pointer.y - rect.top) / rect.height - 0.5) * 2, -1, 1);
+      if (pointer.active && nextRect.width > 0 && nextRect.height > 0) {
+        mx = clamp(((pointer.x - nextRect.left) / nextRect.width - 0.5) * 2, -1, 1);
+        my = clamp(((pointer.y - nextRect.top) / nextRect.height - 0.5) * 2, -1, 1);
       }
 
-      root.style.setProperty('--p-s', progress.toFixed(4));
-      root.style.setProperty('--p-mx', mx.toFixed(4));
-      root.style.setProperty('--p-my', my.toFixed(4));
+      const nextProgress = progress.toFixed(4);
+      const nextMx = mx.toFixed(4);
+      const nextMy = my.toFixed(4);
+
+      if (lastValues.progress !== nextProgress) {
+        root.style.setProperty('--p-s', nextProgress);
+        lastValues.progress = nextProgress;
+      }
+      if (lastValues.mx !== nextMx) {
+        root.style.setProperty('--p-mx', nextMx);
+        lastValues.mx = nextMx;
+      }
+      if (lastValues.my !== nextMy) {
+        root.style.setProperty('--p-my', nextMy);
+        lastValues.my = nextMy;
+      }
     };
 
     const requestTick = () => {
@@ -543,10 +499,17 @@ const Dashboard = () => {
       rafId = window.requestAnimationFrame(tick);
     };
 
-    const onScroll = () => requestTick();
-    const onResize = () => requestTick();
+    const onScroll = () => {
+      needsMeasure = true;
+      requestTick();
+    };
+    const onResize = () => {
+      needsMeasure = true;
+      requestTick();
+    };
 
     const onPointerMove = (event) => {
+      if (!heroInViewRef.current) return;
       pointer = { x: event.clientX, y: event.clientY, active: true };
       requestTick();
     };
@@ -560,6 +523,9 @@ const Dashboard = () => {
     root.style.setProperty('--p-s', '0');
     root.style.setProperty('--p-mx', '0');
     root.style.setProperty('--p-my', '0');
+    lastValues.progress = '0';
+    lastValues.mx = '0';
+    lastValues.my = '0';
     requestTick();
 
     // Only update hero parallax while the hero is near the viewport.
@@ -567,7 +533,10 @@ const Dashboard = () => {
       (entries) => {
         const entry = entries[0];
         heroInViewRef.current = !!entry?.isIntersecting;
-        if (heroInViewRef.current) requestTick();
+        if (heroInViewRef.current) {
+          needsMeasure = true;
+          requestTick();
+        }
       },
       { threshold: 0, rootMargin: '240px 0px 240px 0px' }
     );
@@ -693,17 +662,6 @@ const Dashboard = () => {
   }, [projects, styles, showNewProject]);
 
   useEffect(() => {
-    if (!tourMode) return;
-    const onKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        exitTour();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [tourMode]);
-
-  useEffect(() => {
     if (!actionMessage) return;
     const timer = setTimeout(() => setActionMessage(null), 2600);
     return () => clearTimeout(timer);
@@ -825,10 +783,14 @@ const Dashboard = () => {
   const sortedProjects =
     projects.length > 0 ? [...projects].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)) : [];
   const recentProjects = sortedProjects.slice(0, 3);
+  const featuredStyle = initStyle || styles[0] || null;
+  const featuredStyleElements = featuredStyle ? resolveStyleElements(featuredStyle) : null;
+  const currentDirectionLead = featuredStyle?.description || featuredStyleElements?.previewFeatures?.[0] || 'Curated design cues';
+  const dashboardTone = canonicalStyleKey(featuredStyle?.name) || 'default';
   const dashboardStats = [
     { label: 'Projects', value: projects.length, icon: FolderKanban },
     { label: 'Styles', value: styles.length, icon: Palette },
-    { label: 'Tour Rooms', value: tourRooms.length, icon: Home },
+    { label: 'Room Types', value: roomTypes.length, icon: Home },
     { label: 'Avg Budget', value: `$${avgBudget}`, icon: DollarSign },
   ];
 
@@ -847,11 +809,17 @@ const Dashboard = () => {
   return (
     <motion.div 
       className="dashboard"
+      data-style={dashboardTone}
       initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       exit={{ opacity: 0, y: -15, filter: 'blur(10px)' }}
       transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
     >
+      <div className="dashboard-atmosphere" aria-hidden="true">
+        <span className="dashboard-orb dashboard-orb-a"></span>
+        <span className="dashboard-orb dashboard-orb-b"></span>
+        <span className="dashboard-orb dashboard-orb-c"></span>
+      </div>
       <div className="dashboard-shell">
         <header className="dashboard-header">
           <div className="header-left">
@@ -861,7 +829,7 @@ const Dashboard = () => {
           <div className="header-actions">
             <button
               type="button"
-              className="header-action header-action-primary"
+              className="header-action header-action-primary studio-btn studio-btn--primary"
               onClick={() => {
                 setShowNewProject(true);
                 // Keep user oriented: jump to the creation area.
@@ -905,20 +873,35 @@ const Dashboard = () => {
           </motion.h1>
         </div>
         <motion.div className="greeting-right" variants={marceloItem}>
-          <button
-            type="button"
-            className="cta-primary"
-            onClick={() => navigate('/workspace')}
-          >
-            Open Workspace
-          </button>
-          <button
-            type="button"
-            className="cta-secondary"
-            onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            Browse Style Library
-          </button>
+          <div className="greeting-actions">
+            <button
+              type="button"
+              className="cta-primary studio-btn studio-btn--primary"
+              onClick={() => navigate('/workspace')}
+            >
+              Open Workspace
+            </button>
+            <button
+              type="button"
+              className="cta-secondary studio-btn studio-btn--secondary"
+              onClick={() => document.getElementById('styles-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              Browse Style Library
+            </button>
+          </div>
+          {featuredStyle && (
+            <div className="greeting-spotlight">
+              <span className="spotlight-label">Current Direction</span>
+              <div className="spotlight-head">
+                <strong>Room Preview Ready</strong>
+                <span>{currentDirectionLead}</span>
+              </div>
+              <div className="spotlight-meta">
+                <span>{projects.length} active projects</span>
+                <span>{avgBudget ? `$${avgBudget}` : '$0'} avg budget</span>
+              </div>
+            </div>
+          )}
         </motion.div>
       </motion.section>
 
@@ -946,8 +929,8 @@ const Dashboard = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
       >
-        <div className="section-intro">
-          <h2>Recent Activity</h2>
+        <div className="section-intro studio-section-intro">
+          <h2 className="studio-section-title">Recent Activity</h2>
         </div>
         {recentProjects.length ? (
           <div className="recent-projects-grid">
@@ -996,57 +979,6 @@ const Dashboard = () => {
         </aside>
 
 	      <div className="dashboard-main">
-          <motion.section 
-            className="house-tour-section reveal-on-scroll"
-            initial={{ opacity: 0, y: 60 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={marceloTransition}
-          >
-            <div className="section-intro">
-              <h2>Spatial Walkthrough</h2>
-            </div>
-
-            <motion.button
-              type="button"
-              className={`tour-media-card ${isEnteringTour ? 'entering' : ''}`}
-              onClick={startTour}
-              whileHover={{ y: -2 }}
-              whileTap={{ y: 0 }}
-            >
-              <div className="tour-media-scrim" aria-hidden="true" />
-              <div className="tour-media-play" aria-hidden="true">
-                <PlayCircle size={72} strokeWidth={1} />
-              </div>
-              <div className="tour-media-copy">
-                <span className="tour-media-kicker">Showcase House</span>
-                <span className="tour-media-title">Immersive Studio Experience</span>
-                <span className="tour-media-meta">{tourRooms.length} Curated Environments</span>
-              </div>
-            </motion.button>
-
-            <div className="tour-preview-mini">
-              {tourRooms.map((room, idx) => (
-                <motion.span 
-                  key={idx} 
-                  className="mini-room-dot"
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5 + idx * 0.1 }}
-                  style={{ background: room.color }}
-                  title={room.name}
-                >
-                  {room.emoji}
-                </motion.span>
-              ))}
-            </div>
-
-            <button type="button" className="tour-immersive-btn" data-magnetic-button onClick={() => navigate('/virtual-tour')}>
-              Open Virtual Tour
-            </button>
-          </motion.section>
-
 	        {/* What We Do - Introduction Section */}
           <motion.section 
             className="search-section reveal-on-scroll" 
@@ -1056,9 +988,9 @@ const Dashboard = () => {
             viewport={{ once: true, margin: "-100px" }}
             transition={marceloTransition}
           >
-            <div className="section-intro">
-              <h2>Design Studio Explorer</h2>
-              <p>Search over 4,000 architectural motifs and curated design signatures.</p>
+            <div className="section-intro studio-section-intro">
+              <h2 className="studio-section-title">Design Studio Explorer</h2>
+              <p className="studio-section-copy">Search over 4,000 architectural motifs and curated design signatures.</p>
             </div>
 
           {/* Search bar */}
@@ -1076,7 +1008,7 @@ const Dashboard = () => {
               />
               <button
                 type="button"
-                className="cta-secondary"
+                className="cta-secondary studio-btn studio-btn--secondary studio-btn--compact"
                 onClick={() => setSearchTerm(searchTerm.trim())}
                 disabled={!searchTerm.trim()}
               >
@@ -1155,9 +1087,9 @@ const Dashboard = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-10% 0px' }}
           >
-            <div className="section-intro">
-              <h2>Explore Design Styles</h2>
-              <p>Select a style to preview palette, materials, and a tailored AI direction.</p>
+            <div className="section-intro studio-section-intro">
+              <h2 className="studio-section-title">Explore Design Styles</h2>
+              <p className="studio-section-copy">Select a style to preview palette, materials, and a tailored AI direction.</p>
             </div>
             
             {initStyle && (
@@ -1175,14 +1107,14 @@ const Dashboard = () => {
                     <div className="init-actions">
                       <button
                         type="button"
-                        className="init-primary"
+                        className="init-primary studio-btn studio-btn--primary"
                         onClick={() => navigateToWorkspace(initStyle)}
                       >
                         Open Design Workspace
                       </button>
                       <div className="init-secondary">
-                        <button type="button" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
-                        <button type="button" onClick={() => navigateToGuidedDemo(initStyle)}>Open Guided Demo</button>
+                        <button type="button" className="studio-btn studio-btn--secondary studio-btn--compact" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
+                        <button type="button" className="studio-btn studio-btn--secondary studio-btn--compact" onClick={() => navigateToGuidedDemo(initStyle)}>Preview This Style</button>
                       </div>
                     </div>
                     <div className="init-stats">
@@ -1431,13 +1363,13 @@ const Dashboard = () => {
                   <button
                     ref={drawerFirstFocusRef}
                     type="button"
-                    className="init-primary"
+                    className="init-primary studio-btn studio-btn--primary"
                     onClick={startAiFromDrawer}
                   >
                     Open Design Workspace
                   </button>
                   <div className="drawer-actions-inline">
-                    <button type="button" className="drawer-secondary" onClick={() => navigateToGuidedDemo(selectedStyleDrawer)}>Open Guided Demo</button>
+                    <button type="button" className="drawer-secondary studio-btn studio-btn--secondary studio-btn--compact" onClick={() => navigateToGuidedDemo(selectedStyleDrawer)}>Preview This Style</button>
                     <button type="button" className="drawer-tertiary" onClick={() => setShowNewProject(true)}>Upload Room Photo</button>
                   </div>
                 </div>
@@ -1452,7 +1384,7 @@ const Dashboard = () => {
               <button 
                 type="button"
                 onClick={() => setShowNewProject(!showNewProject)}
-                className="new-project-btn"
+                className="new-project-btn studio-btn studio-btn--secondary"
               >
                 {showNewProject ? 'Close' : '+ New Project'}
               </button>
@@ -1564,7 +1496,7 @@ const Dashboard = () => {
                       type="button"
                       whileHover={{ y: -1 }}
                       whileTap={{ y: 0 }}
-                      className="new-project-btn cta-primary" 
+                      className="new-project-btn cta-primary studio-btn studio-btn--primary"
                       onClick={() => setShowNewProject(true)}
                     >
                       {newProjectType ? `Continue with ${newProjectType}` : 'Create Custom Project'}
