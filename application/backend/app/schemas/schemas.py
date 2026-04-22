@@ -126,6 +126,40 @@ class RecommendationResponse(BaseModel):
         from_attributes = True
 
 
+class ShoppingSourceDetail(BaseModel):
+    retailer: str
+    search_query: str
+    url: str
+
+
+class ShoppingProductMatch(BaseModel):
+    key: str
+    name: str
+    retailer: str
+    estimated_cost: float = Field(ge=0.0)
+    price_label: str
+    url: str
+    image_url: Optional[str] = None
+    match_reason: str
+    match_label: str
+    source_kind: Literal["catalog", "search"] = "search"
+
+
+class ShoppingPlanItem(BaseModel):
+    key: str
+    label: str
+    category: str
+    room_zone: str
+    priority_label: str
+    purchase_reason: str
+    estimated_cost: float = Field(ge=0.0)
+    budget_share: float = Field(ge=0.0, le=1.0)
+    is_completed: bool = False
+    search_query: str
+    sources: List[ShoppingSourceDetail] = []
+    products: List[ShoppingProductMatch] = []
+
+
 class SuggestedTagDetail(BaseModel):
     id: int
     name: str
@@ -170,6 +204,7 @@ class ProjectAnalysisResponse(BaseModel):
     suggested_tags: List[SuggestedTagDetail]
     style_scores: List[StyleScoreDetail]
     recommendations: List[RecommendationResponse]
+    shopping_plan: List[ShoppingPlanItem] = []
 
 # ProductItem Schemas
 class ProductItemResponse(BaseModel):

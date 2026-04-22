@@ -71,12 +71,18 @@ def _run_sqlite_compat_migrations():
         return
 
     with engine.begin() as conn:
-        cols = conn.execute(text("PRAGMA table_info(room_projects)")).fetchall()
-        existing = {row[1] for row in cols}
-        if "photo_url" not in existing:
+        room_project_columns = _existing_columns(conn, "room_projects")
+        if "photo_url" not in room_project_columns:
             conn.execute(text("ALTER TABLE room_projects ADD COLUMN photo_url VARCHAR(500)"))
 
-        # ensure style_tags table exists (seed expects it)
+        # Keep the existing dev DB forward-compatible with newer product metadata.
+        product_item_columns = _existing_columns(conn, "product_items")
+        if "vendor_id" not in product_item_columns:
+            conn.execute(text("ALTER TABLE product_items ADD COLUMN vendor_id INTEGER"))
+        if "category" not in product_item_columns:
+            conn.execute(text("ALTER TABLE product_items ADD COLUMN category VARCHAR(100)"))
+
+        # Seeding and tag matching depend on these join tables existing.
         conn.execute(text(
             "CREATE TABLE IF NOT EXISTS style_tags (\n"
             "  id INTEGER PRIMARY KEY,\n"
@@ -87,3 +93,89 @@ def _run_sqlite_compat_migrations():
             "  FOREIGN KEY(tag_id) REFERENCES tags(id)\n"
             ")"
         ))
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS room_dimensions (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  room_project_id INTEGER NOT NULL,\n"
+            "  width FLOAT,\n"
+            "  length FLOAT,\n"
+            "  height FLOAT,\n"
+            "  unit VARCHAR(20) DEFAULT 'ft',\n"
+            "  created_at DATETIME,\n"
+            "  FOREIGN KEY(room_project_id) REFERENCES room_projects(id)\n"
+            ")"
+        ))
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS room_furniture (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  room_project_id INTEGER NOT NULL,\n"
+            "  name VARCHAR(255) NOT NULL,\n"
+            "  category VARCHAR(100),\n"
+            "  quantity INTEGER DEFAULT 1,\n"
+            "  created_at DATETIME,\n"
+            "  FOREIGN KEY(room_project_id) REFERENCES room_projects(id)\n"
+            ")"
+        ))
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS room_objects (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  room_project_id INTEGER NOT NULL,\n"
+            "  name VARCHAR(255) NOT NULL,\n"
+            "  category VARCHAR(100),\n"
+            "  quantity INTEGER DEFAULT 1,\n"
+            "  created_at DATETIME,\n"
+            "  FOREIGN KEY(room_project_id) REFERENCES room_projects(id)\n"
+            ")"
+        ))
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS vendors (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  name VARCHAR(255) NOT NULL UNIQUE,\n"
+            "  website_url VARCHAR(500),\n"
+            "  created_at DATETIME\n"
+            ")"
+        ))
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS budget_plans (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  project_id INTEGER NOT NULL,\n"
+            "  total_budget FLOAT NOT NULL DEFAULT 0.0,\n"
+            "  currency VARCHAR(10) NOT NULL DEFAULT 'USD',\n"
+            "  plan_name VARCHAR(255),\n"
+            "  created_at DATETIME,\n"
+            "  FOREIGN KEY(project_id) REFERENCES room_projects(id)\n"
+            ")"
+        ))
+        conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS budget_allocations (\n"
+            "  id INTEGER PRIMARY KEY,\n"
+            "  budget_id INTEGER NOT NULL,\n"
+            "  product_id INTEGER,\n"
+            "  category VARCHAR(100) NOT NULL,\n"
+            "  allocated_amount FLOAT NOT NULL DEFAULT 0.0,\n"
+            "  quantity INTEGER NOT NULL DEFAULT 1,\n"
+            "  priority_rank INTEGER,\n"
+            "  created_at DATETIME,\n"
+            "  FOREIGN KEY(budget_id) REFERENCES budget_plans(id),\n"
+            "  FOREIGN KEY(product_id) REFERENCES product_items(id)\n"
+            ")"
+        ))
+
+        # SQLite can add uniqueness safely with indexes, which is good enough for dev.
+        conn.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_style_tags_style_tag "
+            "ON style_tags (style_id, tag_id)"
+        ))
+        conn.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_room_tags_project_tag "
+            "ON room_tags (room_project_id, tag_id)"
+        ))
+        conn.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_resemblance_project_style "
+            "ON resemblance_scores (room_project_id, style_id)"
+        ))
+
+
+def _existing_columns(conn, table_name: str) -> set[str]:
+    rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
+    return {row[1] for row in rows}

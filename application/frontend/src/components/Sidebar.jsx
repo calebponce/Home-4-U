@@ -20,7 +20,7 @@ const Sidebar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Workspace', path: '/workspace', icon: <Brush size={20} /> },
     { name: 'About', path: '/about', icon: <Compass size={20} /> },
-    { name: 'Virtual Tour', path: '/virtual-tour', icon: <Presentation size={20} /> },
+    { name: 'Walkthrough', path: '/virtual-tour', icon: <Presentation size={20} /> },
   ];
 
   return (

@@ -26,6 +26,7 @@ const RouteChunkFallback = () => (
 
 const ProtectedRoute = ({ children }) => {
   const { token, loading } = useAuth()
+  const hidesGlobalNavbar = false
   
   if (loading) {
     return <SessionLoadingGate />
@@ -37,8 +38,8 @@ const ProtectedRoute = ({ children }) => {
   
   return (
     <div className="app-layout">
-      <Navbar />
-      <main className="app-main-content">
+      {!hidesGlobalNavbar && <Navbar />}
+      <main className={`app-main-content ${hidesGlobalNavbar ? 'app-main-content--standalone' : 'app-main-content--with-nav'}`}>
         <PageMotion>
           {children}
         </PageMotion>

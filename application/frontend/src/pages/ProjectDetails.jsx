@@ -1,49 +1,109 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  ChevronLeft,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
 import { projectsAPI, recommendationsAPI } from '../services/api';
-import { ChevronLeft, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import { SkeletonKanbanColumn, SkeletonCard } from '../components/Skeletons';
+import { styleSlug } from '../utils/styleContext';
 import './ProjectDetails.css';
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12, filter: 'blur(10px)' },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     filter: 'blur(0px)',
-    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.08, delayChildren: 0.12 }
-  }
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.08, delayChildren: 0.12 },
+  },
 };
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 30, filter: 'blur(10px)' },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
+  visible: {
+    opacity: 1,
+    y: 0,
     filter: 'blur(0px)',
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
-  }
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+const deriveProjectTone = (analysis, project) => {
+  const selected = analysis?.selected_style?.name || project?.room_type || '';
+  return styleSlug(selected || 'default') || 'default';
+};
+
+const formatCurrency = (value) => `$${Number(value || 0).toLocaleString()}`;
+
+const SHOPPING_LANES = [
+  {
+    key: 'buy-first',
+    title: 'Buy First',
+    detail: 'Start with the item that changes the room fastest.',
+  },
+  {
+    key: 'layer-next',
+    title: 'Layer Next',
+    detail: 'Add the pieces that lock in the style direction.',
+  },
+  {
+    key: 'finish-out',
+    title: 'Finish Out',
+    detail: 'Use these for polish, balance, and final cohesion.',
+  },
+];
+
+const getShoppingLaneKey = (index) => {
+  if (index === 0) return 'buy-first';
+  if (index <= 2) return 'layer-next';
+  return 'finish-out';
 };
 
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [project, setProject] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState('');
   const [generating, setGenerating] = useState(false);
+  const purchaseSpotlightRef = useRef(null);
+  const shoppingLaneRefs = useRef({});
+  const walkthroughSearch = new URLSearchParams(location.search);
+  const walkthroughLane = walkthroughSearch.get('lane') || '';
+  const walkthroughRoom = walkthroughSearch.get('room') || '';
+  const walkthroughHotspot = walkthroughSearch.get('hotspot') || '';
+  const isWalkthroughLinked = walkthroughSearch.get('from') === 'walkthrough';
+  const shoppingPlan = analysis?.shopping_plan || [];
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       const projectRes = await projectsAPI.getById(id);
       setProject(projectRes.data);
-      try {
-        const recsRes = await recommendationsAPI.getByProject(id);
-        setRecommendations(recsRes.data || []);
-      } catch {
-        console.log('No recommendations yet');
+
+      const [analysisRes, recsRes] = await Promise.allSettled([
+        projectsAPI.getAnalysis(id),
+        recommendationsAPI.getByProject(id),
+      ]);
+
+      if (analysisRes.status === 'fulfilled') {
+        setAnalysis(analysisRes.value.data);
+        setRecommendations(analysisRes.value.data?.recommendations || []);
+      } else {
+        setAnalysis(null);
+        if (recsRes.status === 'fulfilled') {
+          setRecommendations(recsRes.value.data || []);
+        } else {
+          setRecommendations([]);
+        }
       }
     } catch (err) {
       console.error('Error fetching project:', err);
@@ -68,13 +128,21 @@ const ProjectDetails = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (loading || !isWalkthroughLinked || !shoppingPlan.length) return;
+    const target = walkthroughLane === 'buy-first'
+      ? purchaseSpotlightRef.current
+      : shoppingLaneRefs.current[walkthroughLane];
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [loading, isWalkthroughLinked, shoppingPlan.length, walkthroughLane]);
+
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
     try {
       if (!budget) return;
       await projectsAPI.update(id, { budget: parseFloat(budget) });
       setBudget('');
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error('Error updating budget:', err);
     }
@@ -84,7 +152,7 @@ const ProjectDetails = () => {
     setGenerating(true);
     try {
       await recommendationsAPI.generate(id);
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error('Error generating recommendations:', err);
     } finally {
@@ -95,7 +163,7 @@ const ProjectDetails = () => {
   const handleMarkComplete = async (recId) => {
     try {
       await recommendationsAPI.markComplete(recId);
-      setRecommendations(recs => recs.map(r => r.id === recId ? { ...r, is_completed: true } : r));
+      await fetchData();
     } catch (err) {
       console.error('Error marking complete:', err);
     }
@@ -112,146 +180,489 @@ const ProjectDetails = () => {
             <SkeletonCard />
             <SkeletonCard />
           </div>
-          <div className="kanban-board">
-            <SkeletonKanbanColumn />
+          <div className="project-main-stack">
+            <SkeletonCard />
+            <div className="kanban-board">
+              <SkeletonKanbanColumn />
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  const tone = deriveProjectTone(analysis, project);
+  const selectedStyleName = analysis?.selected_style?.name || 'Saved Project';
   const projectBudget = Number(project?.budget) || 0;
-  const spent = recommendations.filter(r => r.is_completed).reduce((sum, r) => sum + (Number(r.estimated_cost) || 0), 0);
+  const recommendationList = analysis?.recommendations || recommendations;
+  const suggestedTags = analysis?.suggested_tags || [];
+  const styleScores = analysis?.style_scores || [];
+  const selectedScore = styleScores.find((item) => item.style_name === analysis?.selected_style?.name) || styleScores[0] || null;
+  const openTasks = recommendationList.filter((item) => !item.is_completed);
+  const completedTasks = recommendationList.filter((item) => item.is_completed);
+  const spent = recommendationList
+    .filter((item) => item.is_completed)
+    .reduce((sum, item) => sum + (Number(item.estimated_cost) || 0), 0);
   const remaining = projectBudget - spent;
+  const shoppingTotal = shoppingPlan.reduce((sum, item) => sum + (Number(item.estimated_cost) || 0), 0);
+  const nextPurchase = shoppingPlan.find((item) => !item.is_completed) || shoppingPlan[0] || null;
+  const completedShoppingCount = shoppingPlan.filter((item) => item.is_completed).length;
+  const remainingShoppingCount = Math.max(0, shoppingPlan.length - completedShoppingCount);
+  const shoppingProgress = shoppingPlan.length ? Math.round((completedShoppingCount / shoppingPlan.length) * 100) : 0;
+  const hasOutstandingPurchases = shoppingPlan.some((item) => !item.is_completed);
+  const purchaseBoard = (() => {
+    const laneMap = new Map(
+      SHOPPING_LANES.map((lane) => [lane.key, { ...lane, total: 0, items: [] }]),
+    );
+
+    shoppingPlan.forEach((item, index) => {
+      const lane = laneMap.get(getShoppingLaneKey(index));
+      if (!lane) return;
+      lane.items.push({
+        ...item,
+        stepNumber: index + 1,
+      });
+      lane.total += Number(item.estimated_cost || 0);
+    });
+
+    return SHOPPING_LANES
+      .map((lane) => laneMap.get(lane.key))
+      .filter((lane) => lane && lane.items.length > 0)
+      .map((lane) => ({
+        ...lane,
+        total: Math.round((lane.total || 0) * 100) / 100,
+      }));
+  })();
+  const hasFocusedLane = SHOPPING_LANES.some((lane) => lane.key === walkthroughLane);
+  const handleOpenWalkthrough = () => {
+    const params = new URLSearchParams();
+    const linkedStyle = analysis?.selected_style?.name || selectedStyleName;
+    const linkedStyleSlug = linkedStyle ? styleSlug(linkedStyle) : '';
+    if (linkedStyleSlug) params.set('style', linkedStyleSlug);
+    params.set('project', String(id));
+
+    navigate(`/virtual-tour?${params.toString()}`, {
+      state: {
+        ...(analysis?.selected_style ? { selectedStyle: analysis.selected_style } : {}),
+        projectId: Number(id),
+      },
+    });
+  };
 
   return (
-    <motion.div 
+    <motion.div
       className="project-details"
+      data-style={tone}
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
+      <div className="project-atmosphere" aria-hidden="true">
+        <span className="project-orb project-orb-a"></span>
+        <span className="project-orb project-orb-b"></span>
+        <span className="project-orb project-orb-c"></span>
+      </div>
+
       <motion.div variants={sectionVariants} className="project-details-header">
         <div className="header-left">
-          <button type="button" onClick={() => navigate('/dashboard')} className="back-btn-ghost">
+          <button type="button" onClick={() => navigate('/dashboard')} className="back-btn-ghost studio-btn studio-btn--ghost">
             <ChevronLeft size={16} /> Back to Dashboard
           </button>
-          <h1 className="p-title">{project?.room_type || 'Room Project'}</h1>
-          <div className="p-meta">{project?.room_type} studio brief • Project #{id}</div>
+          <p className="project-eyebrow">Project Command Deck</p>
+          <h1 className="p-title">{selectedStyleName}</h1>
+          <div className="p-meta">
+            {project?.room_type} studio brief • Project #{id}
+            {analysis ? ` • ${Math.round(selectedScore?.score_value || 0)}% aligned` : ''}
+          </div>
+          <div className="project-hero-metrics studio-hero-metrics">
+            <div className="project-hero-card studio-hero-card">
+              <span className="studio-hero-label">Budget rail</span>
+              <strong className="studio-hero-value">{formatCurrency(projectBudget)}</strong>
+            </div>
+            <div className="project-hero-card studio-hero-card">
+              <span className="studio-hero-label">Shopping total</span>
+              <strong className="studio-hero-value">{formatCurrency(shoppingTotal)}</strong>
+            </div>
+            <div className="project-hero-card studio-hero-card">
+              <span className="studio-hero-label">Open tasks</span>
+              <strong className="studio-hero-value">{openTasks.length}</strong>
+            </div>
+          </div>
         </div>
       </motion.div>
 
       <div className="canvas-grid">
-        <motion.div variants={sectionVariants} className="project-sidebar">
+        <motion.aside variants={sectionVariants} className="project-sidebar">
           <div className="finance-card">
             <div className="finance-head">
               <h3>Budget Overview</h3>
-              <p>Track spend against the approved project ceiling.</p>
+              <p>Track the plan against the ceiling and keep the room realistic.</p>
             </div>
-            
+
             <div className="budget-details">
               <div className="budget-item">
                 <span className="lbl">Invested</span>
-                <span className="val">${spent.toLocaleString()}</span>
+                <span className="val">{formatCurrency(spent)}</span>
               </div>
               <div className="budget-item">
                 <span className="lbl">Budget</span>
-                <span className="val">${projectBudget.toLocaleString()}</span>
+                <span className="val">{formatCurrency(projectBudget)}</span>
               </div>
               <div className="budget-item">
                 <span className="lbl">Remaining</span>
                 <span className={`val ${remaining < 0 ? 'negative' : 'positive'}`}>
-                  ${remaining.toLocaleString()}
+                  {formatCurrency(remaining)}
                 </span>
               </div>
             </div>
 
             <form onSubmit={handleUpdateBudget} className="budget-form">
               <label className="sr-only" htmlFor="project-budget-input">Adjust budget ceiling</label>
-              <input 
+              <input
                 id="project-budget-input"
-                type="number" 
-                placeholder="Adjust ceiling..." 
-                value={budget} 
-                onChange={(e) => setBudget(e.target.value)} 
+                type="number"
+                placeholder="Adjust ceiling..."
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
               />
               <button type="submit">Update</button>
             </form>
           </div>
-        </motion.div>
 
-        <motion.div variants={sectionVariants} className="kanban-board">
-          <div className="kanban-header">
-            <h2>Project Plan</h2>
-            <button 
-              type="button"
-              className="generate-tasks-btn"
-              onClick={handleGenerateRecommendations}
-              disabled={generating}
-            >
-              {generating ? <Clock size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {generating ? 'Refreshing Plan...' : 'Refresh Plan'}
-            </button>
-          </div>
+          <div className="analysis-card">
+            <div className="finance-head">
+              <h3>Saved Analysis</h3>
+              <p>{analysis?.summary || 'Run workspace analysis to generate style signals and shopping guidance.'}</p>
+            </div>
 
-          <div className="kanban-columns">
-            <div className="k-col">
-              <div className="k-col-head">
-                <span>Open Tasks</span>
-                <span className="count">{recommendations.filter(r => !r.is_completed).length}</span>
+            {!!suggestedTags.length && (
+              <div className="analysis-chip-row studio-chip-row">
+                {suggestedTags.slice(0, 5).map((tag) => (
+                  <span key={tag.id} className="analysis-chip studio-chip">{tag.name}</span>
+                ))}
               </div>
-              <div className="k-col-body">
-                {recommendations.filter(r => !r.is_completed).length === 0 ? (
-                  <div className="empty-kanban">All current tasks are complete.</div>
-                ) : (
+            )}
+
+            {!!selectedScore?.matched_tags?.length && (
+              <div className="analysis-meta-list">
+                {selectedScore.matched_tags.map((tag) => (
+                  <div key={tag} className="analysis-meta-row">
+                    <span>{tag}</span>
+                    <span>Matched signal</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.aside>
+
+        <motion.div variants={sectionVariants} className="project-main-stack">
+          <section className="project-feature-panel">
+            <div className="feature-panel-copy">
+              <p className="project-eyebrow">Next Best Move</p>
+              <h2>{nextPurchase?.label || 'Generate your first plan'}</h2>
+              <p>
+                {nextPurchase
+                  ? nextPurchase.purchase_reason
+                  : 'Once analysis is saved from the workspace, this panel will spotlight the highest-impact purchase.'}
+              </p>
+              {nextPurchase && (
+                <div className="feature-panel-meta">
+                  <span>{nextPurchase.priority_label}</span>
+                  <span>{formatCurrency(nextPurchase.estimated_cost)}</span>
+                  <span>{Math.round((nextPurchase.budget_share || 0) * 100)}% of budget</span>
+                </div>
+              )}
+            </div>
+            <div className="feature-panel-actions">
+              <button
+                type="button"
+                className="feature-primary"
+                onClick={() => navigate(`/workspace?style=${encodeURIComponent(styleSlug(selectedStyleName))}`, {
+                  state: analysis?.selected_style ? { selectedStyle: analysis.selected_style } : undefined,
+                })}
+              >
+                Open Workspace
+              </button>
+              {analysis && (
+                <button
+                  type="button"
+                  className="feature-secondary"
+                  onClick={handleOpenWalkthrough}
+                >
+                  Open Walkthrough
+                </button>
+              )}
+              <button
+                type="button"
+                className="feature-secondary"
+                onClick={handleGenerateRecommendations}
+                disabled={generating}
+              >
+                {generating ? <Clock size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                {generating ? 'Refreshing…' : 'Refresh Plan'}
+              </button>
+            </div>
+          </section>
+
+          <section className="shopping-board">
+            <div className="kanban-header purchase-board-head">
+              <div className="purchase-board-copy">
+                <h2>Purchase Board</h2>
+                <p>Move from saved design signals to a room-by-room buying sequence.</p>
+                {isWalkthroughLinked && (
+                  <p className="purchase-context-note">
+                    Linked from walkthrough
+                    {walkthroughRoom ? ` · ${walkthroughRoom}` : ''}
+                    {walkthroughHotspot ? ` · ${walkthroughHotspot}` : ''}
+                  </p>
+                )}
+              </div>
+                <div className="purchase-board-summary">
+                  <span className="shopping-total">{formatCurrency(shoppingTotal)}</span>
+                  <span className="shopping-total">{completedShoppingCount}/{shoppingPlan.length || 0} sourced</span>
+                  <span className="shopping-total">{remainingShoppingCount} left</span>
+                  <span className="shopping-total">{shoppingProgress}% complete</span>
+              </div>
+            </div>
+
+            {shoppingPlan.length ? (
+              <>
+                {nextPurchase && (
+                  <section
+                    ref={purchaseSpotlightRef}
+                    className={`purchase-spotlight ${nextPurchase.is_completed ? 'completed' : ''} ${isWalkthroughLinked && walkthroughLane === 'buy-first' ? 'is-focused' : ''}`}
+                  >
+                    <div className="purchase-spotlight-copy">
+                      <p className="project-eyebrow">
+                        {hasOutstandingPurchases ? 'Buy First' : 'Plan Complete'}
+                      </p>
+                      <h3>{nextPurchase.label}</h3>
+                      <p>{nextPurchase.purchase_reason}</p>
+                      <div className="purchase-spotlight-meta">
+                        <span>{nextPurchase.priority_label}</span>
+                        <span>{nextPurchase.room_zone}</span>
+                        <span>{formatCurrency(nextPurchase.estimated_cost)}</span>
+                        <span>{Math.round((nextPurchase.budget_share || 0) * 100)}% of budget</span>
+                      </div>
+                      <div className="purchase-search-query">
+                        <span>Look for</span>
+                        <strong>{nextPurchase.search_query}</strong>
+                      </div>
+                    </div>
+                    <div className="purchase-spotlight-actions">
+                      {(nextPurchase.products || []).map((product) => (
+                        <article key={product.key} className="purchase-product-card">
+                          <div className={`purchase-product-thumb ${product.image_url ? 'has-image' : 'is-placeholder'}`}>
+                            {product.image_url ? (
+                              <img src={product.image_url} alt={product.name} loading="lazy" />
+                            ) : (
+                              <span>{product.retailer.slice(0, 1)}</span>
+                            )}
+                          </div>
+                          <div className="purchase-product-copy">
+                            <div className="purchase-product-topline">
+                              <span className="purchase-product-badge">{product.match_label}</span>
+                              <span className="purchase-product-retailer">{product.retailer}</span>
+                            </div>
+                            <h4>{product.name}</h4>
+                            <p>{product.match_reason}</p>
+                            <div className="purchase-product-meta">
+                              <span>{product.price_label}</span>
+                              <span>{formatCurrency(product.estimated_cost)}</span>
+                              <span>{product.source_kind === 'catalog' ? 'Catalog' : 'Retailer search'}</span>
+                            </div>
+                            <a
+                              href={product.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="purchase-product-link"
+                            >
+                              <span>View Pick</span>
+                              <ArrowUpRight size={14} />
+                            </a>
+                          </div>
+                        </article>
+                      ))}
+                      {!(nextPurchase.products || []).length && nextPurchase.sources.map((source) => (
+                        <a
+                          key={`${nextPurchase.key}-${source.retailer}`}
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="shopping-source-link"
+                        >
+                          <span>Search {source.retailer}</span>
+                          <ArrowUpRight size={14} />
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                <div className="shopping-lanes">
+                  {purchaseBoard.map((lane) => (
+                    <section
+                      key={lane.key}
+                      ref={(node) => {
+                        if (node) shoppingLaneRefs.current[lane.key] = node;
+                      }}
+                      className={`shopping-lane ${hasFocusedLane && walkthroughLane === lane.key ? 'is-focused' : ''}`}
+                    >
+                      <div className="shopping-lane-head">
+                        <div className="shopping-lane-copy">
+                          <p className="shopping-lane-kicker">{lane.title}</p>
+                          <p>{lane.detail}</p>
+                        </div>
+                        <span className="shopping-lane-total">{formatCurrency(lane.total)}</span>
+                      </div>
+                      <div className="shopping-lane-grid">
+                        {lane.items.map((item) => (
+                          <article key={item.key} className={`shopping-plan-card ${item.is_completed ? 'completed' : ''}`}>
+                            <div className="shopping-plan-topline">
+                              <span className="shopping-plan-step">Step {item.stepNumber}</span>
+                              <span className="shopping-plan-category">{item.category}</span>
+                              {item.is_completed && <span className="shopping-plan-status">Completed</span>}
+                            </div>
+                            <h4>{item.label}</h4>
+                            <p>{item.purchase_reason}</p>
+                            <div className="shopping-plan-meta">
+                              <span>{item.room_zone}</span>
+                              <span>{formatCurrency(item.estimated_cost)}</span>
+                              <span>{Math.round((item.budget_share || 0) * 100)}% of budget</span>
+                            </div>
+                            <div className="shopping-plan-query">
+                              <span>Look for</span>
+                              <strong>{item.search_query}</strong>
+                            </div>
+                            {!!item.products?.length && (
+                              <div className="shopping-product-grid">
+                                {item.products.map((product) => (
+                                  <article key={product.key} className="shopping-product-card">
+                                    <div className={`shopping-product-thumb ${product.image_url ? 'has-image' : 'is-placeholder'}`}>
+                                      {product.image_url ? (
+                                        <img src={product.image_url} alt={product.name} loading="lazy" />
+                                      ) : (
+                                        <span>{product.retailer.slice(0, 1)}</span>
+                                      )}
+                                    </div>
+                                    <div className="shopping-product-copy">
+                                      <div className="shopping-product-topline">
+                                        <span className="shopping-product-badge">{product.match_label}</span>
+                                        <span className="shopping-product-retailer">{product.retailer}</span>
+                                      </div>
+                                      <h5>{product.name}</h5>
+                                      <p>{product.match_reason}</p>
+                                      <div className="shopping-product-meta">
+                                        <span>{product.price_label}</span>
+                                        <span>{formatCurrency(product.estimated_cost)}</span>
+                                      </div>
+                                      <a
+                                        href={product.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="purchase-product-link compact"
+                                      >
+                                        <span>View Pick</span>
+                                        <ArrowUpRight size={14} />
+                                      </a>
+                                    </div>
+                                  </article>
+                                ))}
+                              </div>
+                            )}
+                            <div className="shopping-plan-sources">
+                              {item.sources.map((source) => (
+                                <a
+                                  key={`${item.key}-${source.retailer}`}
+                                  href={source.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="shopping-source-link"
+                                >
+                                  <span>Search {source.retailer}</span>
+                                  <ArrowUpRight size={14} />
+                                </a>
+                              ))}
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="empty-kanban shopping-empty-state">
+                Run workspace analysis first. The saved purchase board will show what to buy first, what to layer next, and where to start searching.
+              </div>
+            )}
+          </section>
+
+          <section className="kanban-board">
+            <div className="kanban-header">
+              <h2>Project Tasks</h2>
+            </div>
+
+            <div className="kanban-columns">
+              <div className="k-col">
+                <div className="k-col-head">
+                  <span>Open Tasks</span>
+                  <span className="count">{openTasks.length}</span>
+                </div>
+                <div className="k-col-body">
+                  {openTasks.length === 0 ? (
+                    <div className="empty-kanban">All current tasks are complete.</div>
+                  ) : (
+                    <AnimatePresence>
+                      {openTasks.map((rec) => (
+                        <motion.div
+                          key={rec.id}
+                          initial={{ opacity: 0, x: -20, filter: 'blur(8px)' }}
+                          animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                          exit={{ opacity: 0, x: 20, filter: 'blur(8px)', transition: { duration: 0.3 } }}
+                          className="k-card"
+                        >
+                          <p className="k-card-desc">{rec.description}</p>
+                          <div className="k-card-meta">
+                            <span className="k-badge">{formatCurrency(rec.estimated_cost)}</span>
+                            <button type="button" onClick={() => handleMarkComplete(rec.id)} className="k-action-btn">
+                              Complete
+                            </button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  )}
+                </div>
+              </div>
+
+              <div className="k-col">
+                <div className="k-col-head">
+                  <span>Completed Tasks</span>
+                  <span className="count">{completedTasks.length}</span>
+                </div>
+                <div className="k-col-body">
                   <AnimatePresence>
-                    {recommendations.filter(r => !r.is_completed).map((rec) => (
-                      <motion.div 
+                    {completedTasks.slice().reverse().map((rec) => (
+                      <motion.div
                         key={rec.id}
-                        initial={{ opacity: 0, x: -20, filter: 'blur(8px)' }}
-                        animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                        exit={{ opacity: 0, x: 20, filter: 'blur(8px)', transition: { duration: 0.3 } }}
-                        className="k-card"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="k-card completed"
                       >
                         <p className="k-card-desc">{rec.description}</p>
                         <div className="k-card-meta">
-                          <span className="k-badge">${Number(rec.estimated_cost).toLocaleString()}</span>
-                          <button type="button" onClick={() => handleMarkComplete(rec.id)} className="k-action-btn">
-                            Complete
-                          </button>
+                          <span className="k-badge">{formatCurrency(rec.estimated_cost)}</span>
+                          <CheckCircle2 size={16} color="var(--pd-accent)" />
                         </div>
                       </motion.div>
                     ))}
                   </AnimatePresence>
-                )}
+                </div>
               </div>
             </div>
-
-            <div className="k-col">
-              <div className="k-col-head">
-                <span>Completed Tasks</span>
-                <span className="count">{recommendations.filter(r => r.is_completed).length}</span>
-              </div>
-              <div className="k-col-body">
-                <AnimatePresence>
-                  {recommendations.filter(r => r.is_completed).reverse().map((rec) => (
-                    <motion.div 
-                      key={rec.id} 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="k-card completed"
-                    >
-                      <p className="k-card-desc">{rec.description}</p>
-                      <div className="k-card-meta">
-                        <span className="k-badge">${Number(rec.estimated_cost).toLocaleString()}</span>
-                        <CheckCircle2 size={16} color="var(--color-action-emerald)" />
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-          </div>
+          </section>
         </motion.div>
       </div>
     </motion.div>

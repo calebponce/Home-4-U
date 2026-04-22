@@ -6,38 +6,38 @@
      ============================================================ */
 
   /* Core palette — atmospheric haze around restrained product chrome */
-  --color-graphite-950: #0e1012; /* ink */
-  --color-graphite-900: #1c2328; /* shell */
-  --color-graphite-800: #2f3b43; /* raised dark surface */
-  --color-graphite-700: #42535b; /* structured slate */
-  --color-steel-600: #9db7d2;    /* cool bloom */
-  --color-steel-500: #dbe7f3;    /* mist haze */
-  --color-slate-400: #657788;    /* muted copy */
-  --color-slate-300: #9eacb7;    /* light copy */
-  --color-brass-500: #8c6c45;    /* aged brass shadow */
-  --color-brass-400: #b49771;    /* aged brass */
-  --color-brass-300: #ece3cf;    /* sand haze */
-  --color-stone-200: #d7e0e5;    /* frosted surface */
-  --color-stone-100: #edf2f3;    /* lifted surface */
+  --color-graphite-950: #07111c; /* deep studio ink */
+  --color-graphite-900: #0d1726; /* shell */
+  --color-graphite-800: #152339; /* raised dark surface */
+  --color-graphite-700: #203452; /* structured slate */
+  --color-steel-600: #91b4d4;    /* cool bloom */
+  --color-steel-500: #dee8f2;    /* mist haze */
+  --color-slate-400: #8ea3b9;    /* muted copy */
+  --color-slate-300: #b8c9d8;    /* light copy */
+  --color-brass-500: #8d7453;    /* aged brass shadow */
+  --color-brass-400: #c8ae89;    /* aged brass */
+  --color-brass-300: #e7dac7;    /* sand haze */
+  --color-stone-200: #dbe3ea;    /* frosted surface */
+  --color-stone-100: #eef3f6;    /* lifted surface */
   --color-paper-50:  #ffffff;    /* paper */
   --color-paper-0:   #f7f8f6;    /* base field */
   --color-success-600: #3f6f5a;
   --color-danger-500:  #dc2626;
 
   /* RGB channel triples */
-  --color-graphite-950-rgb: 14 16 18;
-  --color-graphite-900-rgb: 28 35 40;
-  --color-graphite-800-rgb: 47 59 67;
-  --color-graphite-700-rgb: 66 83 91;
-  --color-steel-600-rgb: 157 183 210;
-  --color-steel-500-rgb: 219 231 243;
-  --color-slate-400-rgb: 101 119 136;
-  --color-slate-300-rgb: 158 172 183;
-  --color-brass-500-rgb: 140 108 69;
-  --color-brass-400-rgb: 180 151 113;
-  --color-brass-300-rgb: 236 227 207;
-  --color-stone-200-rgb: 215 224 229;
-  --color-stone-100-rgb: 237 242 243;
+  --color-graphite-950-rgb: 7 17 28;
+  --color-graphite-900-rgb: 13 23 38;
+  --color-graphite-800-rgb: 21 35 57;
+  --color-graphite-700-rgb: 32 52 82;
+  --color-steel-600-rgb: 145 180 212;
+  --color-steel-500-rgb: 222 232 242;
+  --color-slate-400-rgb: 142 163 185;
+  --color-slate-300-rgb: 184 201 216;
+  --color-brass-500-rgb: 141 116 83;
+  --color-brass-400-rgb: 200 174 137;
+  --color-brass-300-rgb: 231 218 199;
+  --color-stone-200-rgb: 219 227 234;
+  --color-stone-100-rgb: 238 243 246;
   --color-paper-50-rgb: 255 255 255;
   --color-paper-0-rgb: 247 248 246;
   --color-success-600-rgb: 63 111 90;
@@ -73,6 +73,23 @@
   --color-accent-subtle:  var(--color-brass-300);
   --color-accent-rgb:     var(--color-brass-400-rgb);
   --color-accent-strong-rgb: var(--color-brass-500-rgb);
+
+  /* Shared studio shell palette for the protected app */
+  --color-studio-bg-start:     var(--color-graphite-950);
+  --color-studio-bg-end:       var(--color-graphite-900);
+  --color-studio-surface:      rgb(var(--color-graphite-900-rgb) / 0.82);
+  --color-studio-surface-soft: rgb(var(--color-graphite-800-rgb) / 0.76);
+  --color-studio-surface-strong: rgb(var(--color-graphite-700-rgb) / 0.9);
+  --color-studio-border:       rgb(var(--color-steel-500-rgb) / 0.14);
+  --color-studio-border-strong: rgb(var(--color-steel-500-rgb) / 0.24);
+  --color-studio-text:         var(--color-paper-50);
+  --color-studio-muted:        rgb(var(--color-steel-500-rgb) / 0.86);
+  --color-studio-soft:         var(--color-steel-500);
+  --color-studio-glow:         var(--color-steel-600);
+  --color-studio-glow-rgb:     var(--color-steel-600-rgb);
+  --color-studio-warm:         var(--color-brass-300);
+  --color-studio-warm-strong:  var(--color-brass-400);
+  --color-studio-warm-rgb:     var(--color-brass-400-rgb);
 
   /* Borders */
   --color-border:         rgb(var(--color-graphite-900-rgb) / 0.08);

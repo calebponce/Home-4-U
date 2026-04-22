@@ -203,11 +203,14 @@ const useTourFlow = ({ navigate }) => {
   const visitedCount = visitedHotspots[activeRoom.id]?.size || 0;
   const roomComplete = hotspots.length > 0 && visitedCount === hotspots.length;
 
-  const phaseSteps = [
-    { id: 'outside', label: 'Overview' },
-    { id: 'blueprint', label: 'Room Map' },
-    { id: 'room', label: 'Room Review' },
-  ];
+  const phaseSteps = useMemo(
+    () => [
+      { id: 'outside', label: 'Intake' },
+      { id: 'blueprint', label: 'Priority Map' },
+      { id: 'room', label: 'Review' },
+    ],
+    [],
+  );
   const currentPhaseStep = phaseSteps.findIndex((step) => step.id === phase);
   const currentPhaseLabel = phaseSteps[currentPhaseStep]?.label || 'Overview';
 

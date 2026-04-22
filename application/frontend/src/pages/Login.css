@@ -1,28 +1,31 @@
 /* ============================================================
-   LOGIN — Marcelo direction
+   LOGIN — studio route alignment
    Full-bleed editorial. Brand on the left, form on the right.
-   Atmosphere: graphite + brass. Type: large, serif-led.
+   Atmosphere: midnight navy + cool bloom. Type: large, serif-led.
    ============================================================ */
 
 /* Google Font for the display serif (Cormorant Garamond) is loaded via index.html or index.css */
 
 .auth-split-layout {
   /* Local palette tokens */
-  --auth-deep:    var(--color-graphite-950);
-  --auth-surface: rgb(var(--color-graphite-900-rgb) / 0.94);
-  --auth-glass:   rgb(var(--color-graphite-800-rgb) / 0.72);
-  --auth-border:  rgb(var(--color-paper-50-rgb)     / 0.10);
-  --auth-border-mid: rgb(var(--color-paper-50-rgb)  / 0.16);
-  --auth-text:    var(--color-paper-50);
-  --auth-muted:   rgb(var(--color-stone-200-rgb)    / 0.72);
-  --auth-accent:  var(--color-brass-400);
-  --auth-accent-strong: var(--color-brass-500);
-  --auth-accent-subtle: var(--color-brass-300);
+  --auth-deep:    var(--color-studio-bg-start);
+  --auth-surface: rgb(var(--color-graphite-900-rgb) / 0.9);
+  --auth-glass:   var(--color-studio-surface-soft);
+  --auth-border:  var(--color-studio-border);
+  --auth-border-mid: var(--color-studio-border-strong);
+  --auth-text:    var(--color-studio-text);
+  --auth-muted:   var(--color-studio-muted);
+  --auth-accent:  var(--color-studio-glow);
+  --auth-accent-strong: var(--color-studio-text);
+  --auth-accent-subtle: var(--color-studio-soft);
 
   display: flex;
   min-height: 100dvh;
   width: 100%;
-  background-color: var(--auth-deep);
+  background:
+    radial-gradient(circle at 16% 14%, rgb(var(--color-studio-glow-rgb) / 0.2), transparent 30%),
+    radial-gradient(circle at 84% 20%, rgb(var(--color-studio-warm-rgb) / 0.08), transparent 28%),
+    linear-gradient(180deg, var(--color-studio-bg-end) 0%, var(--auth-deep) 42%, rgb(var(--color-graphite-950-rgb) / 1) 100%);
   overflow: hidden;
   font-family: var(--font-sans);
   position: relative;
@@ -60,11 +63,13 @@
   position: absolute;
   inset: 0;
   background:
+    radial-gradient(circle at 18% 18%, rgb(var(--color-studio-glow-rgb) / 0.28), transparent 28%),
+    radial-gradient(circle at 82% 24%, rgb(var(--color-studio-warm-rgb) / 0.08), transparent 24%),
     linear-gradient(
       170deg,
-      rgb(var(--color-graphite-950-rgb) / 0.62) 0%,
-      rgb(var(--color-graphite-950-rgb) / 0.22) 38%,
-      rgb(var(--color-graphite-950-rgb) / 0.55) 100%
+      rgb(6 12 22 / 0.8) 0%,
+      rgb(8 17 31 / 0.32) 38%,
+      rgb(7 14 24 / 0.68) 100%
     ),
     url('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=90&w=2400')
       center / cover no-repeat;
@@ -182,7 +187,7 @@
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--auth-muted);
-  opacity: 0.85;
+  opacity: 1;
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -198,7 +203,7 @@
   position: relative;
   z-index: 2;
   border-left: 1px solid var(--auth-border);
-  box-shadow: -28px 0 56px rgb(var(--color-graphite-950-rgb) / 0.45);
+  box-shadow: -28px 0 56px rgb(4 8 16 / 0.5);
 }
 
 /* Subtle top separator line */
@@ -244,11 +249,15 @@
 /* Floating label fields */
 .input-floating {
   position: relative;
+  display: block;
+  width: 100%;
+  cursor: text;
 }
 
 .input-floating input {
   width: 100%;
-  background: rgb(var(--color-graphite-800-rgb) / 0.65);
+  min-height: 64px;
+  background: rgb(17 29 48 / 0.72);
   border: 1px solid var(--auth-border);
   border-radius: var(--radius-sm);
   padding: 1.15rem 1rem 0.55rem;
@@ -260,16 +269,20 @@
               background var(--motion-fast) ease,
               box-shadow var(--motion-fast) ease;
   letter-spacing: 0.01em;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  z-index: 0;
 }
 
 .input-floating input:focus {
-  background: rgb(var(--color-graphite-700-rgb) / 0.72);
+  background: rgb(22 36 58 / 0.82);
   border-color: var(--auth-accent);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(var(--color-brass-400-rgb) / 0.2);
+  box-shadow: 0 0 0 3px rgb(var(--color-steel-600-rgb) / 0.18);
 }
 
-.input-floating label {
+.input-floating-label {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -277,13 +290,14 @@
   color: var(--auth-muted);
   font-size: 0.875rem;
   font-weight: 300;
-  pointer-events: none;
   transition: all var(--motion-fast) ease;
   letter-spacing: 0.02em;
+  pointer-events: auto;
+  z-index: 1;
 }
 
-.input-floating input:focus ~ label,
-.input-floating input:not(:placeholder-shown) ~ label {
+.input-floating input:focus ~ .input-floating-label,
+.input-floating input:not(:placeholder-shown) ~ .input-floating-label {
   top: 0.42rem;
   transform: translateY(0);
   font-size: 0.67rem;
@@ -294,7 +308,13 @@
 
 /* CTA button */
 .btn-cinematic {
-  background: var(--auth-accent);
+  width: 100%;
+  min-height: 54px;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-steel-600-rgb) / 0.98),
+    rgb(var(--color-steel-500-rgb) / 0.92)
+  );
   color: var(--color-graphite-950);
   border: none;
   border-radius: var(--radius-sm);
@@ -312,13 +332,20 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 8px 24px -12px rgb(var(--color-brass-400-rgb) / 0.7);
+  box-shadow: 0 12px 26px -14px rgb(var(--color-steel-600-rgb) / 0.55);
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
 }
 
 .btn-cinematic:hover:not(:disabled) {
-  background: var(--auth-accent-strong);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-paper-50-rgb) / 0.96),
+    rgb(var(--color-steel-500-rgb) / 0.94)
+  );
   transform: translateY(-1px);
-  box-shadow: 0 14px 32px -16px rgb(var(--color-brass-500-rgb) / 0.8);
+  box-shadow: 0 16px 34px -18px rgb(var(--color-steel-600-rgb) / 0.65);
 }
 
 .btn-cinematic:active:not(:disabled) {

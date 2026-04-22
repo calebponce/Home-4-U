@@ -1,4 +1,14 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -31,8 +41,12 @@ class RoomProject(Base):
     # Relationships
     user = relationship("User", back_populates="room_projects")
     room_tags = relationship("RoomTag", back_populates="room_project")
+    room_dimensions = relationship("RoomDimension", back_populates="room_project")
+    room_furniture = relationship("RoomFurniture", back_populates="room_project")
+    room_objects = relationship("RoomObject", back_populates="room_project")
     resemblance_scores = relationship("ResemblanceScore", back_populates="room_project")
     recommendations = relationship("Recommendation", back_populates="room_project")
+    budget_plans = relationship("BudgetPlan", back_populates="room_project")
 
 class Style(Base):
     __tablename__ = "styles"
@@ -44,6 +58,7 @@ class Style(Base):
     # Relationships
     style_tags = relationship("StyleTag", back_populates="style")
     product_items = relationship("ProductItem", back_populates="style")
+    resemblance_scores = relationship("ResemblanceScore", back_populates="style")
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -57,6 +72,9 @@ class Tag(Base):
 
 class StyleTag(Base):
     __tablename__ = "style_tags"
+    __table_args__ = (
+        UniqueConstraint("style_id", "tag_id", name="uq_style_tags_style_tag"),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     style_id = Column(Integer, ForeignKey("styles.id"), nullable=False)
@@ -69,6 +87,9 @@ class StyleTag(Base):
 
 class RoomTag(Base):
     __tablename__ = "room_tags"
+    __table_args__ = (
+        UniqueConstraint("room_project_id", "tag_id", name="uq_room_tags_project_tag"),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
@@ -81,6 +102,9 @@ class RoomTag(Base):
 
 class ResemblanceScore(Base):
     __tablename__ = "resemblance_scores"
+    __table_args__ = (
+        UniqueConstraint("room_project_id", "style_id", name="uq_resemblance_project_style"),
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
@@ -90,7 +114,7 @@ class ResemblanceScore(Base):
     
     # Relationships
     room_project = relationship("RoomProject", back_populates="resemblance_scores")
-    style = relationship("Style")
+    style = relationship("Style", back_populates="resemblance_scores")
 
 class Recommendation(Base):
     __tablename__ = "recommendations"
@@ -106,15 +130,106 @@ class Recommendation(Base):
     # Relationships
     room_project = relationship("RoomProject", back_populates="recommendations")
 
+
+class RoomDimension(Base):
+    __tablename__ = "room_dimensions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
+    width = Column(Float, nullable=True)
+    length = Column(Float, nullable=True)
+    height = Column(Float, nullable=True)
+    unit = Column(String(20), default="ft")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    room_project = relationship("RoomProject", back_populates="room_dimensions")
+
+
+class RoomFurniture(Base):
+    __tablename__ = "room_furniture"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    category = Column(String(100), nullable=True)
+    quantity = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    room_project = relationship("RoomProject", back_populates="room_furniture")
+
+
+class RoomObject(Base):
+    __tablename__ = "room_objects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    category = Column(String(100), nullable=True)
+    quantity = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    room_project = relationship("RoomProject", back_populates="room_objects")
+
 class ProductItem(Base):
     __tablename__ = "product_items"
     
     id = Column(Integer, primary_key=True, index=True)
     style_id = Column(Integer, ForeignKey("styles.id"), nullable=False)
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=True)
     name = Column(String(255), nullable=False)
+    category = Column(String(100), nullable=True)
     estimated_cost = Column(Float, nullable=False)
     url = Column(String(500))
     image_url = Column(String(500))
     
     # Relationships
     style = relationship("Style", back_populates="product_items")
+    vendor = relationship("Vendor", back_populates="product_items")
+    budget_allocations = relationship("BudgetAllocation", back_populates="product_item")
+
+
+class Vendor(Base):
+    __tablename__ = "vendors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False)
+    website_url = Column(String(500), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    product_items = relationship("ProductItem", back_populates="vendor")
+
+
+class BudgetPlan(Base):
+    __tablename__ = "budget_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False)
+    total_budget = Column(Float, nullable=False, default=0.0)
+    currency = Column(String(10), nullable=False, default="USD")
+    plan_name = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    room_project = relationship("RoomProject", back_populates="budget_plans")
+    budget_allocations = relationship("BudgetAllocation", back_populates="budget_plan")
+
+
+class BudgetAllocation(Base):
+    __tablename__ = "budget_allocations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    budget_id = Column(Integer, ForeignKey("budget_plans.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("product_items.id"), nullable=True)
+    category = Column(String(100), nullable=False)
+    allocated_amount = Column(Float, nullable=False, default=0.0)
+    quantity = Column(Integer, nullable=False, default=1)
+    priority_rank = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    budget_plan = relationship("BudgetPlan", back_populates="budget_allocations")
+    product_item = relationship("ProductItem", back_populates="budget_allocations")

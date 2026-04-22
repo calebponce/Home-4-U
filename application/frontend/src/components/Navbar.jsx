@@ -37,7 +37,7 @@ const Navbar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Workspace', path: '/workspace', icon: Brush },
     { name: 'About', path: '/about', icon: Compass },
-    { name: 'Virtual Tour', path: '/virtual-tour', icon: Presentation },
+    { name: 'Walkthrough', path: '/virtual-tour', icon: Presentation },
   ];
 
   const containerVariants = {
