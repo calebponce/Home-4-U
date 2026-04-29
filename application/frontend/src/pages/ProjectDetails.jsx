@@ -40,6 +40,24 @@ const deriveProjectTone = (analysis, project) => {
 
 const formatCurrency = (value) => `$${Number(value || 0).toLocaleString()}`;
 
+const resolveProjectImageUrl = (photoUrl) => {
+  if (!photoUrl) return '';
+
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    return photoUrl;
+  }
+
+  if (photoUrl.startsWith('/uploads')) {
+    return photoUrl;
+  }
+
+  if (photoUrl.startsWith('uploads/')) {
+    return `/${photoUrl}`;
+  }
+
+  return `/uploads/${photoUrl}`;
+};
+
 const SHOPPING_LANES = [
   {
     key: 'buy-first',
@@ -194,6 +212,8 @@ const ProjectDetails = () => {
   const remainingShoppingCount = Math.max(0, shoppingPlan.length - completedShoppingCount);
   const shoppingProgress = shoppingPlan.length ? Math.round((completedShoppingCount / shoppingPlan.length) * 100) : 0;
   const hasOutstandingPurchases = shoppingPlan.some((item) => !item.is_completed);
+  const projectImageUrl = resolveProjectImageUrl(project?.photo_url);
+
   const purchaseBoard = (() => {
     const laneMap = new Map(
       SHOPPING_LANES.map((lane) => [lane.key, { ...lane, total: 0, items: [] }]),
@@ -217,6 +237,7 @@ const ProjectDetails = () => {
         total: Math.round((lane.total || 0) * 100) / 100,
       }));
   })();
+
   return (
     <motion.div
       className="project-details"
@@ -364,17 +385,36 @@ const ProjectDetails = () => {
             </div>
           </section>
 
+          {projectImageUrl && (
+            <section className="project-photo-panel">
+              <div className="kanban-header">
+                <div className="purchase-board-copy">
+                  <h2>Saved Room Photo</h2>
+                  <p>The uploaded image linked to this project.</p>
+                </div>
+              </div>
+              <div className="project-photo-frame">
+                <img
+                  src={projectImageUrl}
+                  alt={`${project?.room_type || 'Room'} project`}
+                  className="project-photo-image"
+                  loading="lazy"
+                />
+              </div>
+            </section>
+          )}
+
           <section className="shopping-board">
             <div className="kanban-header purchase-board-head">
               <div className="purchase-board-copy">
                 <h2>Purchase Board</h2>
                 <p>Move from saved design signals to a room-by-room buying sequence.</p>
               </div>
-                <div className="purchase-board-summary">
-                  <span className="shopping-total">{formatCurrency(shoppingTotal)}</span>
-                  <span className="shopping-total">{completedShoppingCount}/{shoppingPlan.length || 0} sourced</span>
-                  <span className="shopping-total">{remainingShoppingCount} left</span>
-                  <span className="shopping-total">{shoppingProgress}% complete</span>
+              <div className="purchase-board-summary">
+                <span className="shopping-total">{formatCurrency(shoppingTotal)}</span>
+                <span className="shopping-total">{completedShoppingCount}/{shoppingPlan.length || 0} sourced</span>
+                <span className="shopping-total">{remainingShoppingCount} left</span>
+                <span className="shopping-total">{shoppingProgress}% complete</span>
               </div>
             </div>
 

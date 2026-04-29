@@ -185,6 +185,7 @@
 .analysis-card,
 .kanban-board,
 .project-feature-panel,
+.project-photo-panel,
 .shopping-board {
   background: var(--pd-surface);
   border: 1px solid var(--pd-border);
@@ -201,6 +202,7 @@
 }
 
 .project-feature-panel,
+.project-photo-panel,
 .shopping-board,
 .kanban-board {
   display: grid;
@@ -215,6 +217,31 @@
     linear-gradient(135deg, rgb(255 255 255 / 0.04), transparent 40%),
     radial-gradient(circle at 84% 18%, rgb(var(--pd-accent-rgb) / 0.18), transparent 30%),
     linear-gradient(180deg, rgb(var(--color-graphite-900-rgb) / 0.92), rgb(var(--color-graphite-950-rgb) / 0.96));
+}
+
+.project-photo-panel {
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.04), transparent 44%),
+    radial-gradient(circle at 82% 14%, rgb(var(--pd-accent-rgb) / 0.14), transparent 28%),
+    linear-gradient(180deg, rgb(var(--color-graphite-900-rgb) / 0.9), rgb(var(--color-graphite-950-rgb) / 0.94));
+}
+
+.project-photo-frame {
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--pd-border);
+  background:
+    radial-gradient(circle at 20% 18%, rgb(var(--pd-accent-rgb) / 0.12), transparent 32%),
+    linear-gradient(180deg, rgb(var(--color-graphite-900-rgb) / 0.9), rgb(var(--color-graphite-950-rgb) / 0.96));
+  min-height: 240px;
+}
+
+.project-photo-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+  object-fit: cover;
 }
 
 .feature-panel-copy {
@@ -996,6 +1023,7 @@
   .finance-card,
   .analysis-card,
   .project-feature-panel,
+  .project-photo-panel,
   .shopping-board,
   .kanban-board {
     border-radius: 24px;
