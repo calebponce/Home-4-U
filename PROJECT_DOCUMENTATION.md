@@ -269,7 +269,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | `/project/:id` | Protected | ProjectDetails | Project plan view for a saved room project. |
 | `/virtual-tour` | Redirect | Navigate | Legacy route that now redirects to `/workspace`. |
 | `/workspace` | Protected | Workspace | Protected design workspace with project sync and analysis. |
-| `/` | Public | Navigate | Redirects to `/dashboard`. |
+| `/` | Public | About | Redirects to `/dashboard`. |
 | `*` | Public | NotFound | Catch-all not-found route. |
 
 
@@ -420,5 +420,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-04-29 20:59:44*
+*Last Updated: 2026-04-29 21:51:13*
 *This document is maintained by the repository documentation generator.*
