@@ -298,10 +298,21 @@ const About = () => {
         <div className="shape shape-2"></div>
         <div className="shape shape-3"></div>
       </div>
-
-
-
-      <Navbar />
+      {isAuthenticated ? (
+        <Navbar />
+      ) : (
+        <header className="about-header">
+          <div className="header-content">
+            <button type="button" className="logo" onClick={() => navigate('/')} aria-label="Go to landing page">
+              <Home size={16} aria-hidden="true" /> Home4U
+            </button>
+            <nav className="header-nav" aria-label="Guest navigation">
+              <button type="button" onClick={() => navigate('/login')} className="nav-link">Sign In</button>
+              <button type="button" onClick={() => navigate('/register')} className="nav-link">Sign Up</button>
+            </nav>
+          </div>
+        </header>
+      )}
 
       <motion.section 
         className="hero-section"

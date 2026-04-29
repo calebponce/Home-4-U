@@ -512,7 +512,7 @@ const Workspace = () => {
                   <img src={generatedImage} alt="Generated concept board" className="preview-img styled-img" />
                 )}
                 {previewState !== 'processing' && !generatedImage && (
-                  <span className="preview-placeholder">Your analyzed concept board will appear here once the backend returns scores and recommendations.</span>
+                  <span className="preview-placeholder"></span>
                 )}
               </div>
               {generatedImage && (
