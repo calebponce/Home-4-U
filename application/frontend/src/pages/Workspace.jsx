@@ -68,10 +68,12 @@ const Workspace = () => {
     };
   }, [selectedStyle, styleKey]);
 
+  const projectBudget = Number(location.state?.budget || 0);
+  const inferredBudgetTier = projectBudget >= 5000 ? 'high' : projectBudget > 0 && projectBudget < 2000 ? 'low' : 'medium';
   const [intensity, setIntensity] = useState(60);
-  const [budget, setBudget] = useState('medium');
+  const [budget, setBudget] = useState(inferredBudgetTier);
   const [lighting, setLighting] = useState('warm');
-  const [roomType, setRoomType] = useState('Living Room');
+  const [roomType, setRoomType] = useState(location.state?.roomType || 'Living Room');
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewState, setPreviewState] = useState('before');
   const [status, setStatus] = useState('Awaiting upload');
@@ -183,6 +185,16 @@ const Workspace = () => {
     setWorkspaceError('');
     stopRevealDrag();
   }, [styleInfo.key, clearGenerationTimers, stopRevealDrag]);
+
+  useEffect(() => {
+    if (location.state?.roomType) {
+      setRoomType(location.state.roomType);
+    }
+    if (location.state?.budget) {
+      const nextBudget = Number(location.state.budget || 0);
+      setBudget(nextBudget >= 5000 ? 'high' : nextBudget > 0 && nextBudget < 2000 ? 'low' : 'medium');
+    }
+  }, [location.state]);
 
   const loadDemo = (url, nextRoomType) => {
     clearGenerationTimers();
@@ -500,7 +512,7 @@ const Workspace = () => {
                   <img src={generatedImage} alt="Generated concept board" className="preview-img styled-img" />
                 )}
                 {previewState !== 'processing' && !generatedImage && (
-                  <span className="preview-placeholder">Your analyzed concept board will appear here once the backend returns scores and recommendations.</span>
+                  <span className="preview-placeholder"></span>
                 )}
               </div>
               {generatedImage && (

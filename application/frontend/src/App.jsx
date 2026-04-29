@@ -234,12 +234,6 @@ function App() {
             element={
               loading ? (
                 <SessionLoadingGate />
-              ) : token ? (
-                <ProtectedRoute>
-                  <Suspense fallback={<RouteChunkFallback />}>
-                    <About />
-                  </Suspense>
-                </ProtectedRoute>
               ) : (
                 <PageMotion>
                   <Suspense fallback={<RouteChunkFallback />}>
@@ -280,7 +274,16 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/"
+            element={
+              <PageMotion>
+                <Suspense fallback={<RouteChunkFallback />}>
+                  <About />
+                </Suspense>
+              </PageMotion>
+            }
+          />
           {/* Catch-all route for undefined paths */}
           <Route path="*" element={<PageMotion><NotFound /></PageMotion>} />
         </Routes>

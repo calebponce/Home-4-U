@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Navbar from '../components/Navbar';
 import { Home, DollarSign, Palette, Lightbulb, CheckSquare, Smartphone, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './About.css';
@@ -70,24 +71,7 @@ const About = () => {
 
     animateCounters();
     
-    let rafId = 0;
-    const updateBg = () => {
-      rafId = 0;
-      if (!bgShapesRef.current) return;
-      bgShapesRef.current.style.transform = `translateY(${(window.scrollY || 0) * 0.3}px)`;
-    };
-
-    const onScroll = () => {
-      if (rafId) return;
-      rafId = window.requestAnimationFrame(updateBg);
-    };
-
-    updateBg();
-    window.addEventListener('scroll', onScroll, { passive: true });
-
     return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (rafId) window.cancelAnimationFrame(rafId);
       clearCounterInterval();
       if (contactSubmitTimeoutRef.current !== null) {
         window.clearTimeout(contactSubmitTimeoutRef.current);
@@ -314,19 +298,20 @@ const About = () => {
         <div className="shape shape-2"></div>
         <div className="shape shape-3"></div>
       </div>
-
-      {!isAuthenticated && (
-      <header className="about-header">
-        <div className="header-content">
-          <button type="button" className="logo" onClick={() => navigate('/about')} aria-label="Go to about page">
-            <Home size={16} aria-hidden="true" /> Home4U Studio
-          </button>
-          <nav className="header-nav">
-            <button type="button" onClick={() => navigate('/login')} className="nav-link">Login</button>
-            <button type="button" onClick={() => navigate('/register')} className="nav-link">Sign Up</button>
-          </nav>
-        </div>
-      </header>
+      {isAuthenticated ? (
+        <Navbar />
+      ) : (
+        <header className="about-header">
+          <div className="header-content">
+            <button type="button" className="logo" onClick={() => navigate('/')} aria-label="Go to landing page">
+              <Home size={16} aria-hidden="true" /> Home4U
+            </button>
+            <nav className="header-nav" aria-label="Guest navigation">
+              <button type="button" onClick={() => navigate('/login')} className="nav-link">Sign In</button>
+              <button type="button" onClick={() => navigate('/register')} className="nav-link">Sign Up</button>
+            </nav>
+          </div>
+        </header>
       )}
 
       <motion.section 

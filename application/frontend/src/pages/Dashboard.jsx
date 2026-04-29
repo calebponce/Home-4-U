@@ -898,6 +898,16 @@ const Dashboard = () => {
     { label: 'Avg Budget', value: `$${avgBudget}`, icon: DollarSign },
   ];
 
+  const openProjectWorkspace = useCallback((project) => {
+    navigate('/workspace', {
+      state: {
+        projectId: project?.id ?? null,
+        roomType: project?.room_type ?? null,
+        budget: project?.budget ?? null,
+      },
+    });
+  }, [navigate]);
+
   // Set scene for atmosphere tinting
   useEffect(() => {
     const prev = document.body.dataset.scene;
@@ -1047,7 +1057,6 @@ const Dashboard = () => {
                 whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ ...marceloTransition, delay: idx * 0.1 }}
-                whileHover={{ y: -2, transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1] } }}
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <div className="recent-project-top">
@@ -1625,18 +1634,25 @@ const Dashboard = () => {
                         <p><strong>Initiated:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="project-actions">
-                        <button type="button" className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
+                        <button type="button" className="open-btn" onClick={() => openProjectWorkspace(project)}>
                           Open Studio
                         </button>
                         <button 
                           type="button"
-                          onClick={() => handleDeleteProject(project.id)}
-                          className="delete-btn ghost-danger"
-                          disabled={deletingProjectId === project.id}
+                          onClick={() => navigate(`/project/${project.id}`)}
+                          className="view-btn"
                         >
-                          {deletingProjectId === project.id ? 'Removing...' : 'Archive'}
+                          View Project
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="delete-btn ghost-danger project-archive-btn"
+                        disabled={deletingProjectId === project.id}
+                      >
+                        {deletingProjectId === project.id ? 'Removing...' : 'Archive'}
+                      </button>
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -1648,7 +1664,27 @@ const Dashboard = () => {
 
       {/* Footer */}
       <footer className="dashboard-footer">
-        <p>© 2026 Home4U - Interior Design Assistant</p>
+        <div className="dashboard-footer-content">
+          <div className="dashboard-footer-brand">
+            <h3>Home4U</h3>
+            <p>Interior planning workspace for modern renovation teams and homeowners.</p>
+          </div>
+          <div className="dashboard-footer-links">
+            <div className="dashboard-footer-column">
+              <h4>Navigation</h4>
+              <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>
+              <button type="button" onClick={logout}>Logout</button>
+            </div>
+            <div className="dashboard-footer-column">
+              <h4>About</h4>
+              <p>Version 1.0.0</p>
+              <p>Built by the Home4U team</p>
+            </div>
+          </div>
+        </div>
+        <div className="dashboard-footer-bottom">
+          <p>© 2026 Home4U. All rights reserved.</p>
+        </div>
       </footer>
       </div>
     </motion.div>

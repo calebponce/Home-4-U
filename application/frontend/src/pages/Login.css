@@ -8,24 +8,24 @@
 
 .auth-split-layout {
   /* Local palette tokens */
-  --auth-deep:    var(--color-studio-bg-start);
-  --auth-surface: rgb(var(--color-graphite-900-rgb) / 0.9);
-  --auth-glass:   var(--color-studio-surface-soft);
-  --auth-border:  var(--color-studio-border);
-  --auth-border-mid: var(--color-studio-border-strong);
-  --auth-text:    var(--color-studio-text);
-  --auth-muted:   var(--color-studio-muted);
-  --auth-accent:  var(--color-studio-glow);
-  --auth-accent-strong: var(--color-studio-text);
-  --auth-accent-subtle: var(--color-studio-soft);
+  --auth-deep: #201c18;
+  --auth-surface: rgb(42 36 31 / 0.96);
+  --auth-glass: rgb(49 43 38 / 0.86);
+  --auth-border: rgb(255 255 255 / 0.12);
+  --auth-border-mid: rgb(255 255 255 / 0.18);
+  --auth-text: #f2eeea;
+  --auth-muted: #a79d95;
+  --auth-accent: #ece6e1;
+  --auth-accent-strong: #f2eeea;
+  --auth-accent-subtle: #c2b7ae;
 
   display: flex;
   min-height: 100dvh;
   width: 100%;
   background:
-    radial-gradient(circle at 16% 14%, rgb(var(--color-studio-glow-rgb) / 0.2), transparent 30%),
-    radial-gradient(circle at 84% 20%, rgb(var(--color-studio-warm-rgb) / 0.08), transparent 28%),
-    linear-gradient(180deg, var(--color-studio-bg-end) 0%, var(--auth-deep) 42%, rgb(var(--color-graphite-950-rgb) / 1) 100%);
+    radial-gradient(circle at 16% 14%, rgb(85 72 62 / 0.18), transparent 30%),
+    radial-gradient(circle at 84% 20%, rgb(120 102 89 / 0.08), transparent 28%),
+    linear-gradient(180deg, #2a241f 0%, var(--auth-deep) 42%, #181411 100%);
   overflow: hidden;
   font-family: var(--font-sans);
   position: relative;
@@ -203,7 +203,7 @@
   position: relative;
   z-index: 2;
   border-left: 1px solid var(--auth-border);
-  box-shadow: -28px 0 56px rgb(4 8 16 / 0.5);
+  box-shadow: -28px 0 56px rgb(20 16 13 / 0.38);
 }
 
 /* Subtle top separator line */
@@ -257,9 +257,9 @@
 .input-floating input {
   width: 100%;
   min-height: 64px;
-  background: rgb(17 29 48 / 0.72);
+  background: rgb(47 41 36 / 0.84);
   border: 1px solid var(--auth-border);
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   padding: 1.15rem 1rem 0.55rem;
   color: var(--auth-text);
   font-size: 0.95rem;
@@ -276,10 +276,10 @@
 }
 
 .input-floating input:focus {
-  background: rgb(22 36 58 / 0.82);
+  background: rgb(53 46 40 / 0.94);
   border-color: var(--auth-accent);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(var(--color-steel-600-rgb) / 0.18);
+  box-shadow: 0 0 0 3px rgb(236 230 225 / 0.12);
 }
 
 .input-floating-label {
@@ -310,14 +310,10 @@
 .btn-cinematic {
   width: 100%;
   min-height: 54px;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--color-steel-600-rgb) / 0.98),
-    rgb(var(--color-steel-500-rgb) / 0.92)
-  );
-  color: var(--color-graphite-950);
+  background: var(--auth-accent);
+  color: #1f1a17;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   padding: 0.95rem 1rem;
   font-size: 0.875rem;
   font-weight: 700;
@@ -332,20 +328,16 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 12px 26px -14px rgb(var(--color-steel-600-rgb) / 0.55);
+  box-shadow: 0 12px 26px -14px rgb(236 230 225 / 0.2);
   touch-action: manipulation;
   position: relative;
   z-index: 1;
 }
 
 .btn-cinematic:hover:not(:disabled) {
-  background: linear-gradient(
-    135deg,
-    rgb(var(--color-paper-50-rgb) / 0.96),
-    rgb(var(--color-steel-500-rgb) / 0.94)
-  );
+  background: #f4efeb;
   transform: translateY(-1px);
-  box-shadow: 0 16px 34px -18px rgb(var(--color-steel-600-rgb) / 0.65);
+  box-shadow: 0 16px 34px -18px rgb(236 230 225 / 0.24);
 }
 
 .btn-cinematic:active:not(:disabled) {
@@ -416,11 +408,11 @@
 /* ── Error state ──────────────────────────────────────────── */
 .error-message {
   margin-bottom: 1.25rem;
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
+  background: rgb(122 42 42 / 0.18);
+  color: #f1c0c0;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 0;
+  border: 1px solid rgb(193 98 98 / 0.26);
   font-size: 0.83rem;
   line-height: 1.5;
 }

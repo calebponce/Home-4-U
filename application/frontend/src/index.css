@@ -34,7 +34,7 @@ html {
   min-height: 100%;
   overflow-y: scroll;
   scrollbar-gutter: stable;
-  overscroll-behavior-y: none;
+  background-color: #1a1714;
 }
 
 body {
@@ -55,7 +55,6 @@ body {
   line-height: var(--leading-normal);
   min-height: 100vh;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -66,13 +65,9 @@ body[data-scene='workspace'],
 body[data-scene='project'],
 body[data-scene='about'],
 body[data-scene='notfound'] {
-  background-color: var(--color-studio-bg-start);
-  background-image:
-    radial-gradient(circle at 12% 18%, rgb(var(--color-studio-glow-rgb) / 0.14) 0%, transparent 34%),
-    radial-gradient(circle at 86% 14%, rgb(var(--color-studio-warm-rgb) / 0.08) 0%, transparent 38%),
-    radial-gradient(circle at 52% 108%, rgb(var(--color-steel-500-rgb) / 0.05) 0%, transparent 42%),
-    radial-gradient(circle at 48% -8%, rgb(var(--color-graphite-950-rgb) / 0.2) 0%, transparent 44%),
-    linear-gradient(180deg, var(--color-studio-bg-end) 0%, var(--color-studio-bg-start) 62%, rgb(var(--color-graphite-950-rgb) / 1) 100%);
+  background-color: #1a1714;
+  background-image: none;
+  animation: none;
 }
 
 @keyframes page-atmosphere {
