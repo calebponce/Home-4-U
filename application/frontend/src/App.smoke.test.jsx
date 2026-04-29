@@ -123,6 +123,12 @@ afterEach(() => {
 });
 
 describe('App smoke routing', () => {
+  it('renders the public landing page on /', () => {
+    renderAppAt('/');
+    expect(screen.getByRole('heading', { name: /plan interior projects/i })).toBeInTheDocument();
+    expect(screen.getByTestId('path-probe')).toHaveTextContent('/');
+  });
+
   it('renders login on /login', () => {
     renderAppAt('/login');
     expect(screen.getByRole('heading', { name: /sign in to home4u/i })).toBeInTheDocument();

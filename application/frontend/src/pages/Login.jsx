@@ -207,7 +207,7 @@ const Login = ({ initialMode = 'login' }) => {
             </div>
 
             <div className="auth-exploration">
-              <button onClick={() => navigate('/about')} type="button">
+              <button onClick={() => navigate('/')} type="button">
                 <Sparkles size={12} aria-hidden="true" />
                 View Platform Overview
               </button>

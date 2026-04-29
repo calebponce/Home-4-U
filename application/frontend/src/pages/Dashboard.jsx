@@ -898,6 +898,16 @@ const Dashboard = () => {
     { label: 'Avg Budget', value: `$${avgBudget}`, icon: DollarSign },
   ];
 
+  const openProjectWorkspace = useCallback((project) => {
+    navigate('/workspace', {
+      state: {
+        projectId: project?.id ?? null,
+        roomType: project?.room_type ?? null,
+        budget: project?.budget ?? null,
+      },
+    });
+  }, [navigate]);
+
   // Set scene for atmosphere tinting
   useEffect(() => {
     const prev = document.body.dataset.scene;
@@ -1625,18 +1635,25 @@ const Dashboard = () => {
                         <p><strong>Initiated:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
                       </div>
                       <div className="project-actions">
-                        <button type="button" className="open-btn" onClick={() => navigate(`/project/${project.id}`)}>
+                        <button type="button" className="open-btn" onClick={() => openProjectWorkspace(project)}>
                           Open Studio
                         </button>
                         <button 
                           type="button"
-                          onClick={() => handleDeleteProject(project.id)}
-                          className="delete-btn ghost-danger"
-                          disabled={deletingProjectId === project.id}
+                          onClick={() => navigate(`/project/${project.id}`)}
+                          className="view-btn"
                         >
-                          {deletingProjectId === project.id ? 'Removing...' : 'Archive'}
+                          View Project
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="delete-btn ghost-danger project-archive-btn"
+                        disabled={deletingProjectId === project.id}
+                      >
+                        {deletingProjectId === project.id ? 'Removing...' : 'Archive'}
+                      </button>
                     </motion.div>
                   ))}
                 </AnimatePresence>

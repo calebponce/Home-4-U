@@ -246,12 +246,6 @@ const ProjectDetails = () => {
       animate="visible"
       variants={containerVariants}
     >
-      <div className="project-atmosphere" aria-hidden="true">
-        <span className="project-orb project-orb-a"></span>
-        <span className="project-orb project-orb-b"></span>
-        <span className="project-orb project-orb-c"></span>
-      </div>
-
       <motion.div variants={sectionVariants} className="project-details-header">
         <div className="header-left">
           <button type="button" onClick={() => navigate('/dashboard')} className="back-btn-ghost studio-btn studio-btn--ghost">
