@@ -141,7 +141,7 @@ export HOME4U_PUBLIC_URL="http://18.225.42.247"
 - Public Health Check: `$HOME4U_PUBLIC_URL/health`
 - Test login (returns JWT):
   ```bash
-  curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
+  curl -X POST -F 'username=test@example.com' -F 'password=test123' \
     "$HOME4U_PUBLIC_URL/api/auth/login"
   ```
 
@@ -167,11 +167,14 @@ Production routing:
 2. Smoke test the public health endpoint and proxied API
    ```bash
    curl -sf "$HOME4U_PUBLIC_URL/health"
-   curl -X POST -F 'username=calebmusic10@gmail.com' -F 'password=TempPass123!' \
+   curl -X POST -F 'username=test@example.com' -F 'password=test123' \
      "$HOME4U_PUBLIC_URL/api/auth/login"
    ```
+   - Health and API responses expose `X-Request-ID` and `X-Response-Time` headers to simplify QA tracing.
 3. Keep code/DB in sync
    - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
+   - For managed relational DB upgrades, run `application/backend/run_migrations.sh upgrade`.
+   - For an existing database created before Alembic was added, stamp it once with `application/backend/run_migrations.sh stamp head`.
    - If a user exists locally but not on AWS, add/reset once in the AWS DB.
 4. Service management
    - Managed by systemd unit `home4u-backend` (uvicorn on `127.0.0.1:8000`, exposed publicly through Nginx).

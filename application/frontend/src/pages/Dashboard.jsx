@@ -350,6 +350,34 @@ const formatLoadError = (err) => {
   return 'Could not load dashboard data. Please refresh.';
 };
 
+const formatActionError = (err, fallback = 'Could not complete this dashboard action.') => {
+  if (!err) return fallback;
+
+  const status = err.response?.status;
+  if (status === 401) return 'Your session expired. Please log in again.';
+  if (status === 403) return 'Access denied for this action.';
+  if (status && status >= 500) return err.response?.data?.detail || 'Server error while saving dashboard changes.';
+  if (status && status >= 400) return err.response?.data?.detail || fallback;
+  if (err.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
+  if (err.message?.toLowerCase().includes('network')) {
+    return 'Network issue: unable to reach API. Check backend/proxy configuration.';
+  }
+  return fallback;
+};
+
+const formatSearchError = (err) => {
+  if (!err) return 'Search failed.';
+
+  const status = err.response?.status;
+  if (status === 401) return 'Your session expired. Please log in again.';
+  if (status === 403) return 'Access denied for style search.';
+  if (status && status >= 500) return err.response?.data?.detail || 'Search service unavailable.';
+  if (status && status >= 400) return err.response?.data?.detail || 'Search failed.';
+  if (err.code === 'ECONNABORTED') return 'Search timed out. Please try again.';
+  if (err.message?.toLowerCase().includes('network')) return 'Search service unavailable.';
+  return 'Search failed.';
+};
+
 const withRetry = async (fn, retries = 2, delay = 350) => {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -367,7 +395,9 @@ const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [styles, setStyles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshingData, setIsRefreshingData] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [loadNotice, setLoadNotice] = useState('');
   const [newProjectType, setNewProjectType] = useState('');
   const [showNewProject, setShowNewProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -377,6 +407,7 @@ const Dashboard = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchMeta, setSearchMeta] = useState({ total: 0, page: 1, hasMore: false });
   const [searchError, setSearchError] = useState(null);
+  const [searchNotice, setSearchNotice] = useState('');
   const [deletingProjectId, setDeletingProjectId] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
   const [initStyle, setInitStyle] = useState(null);
@@ -385,6 +416,8 @@ const Dashboard = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const drawerTriggerRef = useRef(null);
   const drawerFirstFocusRef = useRef(null);
+  const projectsRef = useRef([]);
+  const stylesRef = useRef([]);
   const [drawerStages, setDrawerStages] = useState({ preview: false, compat: false, dna: false });
   const [hoveredTrait, setHoveredTrait] = useState('');
   const [selectedTrait, setSelectedTrait] = useState('');
@@ -402,6 +435,14 @@ const Dashboard = () => {
   const initLoadingTimeoutRef = useRef(null);
   const drawerFocusTimeoutRef = useRef(null);
   const drawerStageTimeoutsRef = useRef([]);
+
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
+
+  useEffect(() => {
+    stylesRef.current = styles;
+  }, [styles]);
 
   const clearInitLoadingTimeout = useCallback(() => {
     if (initLoadingTimeoutRef.current === null) return;
@@ -738,45 +779,79 @@ const Dashboard = () => {
     return () => clearTimeout(timer);
   }, [actionMessage]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async ({ showSkeleton = true, preserveData = false } = {}) => {
+    if (showSkeleton) setLoading(true);
+    else setIsRefreshingData(true);
+
+    let nextLoadError = '';
+    let nextLoadNotice = '';
+    let shouldKeepProjects = false;
+    let shouldKeepStyles = false;
+
     try {
       setLoadError('');
+      setLoadNotice('');
       const [projectsResult, stylesResult] = await Promise.allSettled([
         withRetry(() => projectsAPI.getAll()),
         withRetry(() => stylesAPI.getAll()),
       ]);
 
       if (projectsResult.status === 'fulfilled') {
+        projectsRef.current = projectsResult.value.data;
         setProjects(projectsResult.value.data);
-        setLoadError('');
       } else {
         console.error('Error fetching projects:', projectsResult.reason);
-        setProjects([]);
         const status = projectsResult.reason?.response?.status;
         if (status === 401 || status === 403) {
           logout();
           navigate('/login', { replace: true });
-          return;
+          return false;
         }
-        setLoadError(formatLoadError(projectsResult.reason));
+        nextLoadError = formatLoadError(projectsResult.reason);
+        shouldKeepProjects = preserveData && projectsRef.current.length > 0;
+        if (!shouldKeepProjects) {
+          projectsRef.current = [];
+          setProjects([]);
+        }
       }
 
       if (stylesResult.status === 'fulfilled') {
         const styleData = stylesResult.value.data;
         const merged = styleData && styleData.length > 0 ? mergeStylesWithDefaults(styleData) : defaultStyles;
+        stylesRef.current = merged;
         setStyles(merged);
       } else {
         console.error('Error fetching styles:', stylesResult.reason);
-        // Non-blocking fallback for styles
-        setStyles(defaultStyles);
-        setActionMessage({
-          type: 'error',
-          text: 'Styles service unavailable. Showing default styles.',
-        });
+        shouldKeepStyles = preserveData && stylesRef.current.length > 0;
+        if (shouldKeepStyles) {
+          setStyles(stylesRef.current);
+        } else {
+          stylesRef.current = defaultStyles;
+          setStyles(defaultStyles);
+        }
+        nextLoadNotice = shouldKeepStyles
+          ? 'Could not refresh styles. Showing the last synced style library.'
+          : 'Styles service unavailable. Showing default styles.';
       }
+
+      if (shouldKeepProjects) {
+        nextLoadNotice = nextLoadNotice || 'Could not refresh projects. Showing the last synced dashboard data.';
+      }
+
+      if (nextLoadError && !shouldKeepProjects) {
+        setLoadError(nextLoadError);
+      } else {
+        setLoadError('');
+      }
+
+      setLoadNotice(nextLoadNotice);
+      if (!nextLoadError || shouldKeepProjects || nextLoadNotice) {
+        return true;
+      }
+      return false;
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
+      else setIsRefreshingData(false);
     }
   }, [logout, navigate]);
 
@@ -787,6 +862,7 @@ const Dashboard = () => {
       setSearchResults([]);
       setSearching(false);
       setSearchError(null);
+      setSearchNotice('');
       setSearchMeta({ total: 0, page: 1, hasMore: false });
       return;
     }
@@ -798,6 +874,7 @@ const Dashboard = () => {
         if (cancelled) return;
         setSearching(true);
         setSearchError(null);
+        setSearchNotice('');
         setSearchResults(localSearch.results);
         setSearchMeta({
           total: localSearch.total,
@@ -830,7 +907,13 @@ const Dashboard = () => {
           page: 1,
           hasMore: false,
         });
-        setSearchError(localSearch.total ? null : (err?.response?.data?.detail || 'Search failed'));
+        if (localSearch.total) {
+          setSearchError(null);
+          setSearchNotice('Search service unavailable. Showing local style matches only.');
+        } else {
+          setSearchNotice('');
+          setSearchError(formatSearchError(err));
+        }
       } finally {
         if (!cancelled) {
           setSearching(false);
@@ -857,10 +940,10 @@ const Dashboard = () => {
       setNewProjectType('');
       setShowNewProject(false);
       setActionMessage({ type: 'success', text: `${newProjectType} project created.` });
-      await fetchData();
+      await fetchData({ showSkeleton: false, preserveData: true });
     } catch (err) {
       console.error('Error creating project:', err);
-      setActionMessage({ type: 'error', text: err.response?.data?.detail || 'Could not create project.' });
+      setActionMessage({ type: 'error', text: formatActionError(err, 'Could not create project.') });
     } finally {
       setIsCreatingProject(false);
     }
@@ -872,10 +955,10 @@ const Dashboard = () => {
     try {
       await projectsAPI.delete(id);
       setActionMessage({ type: 'success', text: 'Project deleted.' });
-      await fetchData();
+      await fetchData({ showSkeleton: false, preserveData: true });
     } catch (err) {
       console.error('Error deleting project:', err);
-      setActionMessage({ type: 'error', text: err.response?.data?.detail || 'Could not delete project.' });
+      setActionMessage({ type: 'error', text: formatActionError(err, 'Could not delete project.') });
     } finally {
       setDeletingProjectId(null);
     }
@@ -956,16 +1039,34 @@ const Dashboard = () => {
             </button>
           </div>
         </header>
-      {loadError && <div className="status-banner status-error">{loadError}</div>}
+      {loadError && (
+        <div className="status-banner status-error" role="alert" aria-live="assertive">
+          {loadError}
+        </div>
+      )}
       {loadError && (
         <div className="status-banner-actions">
-          <button type="button" className="status-retry-btn" onClick={fetchData}>
-            Retry Loading
+          <button
+            type="button"
+            className="status-retry-btn"
+            onClick={() => fetchData({ showSkeleton: !projects.length && !styles.length, preserveData: true })}
+            disabled={isRefreshingData}
+          >
+            {isRefreshingData ? 'Retrying…' : 'Retry Loading'}
           </button>
         </div>
       )}
+      {loadNotice && (
+        <div className="status-banner status-notice" role="status" aria-live="polite">
+          {loadNotice}
+        </div>
+      )}
       {actionMessage && (
-        <div className={`status-banner ${actionMessage.type === 'success' ? 'status-success' : 'status-error'}`}>
+        <div
+          className={`status-banner ${actionMessage.type === 'success' ? 'status-success' : 'status-error'}`}
+          role={actionMessage.type === 'success' ? 'status' : 'alert'}
+          aria-live="polite"
+        >
           {actionMessage.text}
         </div>
       )}
@@ -1136,7 +1237,8 @@ const Dashboard = () => {
                 {searching ? 'Searching…' : 'Search'}
               </button>
             </div>
-            {searchError && <p className="search-error">{searchError}</p>}
+            {searchError && <p className="search-error" role="alert">{searchError}</p>}
+            {searchNotice && <p className="search-notice" role="status" aria-live="polite">{searchNotice}</p>}
             {!searching && searchTerm && searchResults.length === 0 && !searchError && (
               <AnimatePresence>
                 <motion.div 

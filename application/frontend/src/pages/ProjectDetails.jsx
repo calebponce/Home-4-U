@@ -82,6 +82,23 @@ const getShoppingLaneKey = (index) => {
   return 'finish-out';
 };
 
+const formatProjectRequestError = (err, fallback = 'Request failed for this project.') => {
+  if (!err) return fallback;
+
+  const status = err.response?.status;
+  const detail = err.response?.data?.detail;
+  if (status === 401) return 'Your session expired. Please log in again.';
+  if (status === 403) return 'Access denied for this project.';
+  if (status === 404) return detail || 'This project could not be found.';
+  if (status && status >= 500) return detail || 'Server error while loading project data.';
+  if (status && status >= 400) return detail || fallback;
+  if (err.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
+  if (err.message?.toLowerCase().includes('network')) {
+    return 'Network issue: unable to reach API. Check backend/proxy configuration.';
+  }
+  return fallback;
+};
+
 const ProjectDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -89,13 +106,18 @@ const ProjectDetails = () => {
   const [analysis, setAnalysis] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [actionMessage, setActionMessage] = useState(null);
   const [budget, setBudget] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [savingBudget, setSavingBudget] = useState(false);
+  const [completingRecommendationId, setCompletingRecommendationId] = useState(null);
   const shoppingPlan = analysis?.shopping_plan || [];
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async ({ showSkeleton = true } = {}) => {
+    if (showSkeleton) setLoading(true);
     try {
+      setLoadError('');
       const projectRes = await projectsAPI.getById(id);
       setProject(projectRes.data);
 
@@ -117,11 +139,16 @@ const ProjectDetails = () => {
       }
     } catch (err) {
       console.error('Error fetching project:', err);
-      navigate('/dashboard');
+      setLoadError(formatProjectRequestError(err, 'Could not load this project.'));
+      if (showSkeleton) {
+        setProject(null);
+        setAnalysis(null);
+        setRecommendations([]);
+      }
     } finally {
-      setLoading(false);
+      if (showSkeleton) setLoading(false);
     }
-  }, [id, navigate]);
+  }, [id]);
 
   useEffect(() => {
     fetchData();
@@ -138,36 +165,71 @@ const ProjectDetails = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!actionMessage) return undefined;
+    const timer = window.setTimeout(() => setActionMessage(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [actionMessage]);
+
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
+    const nextBudget = Number(budget);
+    if (!budget || !Number.isFinite(nextBudget) || nextBudget <= 0) {
+      setActionMessage({ type: 'error', text: 'Enter a positive budget amount.' });
+      return;
+    }
+
+    setSavingBudget(true);
+    setActionMessage(null);
     try {
-      if (!budget) return;
-      await projectsAPI.update(id, { budget: parseFloat(budget) });
+      await projectsAPI.update(id, { budget: nextBudget });
       setBudget('');
-      await fetchData();
+      setActionMessage({ type: 'success', text: 'Budget updated.' });
+      await fetchData({ showSkeleton: false });
     } catch (err) {
       console.error('Error updating budget:', err);
+      setActionMessage({
+        type: 'error',
+        text: formatProjectRequestError(err, 'Could not update the project budget.'),
+      });
+    } finally {
+      setSavingBudget(false);
     }
   };
 
   const handleGenerateRecommendations = async () => {
     setGenerating(true);
+    setActionMessage(null);
     try {
       await recommendationsAPI.generate(id);
-      await fetchData();
+      setActionMessage({ type: 'success', text: 'Project plan refreshed.' });
+      await fetchData({ showSkeleton: false });
     } catch (err) {
       console.error('Error generating recommendations:', err);
+      setActionMessage({
+        type: 'error',
+        text: formatProjectRequestError(err, 'Could not refresh the project plan.'),
+      });
     } finally {
       setGenerating(false);
     }
   };
 
   const handleMarkComplete = async (recId) => {
+    setCompletingRecommendationId(recId);
+    setActionMessage(null);
     try {
       await recommendationsAPI.markComplete(recId);
-      await fetchData();
+      setActionMessage({ type: 'success', text: 'Task marked complete.' });
+      await fetchData({ showSkeleton: false });
     } catch (err) {
       console.error('Error marking complete:', err);
+      setActionMessage({
+        type: 'error',
+        text: formatProjectRequestError(err, 'Could not update the task status.'),
+      });
+    } finally {
+      setCompletingRecommendationId(null);
     }
   };
 
@@ -190,6 +252,49 @@ const ProjectDetails = () => {
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <motion.div
+        className="project-details"
+        data-style="default"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <div className="project-atmosphere" aria-hidden="true">
+          <span className="project-orb project-orb-a"></span>
+          <span className="project-orb project-orb-b"></span>
+          <span className="project-orb project-orb-c"></span>
+        </div>
+
+        <motion.div variants={sectionVariants} className="project-details-header">
+          <div className="header-left">
+            <button type="button" onClick={() => navigate('/dashboard')} className="back-btn-ghost studio-btn studio-btn--ghost">
+              <ChevronLeft size={16} /> Back to Dashboard
+            </button>
+            <p className="project-eyebrow">Project Command Deck</p>
+            <h1 className="p-title">Project unavailable</h1>
+            <div className="p-meta">We could not load project #{id}. Retry the request or return to the dashboard.</div>
+          </div>
+        </motion.div>
+
+        <section className="project-empty-state">
+          <div className="project-status-banner project-status-banner--error" role="alert" aria-live="assertive">
+            {loadError || 'Could not load this project.'}
+          </div>
+          <div className="project-status-actions">
+            <button type="button" className="feature-secondary" onClick={() => fetchData()}>
+              Retry Loading
+            </button>
+            <button type="button" className="feature-primary" onClick={() => navigate('/dashboard')}>
+              Back to Dashboard
+            </button>
+          </div>
+        </section>
+      </motion.div>
     );
   }
 
@@ -274,6 +379,36 @@ const ProjectDetails = () => {
         </div>
       </motion.div>
 
+      {(loadError || actionMessage) && (
+        <div className="project-status-stack">
+          {loadError && (
+            <>
+              <div className="project-status-banner project-status-banner--error" role="alert" aria-live="assertive">
+                {loadError}
+              </div>
+              <div className="project-status-actions">
+                <button type="button" className="feature-secondary" onClick={() => fetchData({ showSkeleton: false })}>
+                  Retry Loading
+                </button>
+              </div>
+            </>
+          )}
+          {actionMessage && (
+            <div
+              className={`project-status-banner ${
+                actionMessage.type === 'success'
+                  ? 'project-status-banner--success'
+                  : 'project-status-banner--error'
+              }`}
+              role={actionMessage.type === 'success' ? 'status' : 'alert'}
+              aria-live="polite"
+            >
+              {actionMessage.text}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="canvas-grid">
         <motion.aside variants={sectionVariants} className="project-sidebar">
           <div className="finance-card">
@@ -299,16 +434,18 @@ const ProjectDetails = () => {
               </div>
             </div>
 
-            <form onSubmit={handleUpdateBudget} className="budget-form">
+            <form onSubmit={handleUpdateBudget} className="budget-form" noValidate>
               <label className="sr-only" htmlFor="project-budget-input">Adjust budget ceiling</label>
               <input
                 id="project-budget-input"
                 type="number"
+                min="1"
+                step="1"
                 placeholder="Adjust ceiling..."
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
               />
-              <button type="submit">Update</button>
+              <button type="submit" disabled={savingBudget}>{savingBudget ? 'Saving…' : 'Update'}</button>
             </form>
           </div>
 
@@ -608,8 +745,13 @@ const ProjectDetails = () => {
                           <p className="k-card-desc">{rec.description}</p>
                           <div className="k-card-meta">
                             <span className="k-badge">{formatCurrency(rec.estimated_cost)}</span>
-                            <button type="button" onClick={() => handleMarkComplete(rec.id)} className="k-action-btn">
-                              Complete
+                            <button
+                              type="button"
+                              onClick={() => handleMarkComplete(rec.id)}
+                              className="k-action-btn"
+                              disabled={completingRecommendationId === rec.id}
+                            >
+                              {completingRecommendationId === rec.id ? 'Saving…' : 'Complete'}
                             </button>
                           </div>
                         </motion.div>

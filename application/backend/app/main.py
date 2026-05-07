@@ -2,17 +2,21 @@ import logging
 import os
 import time
 import traceback
-from pathlib import Path
+from uuid import uuid4
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.router import api_router
 from app.core.database import init_db
+from app.core.settings import APP_VERSION, UPLOAD_DIR
 
 logger = logging.getLogger(__name__)
+REQUEST_ID_HEADER = "X-Request-ID"
 
 
 def _parse_cors_origins() -> list[str]:
@@ -33,8 +37,21 @@ def _parse_cors_origins() -> list[str]:
     ]
 
 
-def _apply_standard_headers(response, elapsed: float) -> None:
+def _resolve_request_id(request: Request) -> str:
+    incoming = request.headers.get(REQUEST_ID_HEADER, "").strip()
+    if incoming and len(incoming) <= 128:
+        return incoming
+    return uuid4().hex
+
+
+def _request_id_for(request: Request) -> str:
+    request_id = getattr(request.state, "request_id", "")
+    return request_id or uuid4().hex
+
+
+def _apply_standard_headers(response, elapsed: float, request_id: str) -> None:
     """Attach diagnostic and baseline security headers to API responses."""
+    response.headers[REQUEST_ID_HEADER] = request_id
     response.headers["X-Response-Time"] = f"{elapsed:.4f}s"
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
@@ -50,13 +67,11 @@ def _apply_standard_headers(response, elapsed: float) -> None:
 # ---------------------------------------------------------------------------
 app = FastAPI(
     title="Home4U API",
-    version="0.2.0",
+    version=APP_VERSION,
     description="Room renovation recommendation API",
 )
 
 # Serve uploaded images
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
@@ -67,18 +82,21 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 async def global_error_handler(request: Request, call_next):
     """Catch any unhandled exception, log it, and return a clean JSON 500."""
     start = time.perf_counter()
+    request_id = _resolve_request_id(request)
+    request.state.request_id = request_id
     try:
         response = await call_next(request)
         elapsed = time.perf_counter() - start
-        _apply_standard_headers(response, elapsed)
+        _apply_standard_headers(response, elapsed, request_id)
         return response
     except Exception as exc:
         elapsed = time.perf_counter() - start
         logger.error(
-            "Unhandled %s on %s %s (%.4fs): %s\n%s",
+            "Unhandled %s on %s %s [request_id=%s] (%.4fs): %s\n%s",
             type(exc).__name__,
             request.method,
             request.url.path,
+            request_id,
             elapsed,
             exc,
             traceback.format_exc(),
@@ -88,10 +106,37 @@ async def global_error_handler(request: Request, call_next):
             content={
                 "detail": "Internal server error. Our team has been notified.",
                 "type": type(exc).__name__,
+                "request_id": request_id,
             },
         )
-        _apply_standard_headers(response, elapsed)
+        _apply_standard_headers(response, elapsed, request_id)
         return response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Return consistent JSON payloads for handled HTTP errors."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.detail,
+            "request_id": _request_id_for(request),
+        },
+        headers=exc.headers,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Expose validation failures with a request identifier for QA/debugging."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Request validation failed",
+            "errors": exc.errors(),
+            "request_id": _request_id_for(request),
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

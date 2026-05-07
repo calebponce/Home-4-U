@@ -5,8 +5,9 @@ import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 
 const useAuthMock = vi.fn();
-const { projectsGetAllMock, stylesGetAllMock, searchStylesMock } = vi.hoisted(() => ({
+const { projectsGetAllMock, projectsCreateMock, stylesGetAllMock, searchStylesMock } = vi.hoisted(() => ({
   projectsGetAllMock: vi.fn(),
+  projectsCreateMock: vi.fn(),
   stylesGetAllMock: vi.fn(),
   searchStylesMock: vi.fn(),
 }));
@@ -19,7 +20,7 @@ vi.mock('../services/api', () => ({
   projectsAPI: {
     getAll: projectsGetAllMock,
     getById: vi.fn(),
-    create: vi.fn(),
+    create: projectsCreateMock,
     update: vi.fn(),
     delete: vi.fn(),
   },
@@ -38,6 +39,7 @@ describe('Dashboard accessibility', () => {
   beforeEach(() => {
     useAuthMock.mockReset();
     projectsGetAllMock.mockReset();
+    projectsCreateMock.mockReset();
     stylesGetAllMock.mockReset();
     searchStylesMock.mockReset();
 
@@ -49,6 +51,7 @@ describe('Dashboard accessibility', () => {
       logout: vi.fn(),
     });
     projectsGetAllMock.mockResolvedValue({ data: [] });
+    projectsCreateMock.mockResolvedValue({ data: { id: 22, room_type: 'Kitchen' } });
     stylesGetAllMock.mockResolvedValue({
       data: [
         {
@@ -117,5 +120,68 @@ describe('Dashboard accessibility', () => {
 
     expect(within(resultsGrid).getByRole('heading', { name: 'Japanese' })).toBeInTheDocument();
     expect(screen.queryByText(/no results found/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a local-fallback notice when remote style search fails', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+
+    searchStylesMock.mockRejectedValueOnce({ message: 'Network Error' });
+
+    const searchInput = await screen.findByRole('searchbox', { name: /search design styles/i });
+    await user.type(searchInput, 'japanese');
+
+    const resultsGrid = await waitFor(() => {
+      const grid = container.querySelector('.search-gallery-grid');
+      expect(grid).not.toBeNull();
+      return grid;
+    });
+
+    expect(within(resultsGrid).getByRole('heading', { name: 'Japanese' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/showing local style matches only/i);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('preserves current projects when a silent refresh fails after creating a project', async () => {
+    const user = userEvent.setup();
+
+    projectsGetAllMock.mockResolvedValueOnce({
+      data: [
+        {
+          id: 10,
+          room_type: 'Living Room',
+          budget: 1800,
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+    });
+    projectsGetAllMock.mockRejectedValue({
+      message: 'Network Error',
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <Dashboard />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Living Room' })).toBeInTheDocument();
+    const initialProjectFetchCount = projectsGetAllMock.mock.calls.length;
+
+    await user.click(screen.getAllByRole('button', { name: /\+ new project/i })[0]);
+    await user.selectOptions(screen.getByRole('combobox'), 'Kitchen');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(projectsCreateMock).toHaveBeenCalledWith('Kitchen');
+    await waitFor(() => {
+      expect(projectsGetAllMock.mock.calls.length).toBeGreaterThan(initialProjectFetchCount);
+    });
+    expect(screen.getByRole('heading', { name: 'Living Room' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Kitchen' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

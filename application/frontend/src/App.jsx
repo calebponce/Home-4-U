@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children }) => {
 }
 
 function App() {
-  const { token, loading } = useAuth()
+  const { loading } = useAuth()
   const location = useLocation();
 
   useEffect(() => {

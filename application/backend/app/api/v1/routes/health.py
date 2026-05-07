@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.database import engine
+from app.core.settings import APP_VERSION
 
 router = APIRouter()
 
@@ -27,7 +28,7 @@ def health():
             (datetime.now(timezone.utc) - _BOOT_TIME).total_seconds(), 1
         ),
         "python": platform.python_version(),
-        "version": "0.2.0",
+        "version": APP_VERSION,
     }
 
     try:

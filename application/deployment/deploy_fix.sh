@@ -21,6 +21,8 @@ DEPLOY_DIR="$REPO_ROOT/application/deployment"
 
 DATA_DIR="/home/ec2-user/data"
 DB_FILE="$DATA_DIR/home4u.db"
+ENV_DIR="/etc/home4u"
+ENV_FILE="$ENV_DIR/home4u.env"
 
 # Release directories (atomic swap)
 WEB_ROOT="/var/www/home4u"
@@ -60,6 +62,14 @@ if [ -n "$PUBLIC_DNS" ]; then
     TLS_CERT_DIR="/etc/letsencrypt/live/$PUBLIC_DNS"
 fi
 
+require_production_secret() {
+    if [ ! -s "$ENV_FILE" ] || ! grep -Eq '^[[:space:]]*HOME4U_SECRET_KEY=.+' "$ENV_FILE"; then
+        echo "  ❌ FATAL: $ENV_FILE is missing HOME4U_SECRET_KEY."
+        echo "     Create the file and add a long random secret before restarting the production backend."
+        exit 1
+    fi
+}
+
 echo "=========================================================="
 echo "  🚀 Home4U PRODUCTION DEPLOY — $TIMESTAMP"
 echo "=========================================================="
@@ -80,6 +90,7 @@ echo "  ✓ Environment validated (Node $(node -v), Python $(python3 --version))
 echo "▶ Phase 1: Hardening persistence..."
 sudo mkdir -p "$DATA_DIR"
 sudo chown -R ec2-user:ec2-user "$DATA_DIR"
+sudo mkdir -p "$ENV_DIR"
 
 if [ ! -f "$DB_FILE" ]; then
     echo "  ⚠  Production DB not found at $DB_FILE. Checking for legacy migration..."
@@ -95,6 +106,7 @@ fi
 echo ""
 echo "▶ Phase 2: Orchestrating Backend..."
 cd "$BACKEND_DIR"
+require_production_secret
 
 # Clear port 8000 (Self-healing)
 echo "  🧹 Clearing port 8000 conflicts..."

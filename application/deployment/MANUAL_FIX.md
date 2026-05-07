@@ -10,12 +10,26 @@ Because the instance now uses an Elastic IP, the public IP-based URL should rema
 
 ## Step 1: SSH into your server
 ```bash
-ssh -i home4u-key.pem ec2-user@18.225.42.247
+ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247
 ```
 
 ---
 
-## Step 2: Check if backend is running
+## Step 2: Confirm the production secret is configured
+```bash
+sudo mkdir -p /etc/home4u
+sudo test -s /etc/home4u/home4u.env && grep '^HOME4U_SECRET_KEY=' /etc/home4u/home4u.env
+```
+
+If nothing prints, create the file before restarting the backend:
+```bash
+sudo sh -c 'printf "HOME4U_SECRET_KEY=replace-with-a-long-random-secret\n" > /etc/home4u/home4u.env'
+sudo chmod 600 /etc/home4u/home4u.env
+```
+
+---
+
+## Step 3: Check if backend is running
 ```bash
 sudo systemctl status home4u-backend --no-pager
 curl -s http://127.0.0.1:8000/health
@@ -29,7 +43,7 @@ sudo journalctl -u home4u-backend -n 80 --no-pager
 
 ---
 
-## Step 3: Check if database is seeded
+## Step 4: Check if database is seeded
 ```bash
 sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"
 ```
@@ -44,7 +58,7 @@ sudo systemctl restart home4u-backend
 
 ---
 
-## Step 4: Fix nginx configuration
+## Step 5: Fix nginx configuration
 ```bash
 cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
 PUBLIC_DNS="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
@@ -62,7 +76,7 @@ sed "s/__SERVER_NAMES__/$SERVER_NAMES/g" application/deployment/nginx.conf | \
 
 ---
 
-## Step 5: Restart nginx and test
+## Step 6: Restart nginx and test
 ```bash
 sudo nginx -t
 sudo systemctl restart nginx
@@ -70,11 +84,11 @@ sudo systemctl restart nginx
 
 ---
 
-## Step 6: Test login
+## Step 7: Test login
 ```bash
 curl -X POST http://localhost/api/auth/login \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=calebmusic10@gmail.com&password=TempPass123!"
+  -d "username=test@example.com&password=test123"
 ```
 
 Expected response should contain `"access_token"`

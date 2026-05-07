@@ -10,12 +10,18 @@ const {
   projectUpdateMock,
   projectUploadPhotoMock,
   projectAnalyzeMock,
+  extractImageProfileMock,
+  inferDetectedTagsMock,
+  renderConceptPreviewMock,
 } = vi.hoisted(() => ({
   stylesGetAllMock: vi.fn(),
   projectCreateMock: vi.fn(),
   projectUpdateMock: vi.fn(),
   projectUploadPhotoMock: vi.fn(),
   projectAnalyzeMock: vi.fn(),
+  extractImageProfileMock: vi.fn(),
+  inferDetectedTagsMock: vi.fn(),
+  renderConceptPreviewMock: vi.fn(),
 }));
 
 vi.mock('../services/api', () => ({
@@ -32,17 +38,9 @@ vi.mock('../services/api', () => ({
 
 vi.mock('../utils/workspaceDesign', () => ({
   getBudgetAmount: (tier) => ({ low: 900, medium: 2600, high: 6500 }[tier] || 2600),
-  extractImageProfile: vi.fn().mockResolvedValue({
-    width: 800,
-    height: 600,
-    aspect_ratio: 1.333,
-    average_brightness: 0.55,
-    average_saturation: 0.32,
-    warmth_bias: 0.08,
-    dominant_hex: '#b0a79b',
-  }),
-  inferDetectedTags: vi.fn().mockReturnValue(['neutral', 'clean']),
-  renderConceptPreview: vi.fn().mockResolvedValue('data:image/png;base64,concept'),
+  extractImageProfile: extractImageProfileMock,
+  inferDetectedTags: inferDetectedTagsMock,
+  renderConceptPreview: renderConceptPreviewMock,
 }));
 
 describe('Workspace accessibility', () => {
@@ -52,6 +50,9 @@ describe('Workspace accessibility', () => {
     projectUpdateMock.mockReset();
     projectUploadPhotoMock.mockReset();
     projectAnalyzeMock.mockReset();
+    extractImageProfileMock.mockReset();
+    inferDetectedTagsMock.mockReset();
+    renderConceptPreviewMock.mockReset();
     stylesGetAllMock.mockResolvedValue({ data: [] });
     projectCreateMock.mockResolvedValue({
       data: { id: 17, room_type: 'Living Room', budget: 0, photo_url: null },
@@ -87,6 +88,17 @@ describe('Workspace accessibility', () => {
         ],
       },
     });
+    extractImageProfileMock.mockResolvedValue({
+      width: 800,
+      height: 600,
+      aspect_ratio: 1.333,
+      average_brightness: 0.55,
+      average_saturation: 0.32,
+      warmth_bias: 0.08,
+      dominant_hex: '#b0a79b',
+    });
+    inferDetectedTagsMock.mockReturnValue(['neutral', 'clean']);
+    renderConceptPreviewMock.mockResolvedValue('data:image/png;base64,concept');
     vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
       matches: query.includes('prefers-reduced-motion'),
       media: query,
@@ -145,5 +157,83 @@ describe('Workspace accessibility', () => {
     fireEvent.keyDown(slider, { key: ' ', code: 'Space' });
     expect(slider).toHaveAttribute('aria-valuenow', '0');
     expect(slider).toHaveAttribute('aria-valuetext', 'Before 0 percent visible, After 100 percent visible');
+  }, 8000);
+
+  it('rejects non-image uploads before the backend run begins', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/workspace',
+            search: '?style=scandinavian',
+            state: {
+              selectedStyle: {
+                name: 'Scandinavian',
+                slug: 'scandinavian',
+                description: 'Cozy minimalism with natural materials and calm light.',
+              },
+            },
+          },
+        ]}
+      >
+        <Workspace />
+      </MemoryRouter>,
+    );
+
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+
+    const textFile = new File(['notes'], 'notes.txt', { type: 'text/plain' });
+    fireEvent.change(fileInput, { target: { files: [textFile] } });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/choose a png, jpg, or webp image/i);
+    expect(projectCreateMock).not.toHaveBeenCalled();
+    expect(screen.getByText(/room load failed/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /living room/i }));
+  });
+
+  it('restores the previous plan when a rerun fails', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/workspace',
+            search: '?style=scandinavian',
+            state: {
+              selectedStyle: {
+                name: 'Scandinavian',
+                slug: 'scandinavian',
+                description: 'Cozy minimalism with natural materials and calm light.',
+              },
+            },
+          },
+        ]}
+      >
+        <Workspace />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /living room/i }));
+
+    await user.click(screen.getByRole('button', { name: /generate plan/i }));
+    expect(await screen.findByRole('slider', { name: /before and after comparison/i }, { timeout: 4000 })).toBeInTheDocument();
+
+    projectAnalyzeMock.mockRejectedValueOnce({
+      response: {
+        status: 503,
+        data: { detail: 'Analysis service is temporarily unavailable.' },
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /generate plan/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/analysis service is temporarily unavailable/i);
+    expect(screen.getByText('Previous plan restored', { selector: '.status' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/still available while you retry/i);
+    expect(screen.getByRole('slider', { name: /before and after comparison/i })).toBeInTheDocument();
   }, 8000);
 });

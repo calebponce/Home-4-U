@@ -123,9 +123,9 @@ afterEach(() => {
 });
 
 describe('App smoke routing', () => {
-  it('renders the public landing page on /', () => {
+  it('renders the public landing page on /', async () => {
     renderAppAt('/');
-    expect(screen.getByRole('heading', { name: /plan interior projects/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /plan interior projects/i }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByTestId('path-probe')).toHaveTextContent('/');
   });
 

@@ -51,7 +51,9 @@ Budget-aware prioritization of recommendations
 
 Workspace analysis and saved project plans
 
-Administrative style and weight management
+Persisted analysis-run history for QA tracing and backend diagnostics
+
+Authenticated internal tag management and style metadata browsing
 
 About page with team introduction and company information
 
@@ -64,7 +66,7 @@ Prerequisites:
 - Python 3.12.x
 - Node.js 18+
 - SQLite is used by default in development
-- PostgreSQL or another relational database is optional via `DATABASE_URL`
+- PostgreSQL or another relational database is supported via `DATABASE_URL`
 - Git
 
 ### Backend Setup
@@ -93,6 +95,12 @@ http://127.0.0.1:8000
 Swagger docs available at:
 
 http://127.0.0.1:8000/docs
+
+Backend smoke-test runner:
+```bash
+cd application/backend
+./run_smoke_tests.sh
+```
 
 ### Frontend Setup
 
@@ -138,22 +146,54 @@ Screenshots or short examples may be added if helpful.
 
 Environment Variables: 
     Backend supports:
-    DATABASE_URL=              # optional; defaults to local SQLite in development
-    HOME4U_SECRET_KEY=         # recommended in production
+    DATABASE_URL=              # optional; defaults to local SQLite in development; e.g. postgresql+psycopg://home4u:password@localhost:5432/home4u
+    HOME4U_SECRET_KEY=         # required in production
     HOME4U_CORS_ORIGINS=       # optional comma-separated direct backend origins
     HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS=    # optional failed attempts per email+IP window
     HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS= # optional failed attempts per source IP window
     HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS= # optional sliding window size
     HOME4U_ENV=                # optional; set to production to move default SQLite outside repo
     HOME4U_DATA_DIR=           # optional; used with HOME4U_ENV=production
+    HOME4U_UPLOAD_DIR=         # optional; overrides where uploaded room images are stored
+    HOME4U_PUBLIC_ASSET_BASE_URL= # optional; prefixes upload URLs with a public base URL
+    HOME4U_MAX_UPLOAD_BYTES=   # optional; defaults to 10485760 (10MB)
 
     Frontend supports:
     VITE_API_BASE=             # optional; defaults to /api
 
 For production systemd deployments, these backend variables can be supplied through an optional
-`/etc/home4u/home4u.env` file referenced by the repo service unit. Login throttling defaults
+`/etc/home4u/home4u.env` file referenced by the repo service unit, but `HOME4U_SECRET_KEY`
+must be set from some production-safe source before the backend will boot. Login throttling defaults
 to `5` failed attempts per email+IP, `20` failed attempts per source IP, and a `300` second window
-if the rate-limit variables are not supplied.
+if the rate-limit variables are not supplied. API responses also expose `X-Request-ID` and
+`X-Response-Time` headers to support QA tracing and production debugging.
+
+### Database Migrations
+
+Alembic scaffolding is included for controlled relational schema upgrades while preserving the
+current SQLite development fallback.
+
+Fresh database:
+```bash
+cd application/backend
+./run_migrations.sh upgrade
+```
+
+Existing database created before Alembic was added:
+```bash
+cd application/backend
+./run_migrations.sh stamp head
+```
+
+Optional startup flow for managed environments:
+```bash
+cd application/backend
+RUN_MIGRATIONS=1 ./start_backend.sh
+```
+
+For milestone stability, the application still boots safely against the current SQLite default.
+PostgreSQL adoption should be done by setting `DATABASE_URL` and running Alembic against the target
+database before switching deployment traffic.
 
 Public repository docs and smoke-test examples should use a single `HOME4U_PUBLIC_URL` value
 backed by a stable domain or Elastic IP. Avoid committing the temporary EC2 public hostname

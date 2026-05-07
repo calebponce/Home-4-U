@@ -3,13 +3,14 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.models.database import Style, Tag, StyleTag
+from app.models.database import Style, Tag, StyleTag, User
 from app.schemas.schemas import (
     StyleResponse, 
     StyleWithTagsResponse,
     TagResponse,
     StyleTagResponse
 )
+from app.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/styles", tags=["Styles"])
 
@@ -57,8 +58,13 @@ def get_all_tags(db: Session = Depends(get_db)):
 # Admin endpoints - require authentication (simplified for now)
 
 @router.post("/tags/", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
-def create_tag(name: str, db: Session = Depends(get_db)):
-    """Create a new tag (admin only - no auth check for prototype)."""
+def create_tag(
+    name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Create a new tag for authenticated internal use."""
+    _ = current_user
     existing = db.query(Tag).filter(Tag.name == name).first()
     if existing:
         raise HTTPException(
@@ -71,4 +77,3 @@ def create_tag(name: str, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(tag)
     return tag
-

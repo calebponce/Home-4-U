@@ -47,6 +47,7 @@ class RoomProject(Base):
     resemblance_scores = relationship("ResemblanceScore", back_populates="room_project")
     recommendations = relationship("Recommendation", back_populates="room_project")
     budget_plans = relationship("BudgetPlan", back_populates="room_project")
+    analysis_runs = relationship("ProjectAnalysisRun", back_populates="room_project")
 
 class Style(Base):
     __tablename__ = "styles"
@@ -129,6 +130,29 @@ class Recommendation(Base):
     
     # Relationships
     room_project = relationship("RoomProject", back_populates="recommendations")
+
+
+class ProjectAnalysisRun(Base):
+    __tablename__ = "project_analysis_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("room_projects.id"), nullable=False, index=True)
+    request_id = Column(String(128), nullable=True, index=True)
+    status = Column(String(32), nullable=False, default="processing", index=True)
+    selected_style_id = Column(Integer, ForeignKey("styles.id"), nullable=True)
+    selected_style_name = Column(String(100), nullable=True)
+    room_type = Column(String(100), nullable=False)
+    intensity = Column(Integer, nullable=False, default=60)
+    lighting = Column(String(20), nullable=False, default="warm")
+    budget_tier = Column(String(20), nullable=False, default="medium")
+    top_score = Column(Float, nullable=True)
+    recommendation_count = Column(Integer, nullable=False, default=0)
+    error_message = Column(Text, nullable=True)
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+
+    room_project = relationship("RoomProject", back_populates="analysis_runs")
+    selected_style = relationship("Style")
 
 
 class RoomDimension(Base):

@@ -119,6 +119,67 @@
   letter-spacing: 0;
 }
 
+.status-banner {
+  display: flex;
+  align-items: center;
+  min-height: 3.1rem;
+  margin-bottom: 0.85rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--dash-border);
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: var(--dash-card-shadow);
+  line-height: 1.45;
+}
+
+.status-error {
+  border-color: rgb(239 68 68 / 0.28);
+  background: linear-gradient(180deg, rgb(127 29 29 / 0.42), rgb(69 10 10 / 0.48));
+}
+
+.status-success {
+  border-color: rgb(var(--dash-accent-rgb) / 0.26);
+  background: linear-gradient(180deg, rgb(16 72 61 / 0.42), rgb(5 46 37 / 0.5));
+}
+
+.status-notice {
+  border-color: rgb(var(--dash-accent-rgb) / 0.22);
+  background: linear-gradient(180deg, rgb(10 33 54 / 0.56), rgb(8 21 39 / 0.62));
+}
+
+.status-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.status-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 11rem;
+  padding: 0.82rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--dash-border);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--dash-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.status-retry-btn:hover:not(:disabled) {
+  border-color: var(--dash-border);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.status-retry-btn:disabled {
+  opacity: 0.66;
+  cursor: not-allowed;
+}
+
 /* ── Adrien: structured cards ──────────────────────────────── */
 /* ── Marcelo: flat 1px borders, no radius ───────────────── */
 .recent-project-card,
@@ -903,6 +964,11 @@
 
 .search-error {
   color: var(--dash-danger);
+  margin: 0.45rem 0 0;
+}
+
+.search-notice {
+  color: rgb(var(--dash-accent-rgb) / 0.98);
   margin: 0.45rem 0 0;
 }
 

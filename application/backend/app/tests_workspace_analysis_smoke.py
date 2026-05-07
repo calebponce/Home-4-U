@@ -56,9 +56,13 @@ def test_workspace_analysis():
         db.refresh(style)
 
         token = create_access_token({"sub": str(user.id)})
+        request_id = f"workspace-analysis-{uuid4().hex[:8]}"
         response = client.post(
             f"/projects/{project.id}/analysis",
-            headers={"Authorization": f"Bearer {token}"},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "X-Request-ID": request_id,
+            },
             json={
                 "style_id": style.id,
                 "room_type": "Living Room",
@@ -100,6 +104,18 @@ def test_workspace_analysis():
         assert saved_payload["selected_style"]["name"] == "Scandinavian"
         assert saved_payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
         assert len(saved_payload["shopping_plan"][0]["products"]) >= 1
+
+        runs_response = client.get(
+            f"/projects/{project.id}/analysis/runs",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert runs_response.status_code == 200, runs_response.text
+        runs = runs_response.json()
+        assert len(runs) >= 1
+        assert runs[0]["status"] == "succeeded"
+        assert runs[0]["selected_style_name"] == "Scandinavian"
+        assert runs[0]["recommendation_count"] >= 3
+        assert runs[0]["request_id"] == request_id
     finally:
         db.close()
 

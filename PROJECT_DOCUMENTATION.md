@@ -38,7 +38,8 @@
 │                                ▼                                     │
 │                  SQLAlchemy-backed relational data layer             │
 │                  SQLite by default in development                    │
-│                  DATABASE_URL override for other relational DBs      │
+│                  Alembic-managed relational migrations available     │
+│                  DATABASE_URL override for PostgreSQL and peers      │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -79,7 +80,6 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   └── start_backend.sh
 │   ├── credentials
 │   │   ├── README.md
-│   │   └── home4u-key.pem
 │   ├── deployment
 │   │   ├── MANUAL_FIX.md
 │   │   ├── deploy.sh
@@ -269,7 +269,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | `/project/:id` | Protected | ProjectDetails | Project plan view for a saved room project. |
 | `/virtual-tour` | Redirect | Navigate | Legacy route that now redirects to `/workspace`. |
 | `/workspace` | Protected | Workspace | Protected design workspace with project sync and analysis. |
-| `/` | Public | About | Redirects to `/dashboard`. |
+| `/` | Public | Navigate | Redirects to `/dashboard`. |
 | `*` | Public | NotFound | Catch-all not-found route. |
 
 
@@ -339,7 +339,8 @@ Frontend URLs:
 
 - Development defaults to SQLite via [database.py](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/backend/app/core/database.py).
 - `HOME4U_ENV=production` moves the default SQLite path outside the repo so deployments do not lose local data on `git pull`.
-- `DATABASE_URL` can override the default database connection for other relational database deployments.
+- `DATABASE_URL` can override the default database connection for PostgreSQL or other relational database deployments.
+- Alembic migration scaffolding lives under `application/backend/alembic/`, with `application/backend/run_migrations.sh` providing upgrade, stamp, and history commands.
 - `HOME4U_SECRET_KEY` should be supplied in production rather than relying on the repo default.
 - `HOME4U_CORS_ORIGINS` can be used to allow direct cross-origin backend access when the app is not using the same-origin `/api` proxy.
 - `HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS`, and `HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS` tune failed-login throttling; defaults are `5`, `20`, and `300`.

@@ -20,6 +20,35 @@ const ROOM_TYPE_OPTIONS = [
   'Dining Room',
 ];
 
+const ALLOWED_ROOM_UPLOAD_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_ROOM_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+const formatWorkspaceRequestError = (error, stage = 'analyze-room') => {
+  const detail = error?.response?.data?.detail;
+  const status = error?.response?.status;
+  const stageCopy = {
+    'create-project': 'create the project workspace',
+    'update-project': 'save the project brief',
+    'upload-photo': 'upload the room photo',
+    'extract-signals': 'read the room image',
+    'analyze-room': 'analyze the room against the selected style',
+  };
+  const action = stageCopy[stage] || 'complete this workspace action';
+
+  if (status === 401) return 'Your session expired. Please log in again.';
+  if (status === 403) return 'Access denied for this room project.';
+  if (status === 404) return detail || 'This room project could not be found.';
+  if (status === 413) return 'The selected room photo is too large. Use an image under 10 MB.';
+  if (status === 415) return 'Unsupported image format. Upload a PNG, JPG, or WebP file.';
+  if (status && status >= 500) return detail || `Server error while trying to ${action}.`;
+  if (status && status >= 400) return detail || `Could not ${action}.`;
+  if (error?.code === 'ECONNABORTED') return `Request timed out while trying to ${action}.`;
+  if (error?.message?.toLowerCase().includes('network')) {
+    return `Network issue while trying to ${action}. Check the backend connection and try again.`;
+  }
+  return detail || `Could not ${action}. Please try again.`;
+};
+
 const Workspace = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,12 +115,15 @@ const Workspace = () => {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analysisProject, setAnalysisProject] = useState(null);
   const [workspaceError, setWorkspaceError] = useState('');
+  const [workspaceNotice, setWorkspaceNotice] = useState('');
+  const [selectedRoomLabel, setSelectedRoomLabel] = useState('');
   const shoppingPlanRef = useRef(null);
   const generateBtnRef = useRef(null);
   const previewComboRef = useRef(null);
   const comparisonHandleRef = useRef(null);
   const isMountedRef = useRef(false);
   const isRevealDraggingRef = useRef(false);
+  const lastSuccessfulRunRef = useRef(null);
   const generationTimersRef = useRef({
     textInterval: null,
     completionTimeout: null,
@@ -183,6 +215,8 @@ const Workspace = () => {
     setGeneratedImage(null);
     setAnalysisResult(null);
     setWorkspaceError('');
+    setWorkspaceNotice('');
+    lastSuccessfulRunRef.current = null;
     stopRevealDrag();
   }, [styleInfo.key, clearGenerationTimers, stopRevealDrag]);
 
@@ -203,11 +237,14 @@ const Workspace = () => {
     setProcessingText('');
     setProcessingLevel(0);
     setWorkspaceError('');
+    setWorkspaceNotice('');
     setAnalysisResult(null);
     setAnalysisProject(null);
     setRoomImage(url);
     setRoomFile(null);
     setGeneratedImage(null);
+    setSelectedRoomLabel(`${nextRoomType || roomType} sample room`);
+    lastSuccessfulRunRef.current = null;
     if (nextRoomType) setRoomType(nextRoomType);
     setPreviewState('before');
     setStatus('Sample room loaded');
@@ -274,12 +311,66 @@ const Workspace = () => {
     }, 2000);
   }, []);
 
+  const handleRoomFileChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!ALLOWED_ROOM_UPLOAD_TYPES.has(file.type)) {
+      setWorkspaceNotice('');
+      setWorkspaceError('Choose a PNG, JPG, or WebP image so Home4U can analyze the room.');
+      setStatus('Room load failed');
+      return;
+    }
+
+    if (file.size > MAX_ROOM_UPLOAD_BYTES) {
+      setWorkspaceNotice('');
+      setWorkspaceError('Room photos must be 10 MB or smaller.');
+      setStatus('Room load failed');
+      return;
+    }
+
+    setWorkspaceError('');
+    setWorkspaceNotice('');
+    setStatus(`Loading ${file.name}...`);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (!isMountedRef.current) return;
+      clearGenerationTimers();
+      setIsGenerating(false);
+      setShowSuccessGlow(false);
+      setProcessingText('');
+      setProcessingLevel(0);
+      setAnalysisResult(null);
+      setAnalysisProject(null);
+      setRoomFile(file);
+      setRoomImage(ev.target?.result || null);
+      setGeneratedImage(null);
+      setPreviewState('before');
+      setSelectedRoomLabel(file.name);
+      lastSuccessfulRunRef.current = null;
+      setStatus('Room loaded');
+    };
+    reader.onerror = () => {
+      if (!isMountedRef.current) return;
+      setWorkspaceNotice('');
+      setWorkspaceError('Could not read the selected image file. Try a different image.');
+      setStatus('Room load failed');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleGenerate = async () => {
     if (isGenerating || !roomImage) return;
+
+    const previousSuccessfulRun = lastSuccessfulRunRef.current;
+    let stage = 'create-project';
 
     clearGenerationTimers();
     setIsGenerating(true);
     setWorkspaceError('');
+    setWorkspaceNotice('');
     setAnalysisResult(null);
     setGeneratedImage(null);
     setShowSuccessGlow(false);
@@ -291,6 +382,7 @@ const Workspace = () => {
     try {
       let project = analysisProject;
       if (!project) {
+        stage = 'create-project';
         const createdProject = await projectsAPI.create(roomType);
         project = createdProject.data;
       }
@@ -300,6 +392,7 @@ const Workspace = () => {
         || Math.round(Number(project.budget || 0)) !== budgetAmount
       );
       if (needsProjectUpdate) {
+        stage = 'update-project';
         setStatus('Updating project brief...');
         setProcessingText('Saving room type and budget constraints...');
         setProcessingLevel(0.18);
@@ -313,6 +406,7 @@ const Workspace = () => {
       setAnalysisProject(project);
 
       if (roomFile) {
+        stage = 'upload-photo';
         setStatus('Uploading room photo...');
         setProcessingText('Saving the selected room photo to the backend...');
         setProcessingLevel(0.32);
@@ -321,12 +415,14 @@ const Workspace = () => {
         setAnalysisProject(project);
       }
 
+      stage = 'extract-signals';
       setStatus('Extracting room signals...');
       setProcessingText('Reading light, color, and composition cues from the room image...');
       setProcessingLevel(0.5);
       const imageProfile = roomFile ? await extractImageProfile(roomImage) : null;
       const detectedTags = inferDetectedTags(imageProfile);
 
+      stage = 'analyze-room';
       setStatus('Calculating style scores...');
       setProcessingText(`Comparing the saved room with ${styleInfo.name} and the rest of the Home4U style library...`);
       setProcessingLevel(0.72);
@@ -348,27 +444,47 @@ const Workspace = () => {
       setStatus('Rendering concept board...');
       setProcessingText('Composing a presentation-ready concept board from the backend analysis...');
       setProcessingLevel(0.9);
-      const conceptBoard = await renderConceptPreview({
-        sourceUrl: roomImage,
-        analysis: nextAnalysis,
-        styleInfo,
-      });
+      let conceptBoard = roomImage;
+      try {
+        conceptBoard = await renderConceptPreview({
+          sourceUrl: roomImage,
+          analysis: nextAnalysis,
+          styleInfo,
+        }) || roomImage;
+      } catch {
+        conceptBoard = roomImage;
+        setWorkspaceNotice('Plan generated, but the concept board preview fell back to the original room image.');
+      }
 
       if (!isMountedRef.current) return;
-      setGeneratedImage(conceptBoard || roomImage);
+      setGeneratedImage(conceptBoard);
       setStatus('Analysis ready');
       setProcessingText('Plan generated');
       setProcessingLevel(1);
       setPreviewState('after');
+      lastSuccessfulRunRef.current = {
+        analysisResult: nextAnalysis,
+        analysisProject: nextAnalysis.project,
+        generatedImage: conceptBoard,
+        revealPct: 60,
+      };
       triggerSuccessState();
     } catch (error) {
-      const detail = error?.response?.data?.detail;
-      const fallbackMessage = roomFile
-        ? 'The backend could not process this room right now.'
-        : 'Sample rooms can generate a plan, but photo upload is only available for local images.';
-      setWorkspaceError(typeof detail === 'string' ? detail : fallbackMessage);
-      setStatus('Analysis failed');
-      setPreviewState('before');
+      const recoveredPreviousPlan = Boolean(previousSuccessfulRun?.analysisResult && previousSuccessfulRun?.generatedImage);
+      if (recoveredPreviousPlan) {
+        setAnalysisResult(previousSuccessfulRun.analysisResult);
+        setAnalysisProject(previousSuccessfulRun.analysisProject || null);
+        setGeneratedImage(previousSuccessfulRun.generatedImage);
+        setPreviewState('after');
+        setRevealPct(previousSuccessfulRun.revealPct ?? 60);
+        setStatus('Previous plan restored');
+        setWorkspaceNotice('Your previous plan is still available while you retry.');
+      } else {
+        setStatus('Analysis failed');
+        setPreviewState('before');
+      }
+      const message = formatWorkspaceRequestError(error, stage);
+      setWorkspaceError(recoveredPreviousPlan ? `${message} Previous plan restored while you retry.` : message);
       setProcessingText('');
       setProcessingLevel(0);
     } finally {
@@ -660,33 +776,15 @@ const Workspace = () => {
               </div>
               <p className="control-sub compact">Sample rooms stay local for preview, but they still generate a saved backend plan.</p>
             </div>
+            {selectedRoomLabel && (
+              <p className="control-sub compact">Loaded asset: {selectedRoomLabel}</p>
+            )}
             <label className="secondary upload-btn">
               Upload Room Photo
               <input
                 type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  clearGenerationTimers();
-                  setIsGenerating(false);
-                  setShowSuccessGlow(false);
-                  setProcessingText('');
-                  setProcessingLevel(0);
-                  setWorkspaceError('');
-                  setAnalysisResult(null);
-                  setAnalysisProject(null);
-                  setRoomFile(file);
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    if (!isMountedRef.current) return;
-                    setRoomImage(ev.target?.result || null);
-                    setGeneratedImage(null);
-                    setPreviewState('before');
-                    setStatus('Room loaded');
-                  };
-                  reader.readAsDataURL(file);
-                }}
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleRoomFileChange}
                 hidden
               />
             </label>
@@ -710,8 +808,27 @@ const Workspace = () => {
             >
               {analysisResult?.shopping_plan?.length ? 'Open Shopping Plan' : 'Run Analysis To Unlock Sourcing'}
             </button>
-            {workspaceError && (
-              <p className="workspace-error" role="alert">{workspaceError}</p>
+            {(workspaceError || workspaceNotice) && (
+              <div className="workspace-feedback">
+                {workspaceError && (
+                  <>
+                    <p className="workspace-error" role="alert">{workspaceError}</p>
+                    {roomImage && (
+                      <button
+                        type="button"
+                        className="secondary-link-btn workspace-retry-btn"
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                      >
+                        Retry Generate Plan
+                      </button>
+                    )}
+                  </>
+                )}
+                {workspaceNotice && (
+                  <p className="workspace-notice" role="status" aria-live="polite">{workspaceNotice}</p>
+                )}
+              </div>
             )}
           </div>
 

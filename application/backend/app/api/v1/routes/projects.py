@@ -1,15 +1,24 @@
-from pathlib import Path
 import uuid
+from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status, UploadFile, File
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Literal
 
 from app.core.database import get_db
-from app.models.database import RoomProject, User
+from app.core.settings import (
+    ALLOWED_UPLOAD_TYPES,
+    MAX_UPLOAD_BYTES,
+    MAX_UPLOAD_BYTES_LABEL,
+    UPLOAD_DIR,
+    build_public_asset_url,
+)
+from app.models.database import ProjectAnalysisRun, RoomProject, User
 from app.schemas.schemas import (
     ProjectAnalysisRequest,
     ProjectAnalysisResponse,
+    ProjectAnalysisRunResponse,
     RoomProjectCreate,
     RoomProjectUpdate,
     RoomProjectResponse,
@@ -22,13 +31,6 @@ from app.services.project_analysis import (
 from app.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/projects", tags=["RoomProjects"])
-
-# Upload config
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_BYTES = 5 * 1024 * 1024  # 5MB
 
 
 @router.post("/", response_model=RoomProjectResponse, status_code=status.HTTP_201_CREATED)
@@ -50,11 +52,36 @@ def create_project(
 
 @router.get("/", response_model=List[RoomProjectResponse])
 def get_projects(
+    response: Response,
+    limit: int = Query(default=20, ge=1, le=100),
+    page: int = Query(default=1, ge=1),
+    room_type: str | None = Query(default=None),
+    sort: Literal["created_desc", "created_asc", "budget_desc", "budget_asc"] = Query(default="created_desc"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get all room projects for the current user."""
-    return db.query(RoomProject).filter(RoomProject.user_id == current_user.id).all()
+    query = db.query(RoomProject).filter(RoomProject.user_id == current_user.id)
+    if room_type:
+        query = query.filter(RoomProject.room_type.ilike(room_type.strip()))
+
+    total = query.count()
+    order_clause = {
+        "created_desc": desc(RoomProject.created_at),
+        "created_asc": asc(RoomProject.created_at),
+        "budget_desc": desc(RoomProject.budget),
+        "budget_asc": asc(RoomProject.budget),
+    }[sort]
+    items = (
+        query.order_by(order_clause, desc(RoomProject.id))
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+    response.headers["X-Total-Count"] = str(total)
+    response.headers["X-Page"] = str(page)
+    response.headers["X-Limit"] = str(limit)
+    return items
 
 
 @router.get("/{project_id}", response_model=RoomProjectResponse)
@@ -97,6 +124,49 @@ def get_project_analysis(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project analysis not found")
 
     return payload
+
+
+@router.get(
+    "/{project_id}/analysis/runs",
+    response_model=List[ProjectAnalysisRunResponse],
+)
+def get_project_analysis_runs(
+    project_id: int,
+    response: Response,
+    limit: int = Query(default=10, ge=1, le=50),
+    page: int = Query(default=1, ge=1),
+    status_filter: Literal["processing", "succeeded", "failed"] | None = Query(
+        default=None,
+        alias="status",
+    ),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return recent analysis runs for a project to support QA and product tracing."""
+    project = (
+        db.query(RoomProject)
+        .filter(RoomProject.id == project_id, RoomProject.user_id == current_user.id)
+        .first()
+    )
+
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    query = db.query(ProjectAnalysisRun).filter(ProjectAnalysisRun.project_id == project_id)
+    if status_filter is not None:
+        query = query.filter(ProjectAnalysisRun.status == status_filter)
+
+    total = query.count()
+    items = (
+        query.order_by(ProjectAnalysisRun.started_at.desc(), ProjectAnalysisRun.id.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+    response.headers["X-Total-Count"] = str(total)
+    response.headers["X-Page"] = str(page)
+    response.headers["X-Limit"] = str(limit)
+    return items
 
 
 @router.put("/{project_id}", response_model=RoomProjectResponse)
@@ -167,17 +237,17 @@ async def upload_project_photo(
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    if file.content_type not in ALLOWED_TYPES:
+    if file.content_type not in ALLOWED_UPLOAD_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only JPG, PNG, and WebP images are allowed",
         )
 
     data = await file.read()
-    if len(data) > MAX_BYTES:
+    if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File too large (max 5MB)",
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large (max {MAX_UPLOAD_BYTES_LABEL})",
         )
 
     ext = (
@@ -190,7 +260,7 @@ async def upload_project_photo(
     filename = f"project_{project_id}_{uuid.uuid4().hex}{ext}"
     (UPLOAD_DIR / filename).write_bytes(data)
 
-    project.photo_url = f"/uploads/{filename}"
+    project.photo_url = build_public_asset_url(f"/uploads/{filename}")
     db.commit()
     db.refresh(project)
     return project
@@ -200,6 +270,7 @@ async def upload_project_photo(
 def analyze_project(
     project_id: int,
     analysis_request: ProjectAnalysisRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -213,33 +284,88 @@ def analyze_project(
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    selected_style = resolve_style_for_analysis(
-        db,
-        style_id=analysis_request.style_id,
-        style_slug=analysis_request.style_slug,
-        style_name=analysis_request.style_name,
-    )
-    if selected_style is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Selected style not found")
-
-    if analysis_request.room_type and analysis_request.room_type != project.room_type:
-        project.room_type = analysis_request.room_type
-
-    payload = analyze_project_design(
-        db,
-        project=project,
-        selected_style=selected_style,
+    run = ProjectAnalysisRun(
+        project_id=project.id,
+        request_id=getattr(request.state, "request_id", None),
+        status="processing",
+        selected_style_name=analysis_request.style_name or analysis_request.style_slug,
         room_type=analysis_request.room_type or project.room_type,
         intensity=analysis_request.intensity,
         lighting=analysis_request.lighting,
         budget_tier=analysis_request.budget_tier,
-        image_profile=analysis_request.image_profile.model_dump() if analysis_request.image_profile else None,
-        detected_tags=analysis_request.detected_tags,
+        started_at=datetime.utcnow(),
     )
-
+    db.add(run)
     db.commit()
-    db.refresh(project)
-    for recommendation in payload["recommendations"]:
-        db.refresh(recommendation)
+    db.refresh(run)
 
-    return payload
+    try:
+        selected_style = resolve_style_for_analysis(
+            db,
+            style_id=analysis_request.style_id,
+            style_slug=analysis_request.style_slug,
+            style_name=analysis_request.style_name,
+        )
+        if selected_style is None:
+            run.status = "failed"
+            run.error_message = "Selected style not found"
+            run.completed_at = datetime.utcnow()
+            db.commit()
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Selected style not found")
+
+        if analysis_request.room_type and analysis_request.room_type != project.room_type:
+            project.room_type = analysis_request.room_type
+
+        payload = analyze_project_design(
+            db,
+            project=project,
+            selected_style=selected_style,
+            room_type=analysis_request.room_type or project.room_type,
+            intensity=analysis_request.intensity,
+            lighting=analysis_request.lighting,
+            budget_tier=analysis_request.budget_tier,
+            image_profile=analysis_request.image_profile.model_dump() if analysis_request.image_profile else None,
+            detected_tags=analysis_request.detected_tags,
+        )
+
+        selected_score = next(
+            (
+                score["score_value"]
+                for score in payload["style_scores"]
+                if score["style_id"] == selected_style.id
+            ),
+            payload["style_scores"][0]["score_value"] if payload["style_scores"] else None,
+        )
+        run.status = "succeeded"
+        run.selected_style_id = selected_style.id
+        run.selected_style_name = selected_style.name
+        run.top_score = selected_score
+        run.recommendation_count = len(payload["recommendations"])
+        run.error_message = None
+        run.completed_at = datetime.utcnow()
+
+        db.commit()
+        db.refresh(project)
+        for recommendation in payload["recommendations"]:
+            db.refresh(recommendation)
+
+        return payload
+    except HTTPException:
+        if run.status == "processing":
+            db.rollback()
+            persisted_run = db.get(ProjectAnalysisRun, run.id)
+            if persisted_run is not None:
+                persisted_run.status = "failed"
+                persisted_run.error_message = "Analysis request failed"
+                persisted_run.completed_at = datetime.utcnow()
+                db.commit()
+        raise
+    except Exception as exc:
+        db.rollback()
+        persisted_run = db.get(ProjectAnalysisRun, run.id)
+        if persisted_run is not None:
+            persisted_run.status = "failed"
+            persisted_run.error_message = str(exc)[:500]
+            persisted_run.completed_at = datetime.utcnow()
+            db.commit()
+        raise

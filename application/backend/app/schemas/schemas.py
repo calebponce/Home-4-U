@@ -1,6 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List, Literal
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from typing import Optional, List, Literal, Annotated
 from datetime import datetime
+
+RoomTypeValue = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 
 # User Schemas
 class UserCreate(BaseModel):
@@ -28,11 +30,11 @@ class TokenData(BaseModel):
 
 # RoomProject Schemas
 class RoomProjectCreate(BaseModel):
-    room_type: str
+    room_type: RoomTypeValue
 
 class RoomProjectUpdate(BaseModel):
-    room_type: Optional[str] = None
-    budget: Optional[float] = None
+    room_type: Optional[RoomTypeValue] = None
+    budget: Optional[float] = Field(default=None, ge=0.0)
 
 class RoomProjectResponse(BaseModel):
     id: int
@@ -110,8 +112,8 @@ class ScoreCalculationRequest(BaseModel):
 # Recommendation Schemas
 class RecommendationCreate(BaseModel):
     description: str
-    priority_score: float
-    estimated_cost: float
+    priority_score: float = Field(ge=0.0)
+    estimated_cost: float = Field(ge=0.0)
 
 class RecommendationResponse(BaseModel):
     id: int
@@ -205,6 +207,27 @@ class ProjectAnalysisResponse(BaseModel):
     style_scores: List[StyleScoreDetail]
     recommendations: List[RecommendationResponse]
     shopping_plan: List[ShoppingPlanItem] = []
+
+
+class ProjectAnalysisRunResponse(BaseModel):
+    id: int
+    project_id: int
+    request_id: Optional[str] = None
+    status: str
+    selected_style_id: Optional[int] = None
+    selected_style_name: Optional[str] = None
+    room_type: str
+    intensity: int
+    lighting: str
+    budget_tier: str
+    top_score: Optional[float] = None
+    recommendation_count: int
+    error_message: Optional[str] = None
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 # ProductItem Schemas
 class ProductItemResponse(BaseModel):

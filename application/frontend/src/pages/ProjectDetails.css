@@ -88,6 +88,51 @@
   margin-top: 0;
 }
 
+.project-status-stack {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.project-status-banner {
+  display: flex;
+  align-items: center;
+  min-height: 3.25rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--pd-border);
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: var(--pd-shadow);
+  line-height: 1.5;
+}
+
+.project-status-banner--error {
+  border-color: rgb(239 68 68 / 0.28);
+  background: linear-gradient(180deg, rgb(127 29 29 / 0.42), rgb(69 10 10 / 0.48));
+}
+
+.project-status-banner--success {
+  border-color: rgb(var(--pd-accent-rgb) / 0.28);
+  background: linear-gradient(180deg, rgb(16 72 61 / 0.42), rgb(5 46 37 / 0.5));
+}
+
+.project-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.project-empty-state {
+  display: grid;
+  gap: 1rem;
+  padding: 1.15rem;
+  border-radius: 28px;
+  border: 1px solid var(--pd-border);
+  background: var(--pd-surface);
+  box-shadow: var(--pd-shadow);
+  backdrop-filter: blur(18px);
+}
+
 .canvas-grid {
   display: grid;
   grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);

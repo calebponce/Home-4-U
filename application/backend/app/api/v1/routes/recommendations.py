@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Literal
 
 from app.core.database import get_db
 from app.models.database import Recommendation, RoomProject, ResemblanceScore
@@ -49,6 +50,11 @@ def create_recommendation(
 @router.get("/project/{project_id}", response_model=List[RecommendationResponse])
 def get_project_recommendations(
     project_id: int,
+    response: Response,
+    limit: int = Query(default=20, ge=1, le=100),
+    page: int = Query(default=1, ge=1),
+    status_filter: Literal["all", "open", "completed"] = Query(default="all", alias="status"),
+    sort: Literal["priority_desc", "priority_asc", "created_desc", "created_asc", "cost_desc", "cost_asc"] = Query(default="priority_desc"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -65,10 +71,32 @@ def get_project_recommendations(
             detail="Project not found"
         )
     
-    recommendations = db.query(Recommendation).filter(
+    query = db.query(Recommendation).filter(
         Recommendation.room_project_id == project_id
-    ).order_by(Recommendation.priority_score.desc()).all()
-    
+    )
+    if status_filter == "open":
+        query = query.filter(Recommendation.is_completed.is_(False))
+    elif status_filter == "completed":
+        query = query.filter(Recommendation.is_completed.is_(True))
+
+    total = query.count()
+    order_clause = {
+        "priority_desc": desc(Recommendation.priority_score),
+        "priority_asc": asc(Recommendation.priority_score),
+        "created_desc": desc(Recommendation.created_at),
+        "created_asc": asc(Recommendation.created_at),
+        "cost_desc": desc(Recommendation.estimated_cost),
+        "cost_asc": asc(Recommendation.estimated_cost),
+    }[sort]
+    recommendations = (
+        query.order_by(order_clause, desc(Recommendation.id))
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+    response.headers["X-Total-Count"] = str(total)
+    response.headers["X-Page"] = str(page)
+    response.headers["X-Limit"] = str(limit)
     return recommendations
 
 @router.put("/{recommendation_id}/complete", response_model=RecommendationResponse)

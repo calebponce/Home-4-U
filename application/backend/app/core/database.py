@@ -1,42 +1,25 @@
-import os
 import logging
-from pathlib import Path
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+from app.core.settings import APP_ENV, DATABASE_URL, DEFAULT_DB_PATH, IS_SQLITE
+
 logger = logging.getLogger(__name__)
+if IS_SQLITE:
+    DEFAULT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# ---------------------------------------------------------------------------
-# Database path resolution
-# ---------------------------------------------------------------------------
-# In PRODUCTION the DB lives *outside* the git repo so `git pull` can never
-# delete it.  Set HOME4U_ENV=production in the systemd unit (or export it)
-# to activate this behaviour.
-#
-# In DEVELOPMENT the DB stays inside the repo for convenience.
-# ---------------------------------------------------------------------------
-_ENV = os.getenv("HOME4U_ENV", "development")
-
-if _ENV == "production":
-    _PROD_DATA_DIR = Path(os.getenv("HOME4U_DATA_DIR", "/home/ec2-user/data"))
-    _PROD_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    _DEFAULT_DB_PATH = _PROD_DATA_DIR / "home4u.db"
-else:
-    # Keep the dev default inside the repo (application/backend/home4u.db)
-    _DEFAULT_DB_PATH = Path(__file__).resolve().parents[2] / "home4u.db"
-
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    f"sqlite:///{_DEFAULT_DB_PATH}",
+logger.info(
+    "Database backend configured as %s (env=%s, sqlite_path=%s)",
+    DATABASE_URL.split(":", 1)[0],
+    APP_ENV,
+    DEFAULT_DB_PATH if IS_SQLITE else "n/a",
 )
-
-logger.info("Database path: %s (env=%s)", _DEFAULT_DB_PATH, _ENV)
 
 # Create engine
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
+    connect_args={"check_same_thread": False} if IS_SQLITE else {},
 )
 
 # Create session factory
@@ -67,7 +50,7 @@ def _run_sqlite_compat_migrations():
     Lightweight compatibility migrations for local SQLite.
     Keeps older dev DB files usable when model columns are added.
     """
-    if "sqlite" not in DATABASE_URL:
+    if not IS_SQLITE:
         return
 
     with engine.begin() as conn:

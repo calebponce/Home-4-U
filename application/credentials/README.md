@@ -1,6 +1,7 @@
 # Home4U Cloud Credentials
 
-> **IMPORTANT**: This folder contains all credentials and files needed to access the Home4U cloud infrastructure. Follow the steps below exactly as written.
+> **IMPORTANT**: This folder documents cloud access for Home4U, but live private keys are not distributed through the repository.
+> Treat any PEM file that was previously committed here as compromised and rotate it in AWS before further use.
 >
 > Current host values:
 > - Elastic IP: `18.225.42.247`
@@ -14,23 +15,23 @@
 
 ## Quick Start (5 Minutes)
 
-### Step 1: Download PEM Key
-1. Go to this folder in GitHub
-2. Click on `home4u-key.pem`
-3. Click "Download" button
+### Step 1: Obtain the PEM Key Securely
+1. Get the current PEM key from the Team Lead through an approved secure channel
+2. Do not download or reuse an old key from the Git repository
+3. Verify you are using the rotated replacement key before connecting
 
-### Step 2: Set Up PEM Key (macOS/Linux)
+### Step 2: Set Up the Rotated Key (macOS/Linux)
 ```bash
 # Open Terminal and navigate to downloaded file
-cd ~/Downloads
+cd ~/.ssh
 
 # Set correct permissions
-chmod 400 home4u-key.pem
+chmod 400 home4u-rotated
 ```
 
 ### Step 3: Connect to Server
 ```bash
-ssh -i home4u-key.pem ec2-user@18.225.42.247
+ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247
 ```
 
 ### Step 4: Access Database
@@ -82,9 +83,9 @@ sqlite3 /home/ec2-user/data/home4u.db
 
 ### Windows Users (Using PuTTY)
 
-1. **Download PEM Key** from this folder
+1. **Obtain the rotated key** through an approved secure channel
 2. **Convert PEM to PPK** using PuTTYgen:
-   - Open PuTTYgen → Load → Select home4u-key.pem → Save private key
+   - Open PuTTYgen → Load → Select `home4u-rotated` → Save private key
 3. **Connect with PuTTY**:
    - Host: `ec2-user@18.225.42.247`
    - Port: 22
@@ -92,25 +93,23 @@ sqlite3 /home/ec2-user/data/home4u.db
 
 ### macOS / Linux Users
 
-#### Step 1: Download the PEM Key
-1. Navigate to this folder in the GitHub repository
-2. Click on `home4u-key.pem`
-3. Click the "Download" button
-4. Save to your Downloads folder
+#### Step 1: Obtain the Rotated Key
+1. Request the current PEM key from the Team Lead through an approved secure channel
+2. Save the rotated key to your `~/.ssh` folder
 
 #### Step 2: Set Permissions
 Open Terminal and run:
 
 ```bash
-cd ~/Downloads
-chmod 400 home4u-key.pem
+cd ~/.ssh
+chmod 400 home4u-rotated
 ```
 
 #### Step 3: Connect to EC2
 Run this command in Terminal:
 
 ```bash
-ssh -i ~/Downloads/home4u-key.pem ec2-user@18.225.42.247
+ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247
 ```
 
 **Expected Result:**
@@ -166,28 +165,28 @@ sqlite3 /home/ec2-user/data/home4u.db
 
 ```bash
 # Navigate to where you saved the file
-cd ~/Downloads
+cd ~/.ssh
 
 # Set permissions (REQUIRED - otherwise SSH will fail)
-chmod 400 home4u-key.pem
+chmod 400 home4u-rotated
 
 # Test SSH connection
-ssh -i home4u-key.pem ec2-user@18.225.42.247
+ssh -i home4u-rotated ec2-user@18.225.42.247
 ```
 
 ### For Windows (PowerShell)
 
 ```powershell
 # Set permissions
-icacls home4u-key.pem /inheritance:r
-icacls home4u-key.pem /grant:r "$($env:USERNAME):(R)"
+icacls home4u-rotated /inheritance:r
+icacls home4u-rotated /grant:r "$($env:USERNAME):(R)"
 ```
 
 ### For Windows (Using Git Bash)
 
 ```bash
-chmod 400 home4u-key.pem
-ssh -i home4u-key.pem ec2-user@18.225.42.247
+chmod 400 home4u-rotated
+ssh -i home4u-rotated ec2-user@18.225.42.247
 ```
 
 ---
@@ -200,7 +199,7 @@ ssh -i home4u-key.pem ec2-user@18.225.42.247
 
 **Solution:**
 ```bash
-chmod 400 home4u-key.pem
+chmod 400 ~/.ssh/home4u-rotated
 ```
 
 ---
@@ -259,7 +258,7 @@ sudo yum install -y sqlite
 
 | Task | Command |
 |------|---------|
-| **SSH Connect** | `ssh -i home4u-key.pem ec2-user@18.225.42.247` |
+| **SSH Connect** | `ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247` |
 | **Open App** | `http://18.225.42.247/` |
 | **List users** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"` |
 | **Count projects** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"` |
@@ -272,9 +271,9 @@ sudo yum install -y sqlite
 ## What to Do If Still Having Issues
 
 1. **Double-check the IP address**: Make sure you're using `18.225.42.247`
-2. **Verify PEM file location**: Use the full path like `~/Downloads/home4u-key.pem`
-3. **Check permissions**: Run `ls -la home4u-key.pem` - should show `-r--------`
-4. **Try with verbose mode**: `ssh -v -i home4u-key.pem ec2-user@18.225.42.247`
+2. **Verify key file location**: Use the full path like `~/.ssh/home4u-rotated`
+3. **Check permissions**: Run `ls -la ~/.ssh/home4u-rotated` - should show `-r--------`
+4. **Try with verbose mode**: `ssh -v -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247`
 
 ---
 
@@ -292,7 +291,7 @@ If you have followed all steps exactly and still cannot connect:
 | File | Description |
 |------|-------------|
 | `README.md` | This instruction file |
-| `home4u-key.pem` | SSH private key for EC2 access |
+| `home4u-rotated` | Current SSH private key for EC2 access, distributed out-of-band |
 
 ---
 

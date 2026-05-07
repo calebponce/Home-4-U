@@ -2,9 +2,8 @@
 Seed script to populate initial data into the database.
 Run this script after starting the database to add default styles and tags.
 """
-from sqlalchemy.orm import Session
-from app.core.database import SessionLocal, engine
-from app.models.database import Base, Style, Tag, StyleTag, User
+from app.core.database import SessionLocal, init_db
+from app.models.database import Style, Tag, StyleTag, User
 from app.utils.auth import get_password_hash
 
 # Default styles for the app
@@ -59,8 +58,7 @@ TEST_USERS = [
 
 def seed_database():
     """Seed the database with initial data."""
-    # Create tables
-    Base.metadata.create_all(bind=engine)
+    init_db()
     
     db = SessionLocal()
     
@@ -119,4 +117,3 @@ def seed_database():
 
 if __name__ == "__main__":
     seed_database()
-

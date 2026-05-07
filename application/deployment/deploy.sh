@@ -5,6 +5,17 @@
 
 set -e
 
+ENV_DIR="/etc/home4u"
+ENV_FILE="$ENV_DIR/home4u.env"
+
+require_production_secret() {
+  if [ ! -s "$ENV_FILE" ] || ! grep -Eq '^[[:space:]]*HOME4U_SECRET_KEY=.+' "$ENV_FILE"; then
+    echo "FATAL: $ENV_FILE is missing HOME4U_SECRET_KEY."
+    echo "Create the file and add a long random secret before continuing with production bootstrap."
+    exit 1
+  fi
+}
+
 get_imds_meta() {
   local path="$1"
   local token=""
@@ -48,6 +59,8 @@ apt-get install -y nodejs
 
 # Navigate to app directory
 cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
+mkdir -p "$ENV_DIR"
+require_production_secret
 
 # Set up Python virtual environment for backend
 echo "[4/8] Setting up Python virtual environment..."
@@ -58,7 +71,7 @@ pip install -r requirements.txt
 
 # Run seed script to create database and test users
 echo "[5/8] Seeding database..."
-python seed.py
+HOME4U_ENV=production HOME4U_DATA_DIR=/home/ec2-user/data python seed.py
 deactivate
 
 # Build frontend
@@ -147,22 +160,7 @@ systemctl enable nginx
 
 # Create systemd service for backend
 echo "[8/8] Creating systemd service for backend..."
-cat > /etc/systemd/system/home4u-backend.service << 'EOF'
-[Unit]
-Description=Home4U Backend API
-After=network.target
-
-[Service]
-User=ec2-user
-Group=ec2-user
-WorkingDirectory=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
-Environment="PATH=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/.venv/bin"
-ExecStart=/home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
+cp application/deployment/home4u-backend.service /etc/systemd/system/home4u-backend.service
 
 # Enable and start backend service
 systemctl daemon-reload

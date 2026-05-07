@@ -17,9 +17,9 @@ SECRET_KEY = os.getenv("HOME4U_SECRET_KEY", _DEFAULT_SECRET)
 
 if SECRET_KEY == _DEFAULT_SECRET:
     if _ENV == "production":
-        _logger.error(
-            "⚠️  Production is using the default SECRET_KEY. Set HOME4U_SECRET_KEY "
-            "or provide it through /etc/home4u/home4u.env before public deployment."
+        raise RuntimeError(
+            "HOME4U_SECRET_KEY must be set in production. "
+            "Provide it through the environment or /etc/home4u/home4u.env before deployment."
         )
     else:
         _logger.warning(
