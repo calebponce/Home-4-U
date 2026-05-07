@@ -9,7 +9,7 @@ ENV_DIR="/etc/home4u"
 ENV_FILE="$ENV_DIR/home4u.env"
 
 require_production_secret() {
-  if [ ! -s "$ENV_FILE" ] || ! grep -Eq '^[[:space:]]*HOME4U_SECRET_KEY=.+' "$ENV_FILE"; then
+  if ! sudo test -s "$ENV_FILE" || ! sudo grep -Eq '^[[:space:]]*HOME4U_SECRET_KEY=.+' "$ENV_FILE"; then
     echo "FATAL: $ENV_FILE is missing HOME4U_SECRET_KEY."
     echo "Create the file and add a long random secret before continuing with production bootstrap."
     exit 1
