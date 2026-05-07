@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import uuid
 from datetime import datetime
@@ -7,7 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status, UploadFile, File
 from sqlalchemy import asc, desc
 from sqlalchemy.orm import Session
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from app.core.database import get_db
 from app.core.settings import (
@@ -112,7 +110,7 @@ def get_projects(
     response: Response,
     limit: int = Query(default=20, ge=1, le=100),
     page: int = Query(default=1, ge=1),
-    room_type: str | None = Query(default=None),
+    room_type: Optional[str] = Query(default=None),
     sort: Literal["created_desc", "created_asc", "budget_desc", "budget_asc"] = Query(default="created_desc"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -192,7 +190,7 @@ def get_project_analysis_runs(
     response: Response,
     limit: int = Query(default=10, ge=1, le=50),
     page: int = Query(default=1, ge=1),
-    status_filter: Literal["processing", "succeeded", "failed"] | None = Query(
+    status_filter: Optional[Literal["processing", "succeeded", "failed"]] = Query(
         default=None,
         alias="status",
     ),

@@ -1,11 +1,7 @@
-from __future__ import annotations
-
-from __future__ import annotations
-
 import colorsys
 import json
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Optional
 from urllib.parse import quote_plus, urlparse
 
 from sqlalchemy.orm import Session, selectinload
@@ -334,7 +330,7 @@ class RecommendationRefreshContext:
     budget_tier: str
 
 
-def _normalize_key(value: str | None) -> str:
+def _normalize_key(value: Optional[str]) -> str:
     return "".join(ch for ch in (value or "").strip().lower() if ch.isalnum())
 
 
@@ -342,7 +338,7 @@ def _normalize_tag_label(tag_name: str) -> str:
     return (tag_name or "").replace("-", " ").strip().lower()
 
 
-def _decode_hex_color(dominant_hex: str | None) -> tuple[float, float, float] | None:
+def _decode_hex_color(dominant_hex: Optional[str]) -> Optional[tuple[float, float, float]]:
     raw = (dominant_hex or "").strip().lstrip("#")
     if len(raw) != 6:
         return None
@@ -371,7 +367,7 @@ def _build_saved_tag_records(project: RoomProject) -> list[SuggestedTagRecord]:
     return suggested_records
 
 
-def _decode_detected_tags(raw_value: str | None) -> list[str]:
+def _decode_detected_tags(raw_value: Optional[str]) -> list[str]:
     if not raw_value:
         return []
 
@@ -393,7 +389,7 @@ def _decode_detected_tags(raw_value: str | None) -> list[str]:
     return normalized[:12]
 
 
-def _build_image_profile_from_run(run: ProjectAnalysisRun | None) -> dict | None:
+def _build_image_profile_from_run(run: Optional[ProjectAnalysisRun]) -> Optional[dict]:
     if run is None:
         return None
 
@@ -423,7 +419,7 @@ def _build_image_profile_from_run(run: ProjectAnalysisRun | None) -> dict | None
 def _build_saved_tag_records_from_run(
     db: Session,
     *,
-    run: ProjectAnalysisRun | None,
+    run: Optional[ProjectAnalysisRun],
 ) -> list[SuggestedTagRecord]:
     detected_tags = _decode_detected_tags(run.detected_tags_json if run is not None else None)
     if not detected_tags:
@@ -563,7 +559,7 @@ def _build_shopping_sources(search_query: str, retailers: tuple[str, ...]) -> li
     return sources
 
 
-def _retailer_from_url(url: str | None) -> str:
+def _retailer_from_url(url: Optional[str]) -> str:
     if not url:
         return "Retailer"
     host = (urlparse(url).netloc or "").lower()
@@ -683,7 +679,7 @@ def _build_product_matches(
     return matches
 
 
-def _infer_budget_tier_from_value(budget_value: float | None) -> str:
+def _infer_budget_tier_from_value(budget_value: Optional[float]) -> str:
     amount = float(budget_value or 0.0)
     if amount and amount <= 1500:
         return "low"
@@ -747,7 +743,7 @@ def load_saved_project_analysis(
     db: Session,
     *,
     project: RoomProject,
-) -> dict | None:
+) -> Optional[dict]:
     """Rebuild the latest saved analysis payload from persisted project data."""
     saved_scores = (
         db.query(ResemblanceScore)
@@ -838,10 +834,10 @@ def load_saved_project_analysis(
 def resolve_style_for_analysis(
     db: Session,
     *,
-    style_id: int | None = None,
-    style_slug: str | None = None,
-    style_name: str | None = None,
-) -> Style | None:
+    style_id: Optional[int] = None,
+    style_slug: Optional[str] = None,
+    style_name: Optional[str] = None,
+) -> Optional[Style]:
     """Resolve a style from id, slug, or name."""
     styles = (
         db.query(Style)
@@ -877,7 +873,7 @@ def analyze_project_design(
     intensity: int,
     lighting: str,
     budget_tier: str,
-    image_profile: dict | None,
+    image_profile: Optional[dict],
     detected_tags: Iterable[str],
 ) -> dict:
     """

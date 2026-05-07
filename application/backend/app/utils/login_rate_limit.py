@@ -1,9 +1,8 @@
-from __future__ import annotations
-
 import os
 import time
 from collections import defaultdict, deque
 from threading import Lock
+from typing import Optional
 
 from fastapi import Request
 
@@ -42,7 +41,7 @@ class LoginRateLimiter:
         while bucket and now - bucket[0] >= self.window_seconds:
             bucket.popleft()
 
-    def retry_after(self, client_ip: str, email: str) -> int | None:
+    def retry_after(self, client_ip: str, email: str) -> Optional[int]:
         now = time.time()
         identity_key = f"{client_ip}:{email}"
 
