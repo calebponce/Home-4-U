@@ -7,7 +7,10 @@ import {
   extractImageProfile,
   getBudgetAmount,
   inferDetectedTags,
+  normalizeRoomUpload,
   renderConceptPreview,
+  ROOM_UPLOAD_SOURCE_MAX_BYTES,
+  ROOM_UPLOAD_TARGET_MAX_BYTES,
 } from '../utils/workspaceDesign';
 import './Workspace.css';
 
@@ -21,7 +24,6 @@ const ROOM_TYPE_OPTIONS = [
 ];
 
 const ALLOWED_ROOM_UPLOAD_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_ROOM_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 const formatWorkspaceRequestError = (error, stage = 'analyze-room') => {
   const detail = error?.response?.data?.detail;
@@ -38,7 +40,7 @@ const formatWorkspaceRequestError = (error, stage = 'analyze-room') => {
   if (status === 401) return 'Your session expired. Please log in again.';
   if (status === 403) return 'Access denied for this room project.';
   if (status === 404) return detail || 'This room project could not be found.';
-  if (status === 413) return 'The selected room photo is too large. Use an image under 10 MB.';
+  if (status === 413) return 'The selected room photo is too large. Use an image under 20 MB.';
   if (status === 415) return 'Unsupported image format. Upload a PNG, JPG, or WebP file.';
   if (status && status >= 500) return detail || `Server error while trying to ${action}.`;
   if (status && status >= 400) return detail || `Could not ${action}.`;
@@ -311,7 +313,7 @@ const Workspace = () => {
     }, 2000);
   }, []);
 
-  const handleRoomFileChange = (event) => {
+  const handleRoomFileChange = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
@@ -323,20 +325,17 @@ const Workspace = () => {
       return;
     }
 
-    if (file.size > MAX_ROOM_UPLOAD_BYTES) {
-      setWorkspaceNotice('');
-      setWorkspaceError('Room photos must be 10 MB or smaller.');
-      setStatus('Room load failed');
-      return;
-    }
-
     setWorkspaceError('');
     setWorkspaceNotice('');
     setStatus(`Loading ${file.name}...`);
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
+    try {
+      const normalizedUpload = await normalizeRoomUpload(file, {
+        targetMaxBytes: ROOM_UPLOAD_TARGET_MAX_BYTES,
+        maxSourceBytes: ROOM_UPLOAD_SOURCE_MAX_BYTES,
+      });
       if (!isMountedRef.current) return;
+
       clearGenerationTimers();
       setIsGenerating(false);
       setShowSuccessGlow(false);
@@ -344,21 +343,28 @@ const Workspace = () => {
       setProcessingLevel(0);
       setAnalysisResult(null);
       setAnalysisProject(null);
-      setRoomFile(file);
-      setRoomImage(ev.target?.result || null);
+      setRoomFile(normalizedUpload.file);
+      setRoomImage(normalizedUpload.previewUrl || null);
       setGeneratedImage(null);
       setPreviewState('before');
       setSelectedRoomLabel(file.name);
       lastSuccessfulRunRef.current = null;
+      setWorkspaceNotice(normalizedUpload.notice || '');
       setStatus('Room loaded');
-    };
-    reader.onerror = () => {
+    } catch (error) {
       if (!isMountedRef.current) return;
       setWorkspaceNotice('');
-      setWorkspaceError('Could not read the selected image file. Try a different image.');
+      if (error?.message === 'SOURCE_TOO_LARGE') {
+        setWorkspaceError('Room photos over 40 MB are too large to optimize in the browser.');
+      } else if (error?.message === 'CANVAS_UNAVAILABLE') {
+        setWorkspaceError('This browser could not optimize the selected image. Try a smaller file.');
+      } else if (error?.message === 'OPTIMIZE_FAILED') {
+        setWorkspaceError('Home4U could not shrink that image enough. Try a slightly smaller photo.');
+      } else {
+        setWorkspaceError('Could not read the selected image file. Try a different image.');
+      }
       setStatus('Room load failed');
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleGenerate = async () => {

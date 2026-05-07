@@ -12,6 +12,7 @@ const {
   projectAnalyzeMock,
   extractImageProfileMock,
   inferDetectedTagsMock,
+  normalizeRoomUploadMock,
   renderConceptPreviewMock,
 } = vi.hoisted(() => ({
   stylesGetAllMock: vi.fn(),
@@ -21,6 +22,7 @@ const {
   projectAnalyzeMock: vi.fn(),
   extractImageProfileMock: vi.fn(),
   inferDetectedTagsMock: vi.fn(),
+  normalizeRoomUploadMock: vi.fn(),
   renderConceptPreviewMock: vi.fn(),
 }));
 
@@ -40,7 +42,10 @@ vi.mock('../utils/workspaceDesign', () => ({
   getBudgetAmount: (tier) => ({ low: 900, medium: 2600, high: 6500 }[tier] || 2600),
   extractImageProfile: extractImageProfileMock,
   inferDetectedTags: inferDetectedTagsMock,
+  normalizeRoomUpload: normalizeRoomUploadMock,
   renderConceptPreview: renderConceptPreviewMock,
+  ROOM_UPLOAD_SOURCE_MAX_BYTES: 40 * 1024 * 1024,
+  ROOM_UPLOAD_TARGET_MAX_BYTES: 20 * 1024 * 1024,
 }));
 
 describe('Workspace accessibility', () => {
@@ -52,6 +57,7 @@ describe('Workspace accessibility', () => {
     projectAnalyzeMock.mockReset();
     extractImageProfileMock.mockReset();
     inferDetectedTagsMock.mockReset();
+    normalizeRoomUploadMock.mockReset();
     renderConceptPreviewMock.mockReset();
     stylesGetAllMock.mockResolvedValue({ data: [] });
     projectCreateMock.mockResolvedValue({
@@ -98,6 +104,12 @@ describe('Workspace accessibility', () => {
       dominant_hex: '#b0a79b',
     });
     inferDetectedTagsMock.mockReturnValue(['neutral', 'clean']);
+    normalizeRoomUploadMock.mockImplementation(async (file) => ({
+      file,
+      previewUrl: 'data:image/png;base64,room-preview',
+      optimized: false,
+      notice: '',
+    }));
     renderConceptPreviewMock.mockResolvedValue('data:image/png;base64,concept');
     vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
       matches: query.includes('prefers-reduced-motion'),
@@ -192,6 +204,45 @@ describe('Workspace accessibility', () => {
     expect(screen.getByText(/room load failed/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /living room/i }));
+  });
+
+  it('accepts normalized room uploads and surfaces the optimization notice', async () => {
+    const { container } = render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/workspace',
+            search: '?style=scandinavian',
+            state: {
+              selectedStyle: {
+                name: 'Scandinavian',
+                slug: 'scandinavian',
+                description: 'Cozy minimalism with natural materials and calm light.',
+              },
+            },
+          },
+        ]}
+      >
+        <Workspace />
+      </MemoryRouter>,
+    );
+
+    normalizeRoomUploadMock.mockResolvedValueOnce({
+      file: new File(['optimized-image'], 'loft-optimized.webp', { type: 'image/webp' }),
+      previewUrl: 'data:image/webp;base64,optimized-preview',
+      optimized: true,
+      notice: 'Large image optimized from 24 MB to 7.6 MB for upload.',
+    });
+
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+
+    const imageFile = new File(['room'], 'loft.png', { type: 'image/png' });
+    fireEvent.change(fileInput, { target: { files: [imageFile] } });
+
+    expect(await screen.findByText(/loaded asset: loft\.png/i)).toBeInTheDocument();
+    expect(await screen.findByText(/large image optimized from 24 mb to 7\.6 mb for upload/i)).toBeInTheDocument();
+    expect(screen.getByText(/room loaded/i)).toBeInTheDocument();
   });
 
   it('restores the previous plan when a rerun fails', async () => {

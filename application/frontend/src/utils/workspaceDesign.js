@@ -22,6 +22,10 @@ const getBudgetAmount = (tier = 'medium') => DEFAULT_BUDGETS[tier] || DEFAULT_BU
 
 const getPosterPalette = (styleKey = '') => STYLE_POSTER_PALETTES[styleKey] || STYLE_POSTER_PALETTES.default;
 
+const ROOM_UPLOAD_TARGET_MAX_BYTES = 20 * 1024 * 1024;
+const ROOM_UPLOAD_SOURCE_MAX_BYTES = 40 * 1024 * 1024;
+const ROOM_UPLOAD_MAX_DIMENSION = 2048;
+
 const supportsCanvas = () => {
   const canvas = document.createElement('canvas');
   return typeof canvas.getContext === 'function';
@@ -36,6 +40,43 @@ const loadImage = (src) => new Promise((resolve, reject) => {
   image.onerror = reject;
   image.src = src;
 });
+
+const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = (event) => resolve(event.target?.result || '');
+  reader.onerror = () => reject(new Error('READ_FAILED'));
+  reader.readAsDataURL(file);
+});
+
+const canvasToBlob = (canvas, type, quality) => new Promise((resolve, reject) => {
+  canvas.toBlob((blob) => {
+    if (blob) {
+      resolve(blob);
+      return;
+    }
+    reject(new Error('ENCODE_FAILED'));
+  }, type, quality);
+});
+
+const formatByteLabel = (size) => {
+  const megabytes = size / (1024 * 1024);
+  if (megabytes >= 1) return `${megabytes.toFixed(megabytes >= 10 ? 0 : 1)} MB`;
+  return `${Math.round(size / 1024)} KB`;
+};
+
+const extensionForType = (type, fallbackName = 'room-image') => {
+  if (type === 'image/png') return '.png';
+  if (type === 'image/webp') return '.webp';
+  if (type === 'image/jpeg') return '.jpg';
+  const name = String(fallbackName || '');
+  const dotIndex = name.lastIndexOf('.');
+  return dotIndex >= 0 ? name.slice(dotIndex) : '.jpg';
+};
+
+const filenameForNormalizedAsset = (name, type) => {
+  const baseName = String(name || 'room-image').replace(/\.[^.]+$/, '');
+  return `${baseName}-optimized${extensionForType(type, name)}`;
+};
 
 const drawCoverImage = (ctx, image, width, height) => {
   const imageRatio = image.width / image.height;
@@ -89,6 +130,137 @@ const inferDetectedTags = (profile = null) => {
   }
 
   return Array.from(inferred);
+};
+
+const normalizeRoomUpload = async (
+  file,
+  {
+    targetMaxBytes = ROOM_UPLOAD_TARGET_MAX_BYTES,
+    maxSourceBytes = ROOM_UPLOAD_SOURCE_MAX_BYTES,
+    maxDimension = ROOM_UPLOAD_MAX_DIMENSION,
+  } = {},
+) => {
+  if (!file) throw new Error('NO_FILE');
+  if (file.size > maxSourceBytes) throw new Error('SOURCE_TOO_LARGE');
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await loadImage(objectUrl);
+    const shouldResize = Math.max(image.width || 0, image.height || 0) > maxDimension;
+    if (file.size <= targetMaxBytes && !shouldResize) {
+      return {
+        file,
+        previewUrl: await readFileAsDataUrl(file),
+        optimized: false,
+        notice: '',
+      };
+    }
+
+    if (!supportsCanvas()) throw new Error('CANVAS_UNAVAILABLE');
+
+    const preferredTypes = file.type === 'image/png'
+      ? ['image/webp', 'image/png', 'image/jpeg']
+      : file.type === 'image/webp'
+        ? ['image/webp', 'image/jpeg']
+        : ['image/jpeg', 'image/webp'];
+    const qualitySteps = [0.92, 0.86, 0.8, 0.74, 0.68, 0.6];
+
+    let width = image.width || maxDimension;
+    let height = image.height || maxDimension;
+    if (Math.max(width, height) > maxDimension) {
+      const scale = maxDimension / Math.max(width, height);
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('CANVAS_UNAVAILABLE');
+
+    let bestBlob = null;
+    let bestType = preferredTypes[0];
+    let attemptWidth = width;
+    let attemptHeight = height;
+
+    while (true) {
+      canvas.width = attemptWidth;
+      canvas.height = attemptHeight;
+      ctx.clearRect(0, 0, attemptWidth, attemptHeight);
+      ctx.drawImage(image, 0, 0, attemptWidth, attemptHeight);
+
+      for (const type of preferredTypes) {
+        if (type === 'image/png') {
+          const blob = await canvasToBlob(canvas, type);
+          if (!bestBlob || blob.size < bestBlob.size) {
+            bestBlob = blob;
+            bestType = type;
+          }
+          if (blob.size <= targetMaxBytes) {
+            const normalizedFile = new File(
+              [blob],
+              filenameForNormalizedAsset(file.name, type),
+              { type, lastModified: file.lastModified },
+            );
+            return {
+              file: normalizedFile,
+              previewUrl: await readFileAsDataUrl(normalizedFile),
+              optimized: true,
+              notice: `Large image optimized from ${formatByteLabel(file.size)} to ${formatByteLabel(blob.size)} for upload.`,
+            };
+          }
+          continue;
+        }
+
+        for (const quality of qualitySteps) {
+          const blob = await canvasToBlob(canvas, type, quality);
+          if (!bestBlob || blob.size < bestBlob.size) {
+            bestBlob = blob;
+            bestType = type;
+          }
+          if (blob.size <= targetMaxBytes) {
+            const normalizedFile = new File(
+              [blob],
+              filenameForNormalizedAsset(file.name, type),
+              { type, lastModified: file.lastModified },
+            );
+            return {
+              file: normalizedFile,
+              previewUrl: await readFileAsDataUrl(normalizedFile),
+              optimized: true,
+              notice: `Large image optimized from ${formatByteLabel(file.size)} to ${formatByteLabel(blob.size)} for upload.`,
+            };
+          }
+        }
+      }
+
+      if (Math.max(attemptWidth, attemptHeight) < 960) {
+        break;
+      }
+
+      attemptWidth = Math.max(1, Math.round(attemptWidth * 0.85));
+      attemptHeight = Math.max(1, Math.round(attemptHeight * 0.85));
+    }
+
+    if (bestBlob) {
+      const normalizedFile = new File(
+        [bestBlob],
+        filenameForNormalizedAsset(file.name, bestType),
+        { type: bestType, lastModified: file.lastModified },
+      );
+      if (normalizedFile.size <= targetMaxBytes) {
+        return {
+          file: normalizedFile,
+          previewUrl: await readFileAsDataUrl(normalizedFile),
+          optimized: true,
+          notice: `Large image optimized from ${formatByteLabel(file.size)} to ${formatByteLabel(bestBlob.size)} for upload.`,
+        };
+      }
+    }
+
+    throw new Error('OPTIMIZE_FAILED');
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 };
 
 const extractImageProfile = async (sourceUrl) => {
@@ -296,5 +468,8 @@ export {
   extractImageProfile,
   getBudgetAmount,
   inferDetectedTags,
+  normalizeRoomUpload,
   renderConceptPreview,
+  ROOM_UPLOAD_SOURCE_MAX_BYTES,
+  ROOM_UPLOAD_TARGET_MAX_BYTES,
 };

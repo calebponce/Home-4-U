@@ -56,7 +56,7 @@ UPLOAD_DIR = _resolve_upload_dir()
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 PUBLIC_ASSET_BASE_URL = _normalize_public_asset_base()
-MAX_UPLOAD_BYTES = _read_int_env("HOME4U_MAX_UPLOAD_BYTES", 10 * 1024 * 1024, 1024)
+MAX_UPLOAD_BYTES = _read_int_env("HOME4U_MAX_UPLOAD_BYTES", 20 * 1024 * 1024, 1024)
 MAX_UPLOAD_BYTES_LABEL = _format_upload_limit(MAX_UPLOAD_BYTES)
 DEFAULT_DB_PATH = _resolve_default_db_path()
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")

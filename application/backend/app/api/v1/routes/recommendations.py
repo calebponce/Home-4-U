@@ -11,7 +11,10 @@ from app.schemas.schemas import (
 )
 from app.utils.dependencies import get_current_user
 from app.models.database import User
-from app.services.project_analysis import refresh_project_recommendations
+from app.services.project_analysis import (
+    build_saved_recommendation_context,
+    refresh_project_recommendations,
+)
 
 router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
@@ -171,6 +174,7 @@ def generate_recommendations(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Please calculate style scores first"
         )
+    saved_context = build_saved_recommendation_context(db, project=project)
 
     db.query(Recommendation).filter(
         Recommendation.room_project_id == project_id
@@ -190,10 +194,10 @@ def generate_recommendations(
         project=project,
         selected_style=top_styles[0].style,
         style_scores=style_scores,
-        suggested_tags=[],
-        intensity=60,
-        lighting="warm",
-        budget_tier="medium",
+        suggested_tags=saved_context.suggested_tags,
+        intensity=saved_context.intensity,
+        lighting=saved_context.lighting,
+        budget_tier=saved_context.budget_tier,
     )
 
     db.commit()

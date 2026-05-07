@@ -65,6 +65,24 @@ def _run_sqlite_compat_migrations():
         if "category" not in product_item_columns:
             conn.execute(text("ALTER TABLE product_items ADD COLUMN category VARCHAR(100)"))
 
+        analysis_run_columns = _existing_columns(conn, "project_analysis_runs")
+        if "image_width" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_width INTEGER"))
+        if "image_height" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_height INTEGER"))
+        if "image_aspect_ratio" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_aspect_ratio FLOAT"))
+        if "image_average_brightness" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_average_brightness FLOAT"))
+        if "image_average_saturation" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_average_saturation FLOAT"))
+        if "image_warmth_bias" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_warmth_bias FLOAT"))
+        if "image_dominant_hex" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_dominant_hex VARCHAR(32)"))
+        if "detected_tags_json" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN detected_tags_json TEXT"))
+
         # Seeding and tag matching depend on these join tables existing.
         conn.execute(text(
             "CREATE TABLE IF NOT EXISTS style_tags (\n"

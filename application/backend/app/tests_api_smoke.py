@@ -304,17 +304,17 @@ def test_recommendation_routes_support_generate_and_complete():
             json={
                 "style_id": style.id,
                 "room_type": "Living Room",
-                "intensity": 62,
-                "lighting": "warm",
-                "budget_tier": "medium",
+                "intensity": 82,
+                "lighting": "cool",
+                "budget_tier": "high",
                 "image_profile": {
                     "width": 1200,
                     "height": 900,
                     "aspect_ratio": 1.333,
                     "average_brightness": 0.57,
                     "average_saturation": 0.24,
-                    "warmth_bias": 0.19,
-                    "dominant_hex": "#d7cfc2",
+                    "warmth_bias": -0.16,
+                    "dominant_hex": "#6f8297",
                 },
                 "detected_tags": ["neutral", "cozy"],
             },
@@ -322,7 +322,7 @@ def test_recommendation_routes_support_generate_and_complete():
         assert analysis.status_code == 200, analysis.text
         analysis_payload = analysis.json()
         assert analysis_payload["selected_style"]["name"] == "Warm Minimal"
-        assert len(analysis_payload["recommendations"]) >= 3
+        assert len(analysis_payload["recommendations"]) >= 4
 
         recommendation_list = client.get(
             f"/recommendations/project/{project.id}",
@@ -348,7 +348,24 @@ def test_recommendation_routes_support_generate_and_complete():
         )
         assert regenerated.status_code == 200, regenerated.text
         regenerated_payload = regenerated.json()
-        assert len(regenerated_payload) >= 3
+        assert len(regenerated_payload) >= 4
+        assert any(
+            "crisp, bright, and focused" in recommendation["description"]
+            for recommendation in regenerated_payload
+        )
+        assert any(
+            "statement furnishing" in recommendation["description"]
+            for recommendation in regenerated_payload
+        )
+
+        saved_analysis = client.get(
+            f"/projects/{project.id}/analysis",
+            headers=headers,
+        )
+        assert saved_analysis.status_code == 200, saved_analysis.text
+        saved_analysis_payload = saved_analysis.json()
+        assert saved_analysis_payload["image_profile"]["dominant_hex"] == "#6f8297"
+        assert saved_analysis_payload["image_profile"]["warmth_bias"] == -0.16
 
         completed = client.put(
             f"/recommendations/{regenerated_payload[0]['id']}/complete",
@@ -421,6 +438,8 @@ def test_analysis_run_history_tracks_failed_and_successful_attempts():
         assert payload[0]["status"] == "succeeded"
         assert payload[0]["selected_style_name"] == "Quiet Contemporary"
         assert payload[0]["recommendation_count"] >= 3
+        assert payload[0]["image_profile"] is None
+        assert payload[0]["detected_tags"] == ["neutral", "clean"]
         assert payload[1]["request_id"] == failed_request_id
         assert payload[1]["status"] == "failed"
         assert payload[1]["error_message"] == "Selected style not found"

@@ -102,6 +102,8 @@ def test_workspace_analysis():
         assert saved_response.status_code == 200, saved_response.text
         saved_payload = saved_response.json()
         assert saved_payload["selected_style"]["name"] == "Scandinavian"
+        assert saved_payload["image_profile"]["dominant_hex"] == "#d9d2c5"
+        assert saved_payload["image_profile"]["average_brightness"] == 0.68
         assert saved_payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
         assert len(saved_payload["shopping_plan"][0]["products"]) >= 1
 
@@ -116,6 +118,8 @@ def test_workspace_analysis():
         assert runs[0]["selected_style_name"] == "Scandinavian"
         assert runs[0]["recommendation_count"] >= 3
         assert runs[0]["request_id"] == request_id
+        assert runs[0]["image_profile"]["dominant_hex"] == "#d9d2c5"
+        assert runs[0]["detected_tags"] == ["neutral", "clean"]
     finally:
         db.close()
 

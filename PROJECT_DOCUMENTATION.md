@@ -254,7 +254,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | DELETE | `/projects/{project_id}` | Protected | `projects.py::delete_project` | - |
 | GET | `/projects/{project_id}/analysis` | Protected | `projects.py::get_project_analysis` | - |
 | POST | `/projects/{project_id}/analysis` | Protected | `projects.py::analyze_project` | Persists room tags, style scores, and recommendations for Workspace. |
-| POST | `/projects/{project_id}/photo` | Protected | `projects.py::upload_project_photo` | Accepts JPG, PNG, and WebP uploads up to 5MB. |
+| POST | `/projects/{project_id}/photo` | Protected | `projects.py::upload_project_photo` | Accepts JPG, PNG, and WebP uploads up to 20MB. Larger images can also be normalized client-side before upload in Workspace. |
 | POST | `/recommendations/` | Protected | `recommendations.py::create_recommendation` | Uses a required `project_id` query parameter. |
 | POST | `/recommendations/generate/{project_id}` | Protected | `recommendations.py::generate_recommendations` | Builds a fresh plan from saved resemblance scores. |
 | GET | `/recommendations/project/{project_id}` | Protected | `recommendations.py::get_project_recommendations` | - |

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import colorsys
+import json
 from dataclasses import dataclass
 from typing import Iterable
 from urllib.parse import quote_plus, urlparse
@@ -8,6 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.database import (
     ProductItem,
+    ProjectAnalysisRun,
     Recommendation,
     ResemblanceScore,
     RoomProject,
@@ -321,8 +324,202 @@ class SuggestedTagRecord:
     source: str
 
 
+@dataclass
+class RecommendationRefreshContext:
+    suggested_tags: list[SuggestedTagRecord]
+    intensity: int
+    lighting: str
+    budget_tier: str
+
+
 def _normalize_key(value: str | None) -> str:
     return "".join(ch for ch in (value or "").strip().lower() if ch.isalnum())
+
+
+def _normalize_tag_label(tag_name: str) -> str:
+    return (tag_name or "").replace("-", " ").strip().lower()
+
+
+def _decode_hex_color(dominant_hex: str | None) -> tuple[float, float, float] | None:
+    raw = (dominant_hex or "").strip().lstrip("#")
+    if len(raw) != 6:
+        return None
+
+    try:
+        red = int(raw[0:2], 16) / 255.0
+        green = int(raw[2:4], 16) / 255.0
+        blue = int(raw[4:6], 16) / 255.0
+    except ValueError:
+        return None
+
+    return red, green, blue
+
+
+def _build_saved_tag_records(project: RoomProject) -> list[SuggestedTagRecord]:
+    suggested_records = [
+        SuggestedTagRecord(
+            tag=room_tag.tag,
+            confidence=0.82 if room_tag.is_confirmed else 0.64,
+            source="saved-analysis",
+        )
+        for room_tag in project.room_tags
+        if room_tag.tag is not None
+    ]
+    suggested_records.sort(key=lambda item: item.confidence, reverse=True)
+    return suggested_records
+
+
+def _decode_detected_tags(raw_value: str | None) -> list[str]:
+    if not raw_value:
+        return []
+
+    try:
+        parsed = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(parsed, list):
+        return []
+
+    normalized = []
+    for item in parsed:
+        if not isinstance(item, str):
+            continue
+        cleaned = item.strip()
+        if cleaned:
+            normalized.append(cleaned)
+    return normalized[:12]
+
+
+def _build_image_profile_from_run(run: ProjectAnalysisRun | None) -> dict | None:
+    if run is None:
+        return None
+
+    values = {
+        "width": run.image_width,
+        "height": run.image_height,
+        "aspect_ratio": run.image_aspect_ratio,
+        "average_brightness": run.image_average_brightness,
+        "average_saturation": run.image_average_saturation,
+        "warmth_bias": run.image_warmth_bias,
+        "dominant_hex": run.image_dominant_hex,
+    }
+    if all(value is None for value in values.values()):
+        return None
+
+    return {
+        "width": int(values["width"] or 0),
+        "height": int(values["height"] or 0),
+        "aspect_ratio": float(values["aspect_ratio"] or 1.0),
+        "average_brightness": float(values["average_brightness"] or 0.0),
+        "average_saturation": float(values["average_saturation"] or 0.0),
+        "warmth_bias": float(values["warmth_bias"] or 0.0),
+        "dominant_hex": values["dominant_hex"],
+    }
+
+
+def _build_saved_tag_records_from_run(
+    db: Session,
+    *,
+    run: ProjectAnalysisRun | None,
+) -> list[SuggestedTagRecord]:
+    detected_tags = _decode_detected_tags(run.detected_tags_json if run is not None else None)
+    if not detected_tags:
+        return []
+
+    available_tags = {tag.name.lower(): tag for tag in db.query(Tag).all()}
+    fallback_records = []
+    seen_tag_ids: set[int] = set()
+    for tag_name in detected_tags:
+        tag = available_tags.get(tag_name.lower())
+        if tag is None or tag.id in seen_tag_ids:
+            continue
+        seen_tag_ids.add(tag.id)
+        fallback_records.append(
+            SuggestedTagRecord(tag=tag, confidence=0.63, source="saved-run")
+        )
+    return fallback_records
+
+
+def _matched_tag_names_for_style(
+    *,
+    style: Style,
+    suggested_records: list[SuggestedTagRecord],
+    limit: int = 4,
+) -> list[str]:
+    style_tag_names = {
+        style_tag.tag.name.lower(): style_tag.tag.name
+        for style_tag in style.style_tags
+        if style_tag.tag is not None
+    }
+    return [
+        record.tag.name
+        for record in suggested_records
+        if record.tag.name.lower() in style_tag_names
+    ][:limit]
+
+
+def _build_style_scores_payload(
+    *,
+    scores: list[ResemblanceScore],
+    suggested_records: list[SuggestedTagRecord],
+) -> list[dict]:
+    payload = []
+    ranked_scores = sorted(scores, key=lambda item: item.score_value, reverse=True)
+    for score in ranked_scores:
+        style = score.style
+        if style is None:
+            continue
+        payload.append(
+            {
+                "style_id": style.id,
+                "style_name": style.name,
+                "score_value": round(float(score.score_value or 0.0), 1),
+                "matched_tags": _matched_tag_names_for_style(
+                    style=style,
+                    suggested_records=suggested_records,
+                ),
+            }
+        )
+    return payload
+
+
+def build_saved_recommendation_context(
+    db: Session,
+    *,
+    project: RoomProject,
+) -> RecommendationRefreshContext:
+    latest_run = (
+        db.query(ProjectAnalysisRun)
+        .filter(
+            ProjectAnalysisRun.project_id == project.id,
+            ProjectAnalysisRun.status == "succeeded",
+        )
+        .order_by(ProjectAnalysisRun.started_at.desc(), ProjectAnalysisRun.id.desc())
+        .first()
+    )
+    if latest_run is None:
+        latest_run = (
+            db.query(ProjectAnalysisRun)
+            .filter(ProjectAnalysisRun.project_id == project.id)
+            .order_by(ProjectAnalysisRun.started_at.desc(), ProjectAnalysisRun.id.desc())
+            .first()
+        )
+
+    suggested_tags = _build_saved_tag_records(project)
+    if not suggested_tags:
+        suggested_tags = _build_saved_tag_records_from_run(db, run=latest_run)
+
+    return RecommendationRefreshContext(
+        suggested_tags=suggested_tags,
+        intensity=latest_run.intensity if latest_run is not None else 60,
+        lighting=latest_run.lighting if latest_run is not None else "warm",
+        budget_tier=(
+            latest_run.budget_tier
+            if latest_run is not None
+            else _infer_budget_tier_from_value(project.budget)
+        ),
+    )
 
 
 def _get_shopping_blueprint(room_type: str) -> list[dict]:
@@ -562,58 +759,42 @@ def load_saved_project_analysis(
     if not saved_scores:
         return None
 
-    saved_room_tags = (
-        db.query(RoomTag)
-        .options(selectinload(RoomTag.tag))
-        .filter(RoomTag.room_project_id == project.id)
-        .all()
-    )
     saved_recommendations = (
         db.query(Recommendation)
         .filter(Recommendation.room_project_id == project.id)
         .order_by(Recommendation.priority_score.desc(), Recommendation.created_at.asc())
         .all()
     )
-
-    suggested_records = [
-        SuggestedTagRecord(
-            tag=room_tag.tag,
-            confidence=0.82 if room_tag.is_confirmed else 0.64,
-            source="saved-analysis",
+    latest_run = (
+        db.query(ProjectAnalysisRun)
+        .filter(
+            ProjectAnalysisRun.project_id == project.id,
+            ProjectAnalysisRun.status == "succeeded",
         )
-        for room_tag in saved_room_tags
-        if room_tag.tag is not None
-    ]
-    suggested_records.sort(key=lambda item: item.confidence, reverse=True)
+        .order_by(ProjectAnalysisRun.started_at.desc(), ProjectAnalysisRun.id.desc())
+        .first()
+    )
+
+    project = (
+        db.query(RoomProject)
+        .options(selectinload(RoomProject.room_tags).selectinload(RoomTag.tag))
+        .filter(RoomProject.id == project.id)
+        .first()
+        or project
+    )
+    suggested_records = _build_saved_tag_records(project)
+    if not suggested_records:
+        suggested_records = _build_saved_tag_records_from_run(db, run=latest_run)
 
     ranked_scores = sorted(saved_scores, key=lambda item: item.score_value, reverse=True)
     selected_style = ranked_scores[0].style
     if selected_style is None:
         return None
 
-    style_scores_payload = []
-    for score in ranked_scores:
-        style = score.style
-        if style is None:
-            continue
-        style_tag_names = {
-            style_tag.tag.name.lower(): style_tag.tag.name
-            for style_tag in style.style_tags
-            if style_tag.tag is not None
-        }
-        matched_names = [
-            record.tag.name
-            for record in suggested_records
-            if record.tag.name.lower() in style_tag_names
-        ][:4]
-        style_scores_payload.append(
-            {
-                "style_id": style.id,
-                "style_name": style.name,
-                "score_value": round(float(score.score_value or 0.0), 1),
-                "matched_tags": matched_names,
-            }
-        )
+    style_scores_payload = _build_style_scores_payload(
+        scores=saved_scores,
+        suggested_records=suggested_records,
+    )
 
     suggested_tags_payload = [
         {
@@ -634,7 +815,7 @@ def load_saved_project_analysis(
         "project": project,
         "selected_style": selected_style,
         "summary": summary,
-        "image_profile": None,
+        "image_profile": _build_image_profile_from_run(latest_run),
         "suggested_tags": suggested_tags_payload,
         "style_scores": style_scores_payload,
         "recommendations": saved_recommendations,
@@ -643,7 +824,11 @@ def load_saved_project_analysis(
             selected_style=selected_style,
             recommendations=saved_recommendations,
             suggested_tags=suggested_records,
-            budget_tier=_infer_budget_tier_from_value(project.budget),
+            budget_tier=(
+                latest_run.budget_tier
+                if latest_run is not None
+                else _infer_budget_tier_from_value(project.budget)
+            ),
         ),
     }
 
@@ -748,6 +933,7 @@ def analyze_project_design(
         brightness = float(image_profile.get("average_brightness", 0.0) or 0.0)
         saturation = float(image_profile.get("average_saturation", 0.0) or 0.0)
         warmth = float(image_profile.get("warmth_bias", 0.0) or 0.0)
+        dominant_rgb = _decode_hex_color(image_profile.get("dominant_hex"))
 
         if brightness >= 0.62:
             for tag_name in ("white", "neutral", "light-wood"):
@@ -769,6 +955,29 @@ def analyze_project_design(
         elif warmth <= -0.1:
             for tag_name in ("sleek", "metal", "contemporary"):
                 register_tag(tag_name, "image-profile", 0.61)
+
+        if dominant_rgb is not None:
+            hue, lightness, dominant_saturation = colorsys.rgb_to_hls(*dominant_rgb)
+
+            if dominant_saturation <= 0.15 and lightness >= 0.8:
+                for tag_name in ("white", "neutral", "clean"):
+                    register_tag(tag_name, "dominant-color", 0.69)
+            elif dominant_saturation <= 0.16 and lightness <= 0.22:
+                for tag_name in ("monochrome", "sleek", "metal"):
+                    register_tag(tag_name, "dominant-color", 0.67)
+
+            if 0.08 <= hue <= 0.15:
+                for tag_name in ("walnut", "natural", "vintage"):
+                    register_tag(tag_name, "dominant-color", 0.68)
+            elif 0.18 <= hue <= 0.43:
+                for tag_name in ("plants", "natural", "cozy"):
+                    register_tag(tag_name, "dominant-color", 0.68)
+            elif 0.52 <= hue <= 0.68:
+                for tag_name in ("clean", "sleek", "monochrome"):
+                    register_tag(tag_name, "dominant-color", 0.66)
+            elif hue <= 0.05 or hue >= 0.94:
+                for tag_name in ("rich-colors", "colorful", "eclectic"):
+                    register_tag(tag_name, "dominant-color", 0.64)
 
     db.query(RoomTag).filter(RoomTag.room_project_id == project.id).delete(synchronize_session=False)
     db.query(ResemblanceScore).filter(ResemblanceScore.room_project_id == project.id).delete(synchronize_session=False)
@@ -901,9 +1110,40 @@ def refresh_project_recommendations(
     sorted_scores = sorted(style_scores, key=lambda item: item["score_value"], reverse=True)
     budget_value = float(project.budget or DEFAULT_BUDGET_BY_TIER.get(budget_tier, 2600.0))
     room_label = (project.room_type or "room").strip().lower()
-    primary_tags = [record.tag.name for record in sorted(suggested_tags, key=lambda item: item.confidence, reverse=True)[:3]]
+    primary_tags = [
+        _normalize_tag_label(record.tag.name)
+        for record in sorted(suggested_tags, key=lambda item: item.confidence, reverse=True)[:4]
+    ]
     primary_a = primary_tags[0] if primary_tags else "clean lines"
     primary_b = primary_tags[1] if len(primary_tags) > 1 else selected_style.name.lower()
+
+    style_weights = sorted(
+        [
+            (_normalize_tag_label(style_tag.tag.name), max(style_tag.weight, 0.35))
+            for style_tag in selected_style.style_tags
+            if style_tag.tag is not None
+        ],
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    matched_tag_names = {tag_name for tag_name in primary_tags}
+    strongest_matched = [name for name, _ in style_weights if name in matched_tag_names][:2]
+    strongest_missing = [name for name, _ in style_weights if name not in matched_tag_names][:2]
+
+    anchor_blueprint = _get_shopping_blueprint(room_label)[0]
+    matched_phrase = ", ".join(strongest_matched) if strongest_matched else primary_a
+    missing_phrase = ", ".join(strongest_missing) if strongest_missing else selected_style.name.lower()
+
+    scan_line = (
+        f"Protect the strongest scan signals, especially {matched_phrase}, and repeat them across one major finish and one smaller accent so the room reads cohesive."
+        if strongest_matched
+        else f"Use repeated {matched_phrase} cues across two surfaces so the {room_label} feels more intentional and less pieced together."
+    )
+    gap_line = (
+        f"Push the {selected_style.name.lower()} direction further by adding more {missing_phrase} through the {anchor_blueprint['label'].lower()} and nearby accent zones."
+        if strongest_missing
+        else f"Keep the larger purchases anchored to {selected_style.name.lower()} cues instead of mixing in unrelated styles."
+    )
 
     lighting_line = (
         "Layer warm ambient and task lighting so the room reads softer and more inviting at night."
@@ -926,6 +1166,14 @@ def refresh_project_recommendations(
         else "Keep supporting finishes quiet so the primary style reads consistently across the room."
     )
 
+    budget_line = (
+        f"Use the larger budget to upgrade one foundational {anchor_blueprint['category'].lower()} piece first, then add supporting accents that echo {selected_style.name.lower()} cues."
+        if budget_tier == "high"
+        else f"Keep the spending centered on the {anchor_blueprint['label'].lower()} and one supporting layer so the {room_label} improves without fragmenting the budget."
+        if budget_tier == "medium"
+        else f"Protect the budget by choosing an affordable {anchor_blueprint['label'].lower()} first and delaying secondary decor until the core direction feels right."
+    )
+
     recommendation_specs = [
         (
             f"Anchor the {room_label} around {primary_a} and {primary_b} cues to strengthen the {selected_style.name.lower()} direction.",
@@ -933,19 +1181,24 @@ def refresh_project_recommendations(
             max(180.0, budget_value * 0.34),
         ),
         (
-            lighting_line,
+            gap_line,
             8.7,
             max(120.0, budget_value * 0.18),
         ),
         (
-            intensity_line,
+            lighting_line,
             8.1,
             max(140.0, budget_value * 0.22),
         ),
         (
-            cross_style_line,
+            intensity_line,
             7.4,
             max(90.0, budget_value * 0.12),
+        ),
+        (
+            f"{scan_line} {cross_style_line} {budget_line}",
+            6.9,
+            max(70.0, budget_value * 0.1),
         ),
     ]
 

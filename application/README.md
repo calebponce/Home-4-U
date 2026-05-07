@@ -156,7 +156,7 @@ Environment Variables:
     HOME4U_DATA_DIR=           # optional; used with HOME4U_ENV=production
     HOME4U_UPLOAD_DIR=         # optional; overrides where uploaded room images are stored
     HOME4U_PUBLIC_ASSET_BASE_URL= # optional; prefixes upload URLs with a public base URL
-    HOME4U_MAX_UPLOAD_BYTES=   # optional; defaults to 10485760 (10MB)
+    HOME4U_MAX_UPLOAD_BYTES=   # optional; defaults to 20971520 (20MB)
 
     Frontend supports:
     VITE_API_BASE=             # optional; defaults to /api

@@ -220,6 +220,8 @@ class ProjectAnalysisRunResponse(BaseModel):
     intensity: int
     lighting: str
     budget_tier: str
+    image_profile: Optional[ImageProfile] = None
+    detected_tags: List[str] = []
     top_score: Optional[float] = None
     recommendation_count: int
     error_message: Optional[str] = None

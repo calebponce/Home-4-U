@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import datetime
 
@@ -31,6 +32,60 @@ from app.services.project_analysis import (
 from app.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/projects", tags=["RoomProjects"])
+
+
+def _serialize_analysis_run(run: ProjectAnalysisRun) -> dict:
+    detected_tags = []
+    if run.detected_tags_json:
+        try:
+            parsed = json.loads(run.detected_tags_json)
+        except json.JSONDecodeError:
+            parsed = []
+        if isinstance(parsed, list):
+            detected_tags = [item for item in parsed if isinstance(item, str)]
+
+    image_profile = None
+    if any(
+        value is not None
+        for value in (
+            run.image_width,
+            run.image_height,
+            run.image_aspect_ratio,
+            run.image_average_brightness,
+            run.image_average_saturation,
+            run.image_warmth_bias,
+            run.image_dominant_hex,
+        )
+    ):
+        image_profile = {
+            "width": int(run.image_width or 0),
+            "height": int(run.image_height or 0),
+            "aspect_ratio": float(run.image_aspect_ratio or 1.0),
+            "average_brightness": float(run.image_average_brightness or 0.0),
+            "average_saturation": float(run.image_average_saturation or 0.0),
+            "warmth_bias": float(run.image_warmth_bias or 0.0),
+            "dominant_hex": run.image_dominant_hex,
+        }
+
+    return {
+        "id": run.id,
+        "project_id": run.project_id,
+        "request_id": run.request_id,
+        "status": run.status,
+        "selected_style_id": run.selected_style_id,
+        "selected_style_name": run.selected_style_name,
+        "room_type": run.room_type,
+        "intensity": run.intensity,
+        "lighting": run.lighting,
+        "budget_tier": run.budget_tier,
+        "image_profile": image_profile,
+        "detected_tags": detected_tags,
+        "top_score": run.top_score,
+        "recommendation_count": run.recommendation_count,
+        "error_message": run.error_message,
+        "started_at": run.started_at,
+        "completed_at": run.completed_at,
+    }
 
 
 @router.post("/", response_model=RoomProjectResponse, status_code=status.HTTP_201_CREATED)
@@ -166,7 +221,7 @@ def get_project_analysis_runs(
     response.headers["X-Total-Count"] = str(total)
     response.headers["X-Page"] = str(page)
     response.headers["X-Limit"] = str(limit)
-    return items
+    return [_serialize_analysis_run(item) for item in items]
 
 
 @router.put("/{project_id}", response_model=RoomProjectResponse)
@@ -293,6 +348,14 @@ def analyze_project(
         intensity=analysis_request.intensity,
         lighting=analysis_request.lighting,
         budget_tier=analysis_request.budget_tier,
+        image_width=analysis_request.image_profile.width if analysis_request.image_profile else None,
+        image_height=analysis_request.image_profile.height if analysis_request.image_profile else None,
+        image_aspect_ratio=analysis_request.image_profile.aspect_ratio if analysis_request.image_profile else None,
+        image_average_brightness=analysis_request.image_profile.average_brightness if analysis_request.image_profile else None,
+        image_average_saturation=analysis_request.image_profile.average_saturation if analysis_request.image_profile else None,
+        image_warmth_bias=analysis_request.image_profile.warmth_bias if analysis_request.image_profile else None,
+        image_dominant_hex=analysis_request.image_profile.dominant_hex if analysis_request.image_profile else None,
+        detected_tags_json=json.dumps(analysis_request.detected_tags[:12]),
         started_at=datetime.utcnow(),
     )
     db.add(run)
