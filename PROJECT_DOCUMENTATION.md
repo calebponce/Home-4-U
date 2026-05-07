@@ -38,8 +38,7 @@
 │                                ▼                                     │
 │                  SQLAlchemy-backed relational data layer             │
 │                  SQLite by default in development                    │
-│                  Alembic-managed relational migrations available     │
-│                  DATABASE_URL override for PostgreSQL and peers      │
+│                  DATABASE_URL override for other relational DBs      │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -62,6 +61,10 @@
 csc648-848-project-sp26-vibecoding-for-internship/
 ├── application
 │   ├── backend
+│   │   ├── alembic
+│   │   │   ├── versions
+│   │   │   ├── env.py
+│   │   │   └── script.py.mako
 │   │   ├── app
 │   │   │   ├── api
 │   │   │   ├── core
@@ -71,15 +74,19 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   ├── main.py
+│   │   │   ├── tests_api_smoke.py
 │   │   │   ├── tests_auth_rate_limit.py
 │   │   │   ├── tests_search_smoke.py
 │   │   │   └── tests_workspace_analysis_smoke.py
+│   │   ├── alembic.ini
 │   │   ├── package-lock.json
 │   │   ├── requirements.txt
+│   │   ├── run_migrations.sh
+│   │   ├── run_smoke_tests.sh
 │   │   ├── seed.py
 │   │   └── start_backend.sh
 │   ├── credentials
-│   │   ├── README.md
+│   │   └── README.md
 │   ├── deployment
 │   │   ├── MANUAL_FIX.md
 │   │   ├── deploy.sh
@@ -175,6 +182,8 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | email-validator | 2.3.0 | Email validation |
 | bcrypt | 4.0.1 | Password hashing backend |
 | httpx | 0.27.2 | HTTP client used by FastAPI test tooling |
+| alembic | 1.13.1 | Utility |
+| psycopg[binary] | 3.1.18 | Utility |
 
 
 ### Frontend
@@ -253,7 +262,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | GET | `/search/` | Public | `search.py::search` | - |
 | GET | `/styles/` | Public | `styles.py::get_styles` | - |
 | GET | `/styles/tags/` | Public | `styles.py::get_all_tags` | - |
-| POST | `/styles/tags/` | Public | `styles.py::create_tag` | Prototype admin endpoint; no auth enforcement is currently wired. |
+| POST | `/styles/tags/` | Protected | `styles.py::create_tag` | Prototype admin endpoint; no auth enforcement is currently wired. |
 | GET | `/styles/{style_id}` | Public | `styles.py::get_style` | - |
 | GET | `/styles/{style_id}/tags` | Public | `styles.py::get_style_tags` | - |
 
@@ -269,7 +278,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | `/project/:id` | Protected | ProjectDetails | Project plan view for a saved room project. |
 | `/virtual-tour` | Redirect | Navigate | Legacy route that now redirects to `/workspace`. |
 | `/workspace` | Protected | Workspace | Protected design workspace with project sync and analysis. |
-| `/` | Public | Navigate | Redirects to `/dashboard`. |
+| `/` | Public | About | Redirects to `/dashboard`. |
 | `*` | Public | NotFound | Catch-all not-found route. |
 
 
@@ -339,8 +348,7 @@ Frontend URLs:
 
 - Development defaults to SQLite via [database.py](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/backend/app/core/database.py).
 - `HOME4U_ENV=production` moves the default SQLite path outside the repo so deployments do not lose local data on `git pull`.
-- `DATABASE_URL` can override the default database connection for PostgreSQL or other relational database deployments.
-- Alembic migration scaffolding lives under `application/backend/alembic/`, with `application/backend/run_migrations.sh` providing upgrade, stamp, and history commands.
+- `DATABASE_URL` can override the default database connection for other relational database deployments.
 - `HOME4U_SECRET_KEY` should be supplied in production rather than relying on the repo default.
 - `HOME4U_CORS_ORIGINS` can be used to allow direct cross-origin backend access when the app is not using the same-origin `/api` proxy.
 - `HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS`, and `HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS` tune failed-login throttling; defaults are `5`, `20`, and `300`.
@@ -421,5 +429,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-04-29 21:51:52*
+*Last Updated: 2026-05-07 00:43:02*
 *This document is maintained by the repository documentation generator.*
