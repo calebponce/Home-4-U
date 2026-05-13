@@ -40,7 +40,7 @@ export const projectsAPI = {
   getAll: () => api.get('/projects/'),
   getById: (id) => api.get(`/projects/${id}`),
   getAnalysis: (id) => api.get(`/projects/${id}/analysis`),
-  create: (room_type) => api.post('/projects/', { room_type }),
+  create: (room_type, name = null) => api.post('/projects/', { room_type, name }),
   update: (id, data) => api.put(`/projects/${id}`, data),
   delete: (id) => api.delete(`/projects/${id}`),
   uploadPhoto: (id, file) => {

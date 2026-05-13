@@ -49,10 +49,20 @@ def _create_user(password: str = "smoke-pass") -> tuple[int, str, dict[str, str]
         db.close()
 
 
-def _create_project_for_user(user_id: int, room_type: str = "Living Room", budget: float = 0.0) -> RoomProject:
+def _create_project_for_user(
+    user_id: int,
+    room_type: str = "Living Room",
+    budget: float = 0.0,
+    name: str | None = None,
+) -> RoomProject:
     db = SessionLocal()
     try:
-        project = RoomProject(user_id=user_id, room_type=room_type, budget=budget)
+        project = RoomProject(
+            user_id=user_id,
+            name=name or f"{room_type} Project",
+            room_type=room_type,
+            budget=budget,
+        )
         db.add(project)
         db.commit()
         db.refresh(project)
@@ -130,6 +140,7 @@ def test_projects_require_auth_and_stay_owner_scoped():
     assert created.status_code == 201, created.text
     project_id = created.json()["id"]
     assert created.json()["user_id"] == owner_id
+    assert created.json()["name"] == f"Bedroom Project #{project_id}"
 
     foreign_read = client.get(f"/projects/{project_id}", headers=stranger_headers)
     assert foreign_read.status_code == 404, foreign_read.text
@@ -245,6 +256,14 @@ def test_project_budget_validation_and_photo_limits():
     )
     assert invalid_budget.status_code == 422, invalid_budget.text
 
+    renamed = client.put(
+        f"/projects/{project.id}",
+        json={"name": "Client Presentation Room"},
+        headers=headers,
+    )
+    assert renamed.status_code == 200, renamed.text
+    assert renamed.json()["name"] == "Client Presentation Room"
+
     oversized_upload = client.post(
         f"/projects/{project.id}/photo",
         headers=headers,
@@ -292,7 +311,12 @@ def test_recommendation_routes_support_generate_and_complete():
             description="Balanced, natural, understated interiors with layered comfort.",
             tag_names=["cozy", "natural", "clean", "neutral", "functional"],
         )
-        project = RoomProject(user_id=user_id, room_type="Living Room", budget=2400)
+        project = RoomProject(
+            user_id=user_id,
+            name="Living Room Project",
+            room_type="Living Room",
+            budget=2400,
+        )
         db.add(project)
         db.commit()
         db.refresh(project)
@@ -389,7 +413,12 @@ def test_analysis_run_history_tracks_failed_and_successful_attempts():
             description="Balanced contemporary spaces with warm neutrals and clean structure.",
             tag_names=["clean", "neutral", "functional", "cozy", "sleek"],
         )
-        project = RoomProject(user_id=user_id, room_type="Living Room", budget=2200)
+        project = RoomProject(
+            user_id=user_id,
+            name="Living Room Project",
+            room_type="Living Room",
+            budget=2200,
+        )
         db.add(project)
         db.commit()
         db.refresh(project)

@@ -3,6 +3,7 @@ from typing import Optional, List, Literal, Annotated
 from datetime import datetime
 
 RoomTypeValue = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+ProjectNameValue = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
 
 # User Schemas
 class UserCreate(BaseModel):
@@ -30,15 +31,18 @@ class TokenData(BaseModel):
 
 # RoomProject Schemas
 class RoomProjectCreate(BaseModel):
+    name: Optional[ProjectNameValue] = None
     room_type: RoomTypeValue
 
 class RoomProjectUpdate(BaseModel):
+    name: Optional[ProjectNameValue] = None
     room_type: Optional[RoomTypeValue] = None
     budget: Optional[float] = Field(default=None, ge=0.0)
 
 class RoomProjectResponse(BaseModel):
     id: int
     user_id: int
+    name: str
     room_type: str
     budget: float
     created_at: datetime

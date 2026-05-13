@@ -34,6 +34,20 @@ from app.utils.dependencies import get_current_user
 router = APIRouter(prefix="/projects", tags=["RoomProjects"])
 
 
+def _normalize_project_name(name: Optional[str]) -> Optional[str]:
+    """Normalize optional project names by trimming whitespace."""
+    if name is None:
+        return None
+    cleaned = name.strip()
+    return cleaned or None
+
+
+def _default_project_name(room_type: str, project_id: int) -> str:
+    """Build a readable fallback name for projects that were never explicitly named."""
+    room_label = room_type.strip() or "Room"
+    return f"{room_label} Project #{project_id}"
+
+
 def _serialize_analysis_run(run: ProjectAnalysisRun) -> dict:
     detected_tags = []
     if run.detected_tags_json:
@@ -95,11 +109,16 @@ def create_project(
     current_user: User = Depends(get_current_user),
 ):
     """Create a new room project."""
+    normalized_name = _normalize_project_name(project.name)
     db_project = RoomProject(
         user_id=current_user.id,
+        name=normalized_name or project.room_type,
         room_type=project.room_type,
     )
     db.add(db_project)
+    db.flush()
+    if normalized_name is None:
+        db_project.name = _default_project_name(project.room_type, db_project.id)
     db.commit()
     db.refresh(db_project)
     return db_project
@@ -241,6 +260,15 @@ def update_project(
     if not project:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
+    normalized_name = _normalize_project_name(project_update.name)
+    if project_update.name is not None and normalized_name is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Project name cannot be empty",
+        )
+
+    if normalized_name is not None:
+        project.name = normalized_name
     if project_update.room_type is not None:
         project.room_type = project_update.room_type
     if project_update.budget is not None:
