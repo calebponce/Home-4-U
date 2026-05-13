@@ -74,6 +74,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   │   ├── utils
 │   │   │   ├── __init__.py
 │   │   │   ├── main.py
+│   │   │   ├── tests_analysis_quality_benchmark.py
 │   │   │   ├── tests_api_smoke.py
 │   │   │   ├── tests_auth_rate_limit.py
 │   │   │   ├── tests_search_smoke.py
@@ -429,5 +430,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-05-13 04:46:03*
+*Last Updated: 2026-05-13 06:53:48*
 *This document is maintained by the repository documentation generator.*
