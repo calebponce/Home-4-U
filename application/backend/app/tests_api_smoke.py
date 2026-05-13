@@ -323,6 +323,10 @@ def test_recommendation_routes_support_generate_and_complete():
         analysis_payload = analysis.json()
         assert analysis_payload["selected_style"]["name"] == "Warm Minimal"
         assert len(analysis_payload["recommendations"]) >= 4
+        assert analysis_payload["scan_assessment"]["confidence_label"] == "high"
+        assert analysis_payload["room_state"]["contrast_level"] == "low"
+        assert analysis_payload["recommendations"][0]["confidence_score"] >= 0.7
+        assert analysis_payload["recommendations"][0]["reason_summary"]
 
         recommendation_list = client.get(
             f"/recommendations/project/{project.id}",
@@ -349,6 +353,8 @@ def test_recommendation_routes_support_generate_and_complete():
         assert regenerated.status_code == 200, regenerated.text
         regenerated_payload = regenerated.json()
         assert len(regenerated_payload) >= 4
+        assert regenerated_payload[0]["confidence_score"] >= 0.6
+        assert regenerated_payload[0]["reason_summary"]
         assert any(
             "crisp, bright, and focused" in recommendation["description"]
             for recommendation in regenerated_payload
@@ -366,6 +372,8 @@ def test_recommendation_routes_support_generate_and_complete():
         saved_analysis_payload = saved_analysis.json()
         assert saved_analysis_payload["image_profile"]["dominant_hex"] == "#6f8297"
         assert saved_analysis_payload["image_profile"]["warmth_bias"] == -0.16
+        assert saved_analysis_payload["scan_assessment"]["confidence_label"] == "high"
+        assert saved_analysis_payload["room_state"]["contrast_level"] == "low"
 
         completed = client.put(
             f"/recommendations/{regenerated_payload[0]['id']}/complete",
@@ -439,6 +447,10 @@ def test_analysis_run_history_tracks_failed_and_successful_attempts():
         assert payload[0]["selected_style_name"] == "Quiet Contemporary"
         assert payload[0]["recommendation_count"] >= 3
         assert payload[0]["image_profile"] is None
+        assert payload[0]["scan_assessment"]["confidence_label"] == "low"
+        assert payload[0]["scan_assessment"]["warnings"]
+        assert payload[0]["room_state"]["openness"] == "medium"
+        assert payload[0]["analysis_duration_ms"] is not None
         assert payload[0]["detected_tags"] == ["neutral", "clean"]
         assert payload[1]["request_id"] == failed_request_id
         assert payload[1]["status"] == "failed"
@@ -457,10 +469,71 @@ def test_analysis_run_history_tracks_failed_and_successful_attempts():
         db.close()
 
 
+def test_analysis_validation_rejects_tiny_or_missing_scan_inputs():
+    init_db()
+    user_id, _, headers = _create_user()
+    db = SessionLocal()
+
+    try:
+        style = _ensure_style_with_tags(
+            db,
+            name="Benchmark Minimal",
+            description="Quiet interiors with simple, functional furniture.",
+            tag_names=["clean", "simple", "neutral", "functional"],
+        )
+        project = RoomProject(user_id=user_id, room_type="Bedroom", budget=1800)
+        db.add(project)
+        db.commit()
+        db.refresh(project)
+        db.refresh(style)
+
+        tiny = client.post(
+            f"/projects/{project.id}/analysis",
+            headers=headers,
+            json={
+                "style_id": style.id,
+                "room_type": "Bedroom",
+                "intensity": 45,
+                "lighting": "warm",
+                "budget_tier": "medium",
+                "image_profile": {
+                    "width": 120,
+                    "height": 180,
+                    "aspect_ratio": 0.666,
+                    "average_brightness": 0.42,
+                    "average_saturation": 0.19,
+                    "warmth_bias": 0.06,
+                    "dominant_hex": "#cabfb2",
+                },
+                "detected_tags": [],
+            },
+        )
+        assert tiny.status_code == 422, tiny.text
+        assert "too small" in tiny.json()["detail"].lower()
+
+        missing = client.post(
+            f"/projects/{project.id}/analysis",
+            headers=headers,
+            json={
+                "style_id": style.id,
+                "room_type": "Bedroom",
+                "intensity": 45,
+                "lighting": "warm",
+                "budget_tier": "medium",
+                "detected_tags": [],
+            },
+        )
+        assert missing.status_code == 422, missing.text
+        assert "requires either a valid room image profile or detected room tags" in missing.json()["detail"].lower()
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     test_health_exposes_request_id_and_security_headers()
     test_auth_normalizes_login_and_me_response()
     test_projects_require_auth_and_stay_owner_scoped()
     test_project_budget_validation_and_photo_limits()
     test_recommendation_routes_support_generate_and_complete()
+    test_analysis_validation_rejects_tiny_or_missing_scan_inputs()
     print("API smoke tests passed")

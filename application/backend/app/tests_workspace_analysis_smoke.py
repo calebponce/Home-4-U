@@ -88,8 +88,14 @@ def test_workspace_analysis():
         assert payload["project"]["id"] == project.id
         assert payload["style_scores"][0]["style_name"] == "Scandinavian"
         assert payload["style_scores"][0]["score_value"] >= 70
+        assert payload["scan_assessment"]["confidence_label"] == "high"
+        assert payload["scan_assessment"]["confidence_score"] >= 0.9
+        assert payload["room_state"]["openness"] == "high"
+        assert payload["room_state"]["clutter_level"] == "low"
         assert len(payload["suggested_tags"]) >= 3
         assert len(payload["recommendations"]) >= 3
+        assert payload["recommendations"][0]["confidence_score"] >= 0.7
+        assert payload["recommendations"][0]["reason_summary"]
         assert len(payload["shopping_plan"]) >= 3
         assert payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
         assert len(payload["shopping_plan"][0]["products"]) >= 1
@@ -104,6 +110,8 @@ def test_workspace_analysis():
         assert saved_payload["selected_style"]["name"] == "Scandinavian"
         assert saved_payload["image_profile"]["dominant_hex"] == "#d9d2c5"
         assert saved_payload["image_profile"]["average_brightness"] == 0.68
+        assert saved_payload["scan_assessment"]["confidence_label"] == "high"
+        assert saved_payload["room_state"]["openness"] == "high"
         assert saved_payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
         assert len(saved_payload["shopping_plan"][0]["products"]) >= 1
 
@@ -119,6 +127,9 @@ def test_workspace_analysis():
         assert runs[0]["recommendation_count"] >= 3
         assert runs[0]["request_id"] == request_id
         assert runs[0]["image_profile"]["dominant_hex"] == "#d9d2c5"
+        assert runs[0]["scan_assessment"]["confidence_label"] == "high"
+        assert runs[0]["room_state"]["openness"] == "high"
+        assert runs[0]["analysis_duration_ms"] is not None
         assert runs[0]["detected_tags"] == ["neutral", "clean"]
     finally:
         db.close()

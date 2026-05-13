@@ -121,6 +121,8 @@ class RecommendationResponse(BaseModel):
     description: str
     priority_score: float
     estimated_cost: float
+    confidence_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    reason_summary: Optional[str] = None
     is_completed: bool
     created_at: datetime
 
@@ -186,6 +188,21 @@ class ImageProfile(BaseModel):
     dominant_hex: Optional[str] = None
 
 
+class ScanAssessment(BaseModel):
+    confidence_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    confidence_label: Literal["low", "medium", "high"] = "low"
+    signal_count: int = Field(default=0, ge=0)
+    warnings: List[str] = Field(default_factory=list)
+
+
+class RoomStateSignals(BaseModel):
+    openness: Literal["low", "medium", "high"] = "medium"
+    clutter_level: Literal["low", "medium", "high"] = "medium"
+    contrast_level: Literal["low", "medium", "high"] = "medium"
+    furnishing_density: Literal["low", "medium", "high"] = "medium"
+    cues: List[str] = Field(default_factory=list)
+
+
 class ProjectAnalysisRequest(BaseModel):
     style_id: Optional[int] = None
     style_slug: Optional[str] = None
@@ -203,6 +220,8 @@ class ProjectAnalysisResponse(BaseModel):
     selected_style: StyleResponse
     summary: str
     image_profile: Optional[ImageProfile] = None
+    scan_assessment: Optional[ScanAssessment] = None
+    room_state: Optional[RoomStateSignals] = None
     suggested_tags: List[SuggestedTagDetail]
     style_scores: List[StyleScoreDetail]
     recommendations: List[RecommendationResponse]
@@ -221,9 +240,12 @@ class ProjectAnalysisRunResponse(BaseModel):
     lighting: str
     budget_tier: str
     image_profile: Optional[ImageProfile] = None
+    scan_assessment: Optional[ScanAssessment] = None
+    room_state: Optional[RoomStateSignals] = None
     detected_tags: List[str] = []
     top_score: Optional[float] = None
     recommendation_count: int
+    analysis_duration_ms: Optional[int] = None
     error_message: Optional[str] = None
     started_at: datetime
     completed_at: Optional[datetime] = None

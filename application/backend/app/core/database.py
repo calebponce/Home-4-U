@@ -82,6 +82,24 @@ def _run_sqlite_compat_migrations():
             conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN image_dominant_hex VARCHAR(32)"))
         if "detected_tags_json" not in analysis_run_columns:
             conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN detected_tags_json TEXT"))
+        if "scan_confidence_score" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN scan_confidence_score FLOAT"))
+        if "scan_confidence_label" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN scan_confidence_label VARCHAR(20)"))
+        if "scan_signal_count" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN scan_signal_count INTEGER"))
+        if "scan_warnings_json" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN scan_warnings_json TEXT"))
+        if "room_state_json" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN room_state_json TEXT"))
+        if "analysis_duration_ms" not in analysis_run_columns:
+            conn.execute(text("ALTER TABLE project_analysis_runs ADD COLUMN analysis_duration_ms INTEGER"))
+
+        recommendation_columns = _existing_columns(conn, "recommendations")
+        if "confidence_score" not in recommendation_columns:
+            conn.execute(text("ALTER TABLE recommendations ADD COLUMN confidence_score FLOAT"))
+        if "reason_summary" not in recommendation_columns:
+            conn.execute(text("ALTER TABLE recommendations ADD COLUMN reason_summary TEXT"))
 
         # Seeding and tag matching depend on these join tables existing.
         conn.execute(text(

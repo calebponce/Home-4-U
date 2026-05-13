@@ -328,6 +328,8 @@ class RecommendationRefreshContext:
     intensity: int
     lighting: str
     budget_tier: str
+    scan_assessment: Optional[dict]
+    room_state: Optional[dict]
 
 
 def _normalize_key(value: Optional[str]) -> str:
@@ -336,6 +338,34 @@ def _normalize_key(value: Optional[str]) -> str:
 
 def _normalize_tag_label(tag_name: str) -> str:
     return (tag_name or "").replace("-", " ").strip().lower()
+
+
+def _confidence_label_for_scan_score(score: float) -> str:
+    if score >= 0.74:
+        return "high"
+    if score >= 0.48:
+        return "medium"
+    return "low"
+
+
+def _dedupe_strings(values: Iterable[str]) -> list[str]:
+    seen = set()
+    ordered = []
+    for value in values:
+        cleaned = (value or "").strip()
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        ordered.append(cleaned)
+    return ordered
+
+
+def _banded_level(value: float, *, low_cutoff: float, high_cutoff: float) -> str:
+    if value >= high_cutoff:
+        return "high"
+    if value <= low_cutoff:
+        return "low"
+    return "medium"
 
 
 def _decode_hex_color(dominant_hex: Optional[str]) -> Optional[tuple[float, float, float]]:
@@ -389,6 +419,265 @@ def _decode_detected_tags(raw_value: Optional[str]) -> list[str]:
     return normalized[:12]
 
 
+def _decode_scan_warnings(raw_value: Optional[str]) -> list[str]:
+    if not raw_value:
+        return []
+
+    try:
+        parsed = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(parsed, list):
+        return []
+
+    return [item.strip() for item in parsed if isinstance(item, str) and item.strip()][:6]
+
+
+def _decode_room_state(raw_value: Optional[str]) -> Optional[dict]:
+    if not raw_value:
+        return None
+
+    try:
+        parsed = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(parsed, dict):
+        return None
+
+    cues = parsed.get("cues")
+    return {
+        "openness": parsed.get("openness", "medium"),
+        "clutter_level": parsed.get("clutter_level", "medium"),
+        "contrast_level": parsed.get("contrast_level", "medium"),
+        "furnishing_density": parsed.get("furnishing_density", "medium"),
+        "cues": [
+            item.strip()
+            for item in (cues if isinstance(cues, list) else [])
+            if isinstance(item, str) and item.strip()
+        ][:6],
+    }
+
+
+def build_scan_assessment(
+    *,
+    image_profile: Optional[dict],
+    detected_tags: Iterable[str],
+) -> dict:
+    detected = _dedupe_strings(
+        tag.strip().lower()
+        for tag in detected_tags
+        if isinstance(tag, str) and tag.strip()
+    )[:8]
+    warnings: list[str] = []
+    score = 0.08
+    signal_count = len(detected)
+
+    if image_profile:
+        score += 0.2
+        width = int(image_profile.get("width", 0) or 0)
+        height = int(image_profile.get("height", 0) or 0)
+        brightness = float(image_profile.get("average_brightness", 0.0) or 0.0)
+        saturation = float(image_profile.get("average_saturation", 0.0) or 0.0)
+        dominant_hex = (image_profile.get("dominant_hex") or "").strip()
+        aspect_ratio = float(image_profile.get("aspect_ratio", 0.0) or 0.0)
+
+        if width >= 960 and height >= 720:
+            score += 0.18
+            signal_count += 1
+        elif width >= 640 and height >= 480:
+            score += 0.12
+            signal_count += 1
+        elif width >= 480 and height >= 320:
+            score += 0.07
+            warnings.append("Image resolution is modest, so smaller room details may be under-read.")
+            signal_count += 1
+        else:
+            warnings.append("Image resolution is low, so scan confidence is reduced.")
+
+        if 0.28 <= brightness <= 0.78:
+            score += 0.14
+            signal_count += 1
+        elif 0.18 <= brightness <= 0.9:
+            score += 0.07
+            warnings.append("Lighting is uneven, so brightness-based scan signals are only partially reliable.")
+            signal_count += 1
+        elif brightness < 0.18:
+            warnings.append("The room image is very dark, which limits scan reliability.")
+        else:
+            warnings.append("The room image is very bright, which can wash out scan signals.")
+
+        if 0.1 <= saturation <= 0.72:
+            score += 0.12
+            signal_count += 1
+        elif 0.06 <= saturation <= 0.86:
+            score += 0.06
+            warnings.append("Color variation is limited, so style cues are less distinct.")
+            signal_count += 1
+        else:
+            warnings.append("Color saturation is extreme, which can distort style cue extraction.")
+
+        if dominant_hex:
+            score += 0.08
+            signal_count += 1
+        else:
+            warnings.append("No stable dominant color was captured from the scan.")
+
+        if 0.55 <= aspect_ratio <= 2.5:
+            score += 0.04
+            signal_count += 1
+    else:
+        warnings.append("No image profile was captured, so recommendations rely on limited room-scan signals.")
+
+    if len(detected) >= 4:
+        score += 0.18
+    elif len(detected) >= 2:
+        score += 0.1
+    elif len(detected) == 1:
+        score += 0.05
+    else:
+        warnings.append("No detected room tags were captured from the scan.")
+
+    score = round(min(0.97, max(0.08, score)), 2)
+    label = _confidence_label_for_scan_score(score)
+
+    if label == "low":
+        warnings.append("Try a brighter, wider room photo for stronger recommendations.")
+    elif label == "medium" and not image_profile:
+        warnings.append("A clearer room photo would increase scan confidence and recommendation specificity.")
+
+    return {
+        "confidence_score": score,
+        "confidence_label": label,
+        "signal_count": signal_count,
+        "warnings": _dedupe_strings(warnings)[:6],
+    }
+
+
+def build_room_state_signals(
+    *,
+    room_type: str,
+    image_profile: Optional[dict],
+    detected_tags: Iterable[str],
+    suggested_tags: Optional[Iterable[SuggestedTagRecord]] = None,
+) -> dict:
+    detected = {
+        tag.strip().lower()
+        for tag in detected_tags
+        if isinstance(tag, str) and tag.strip()
+    }
+    suggested = {
+        record.tag.name.strip().lower()
+        for record in (suggested_tags or [])
+        if record.tag is not None and record.tag.name
+    }
+    tag_pool = detected | suggested
+    brightness = float((image_profile or {}).get("average_brightness", 0.0) or 0.0)
+    saturation = float((image_profile or {}).get("average_saturation", 0.0) or 0.0)
+    warmth = float((image_profile or {}).get("warmth_bias", 0.0) or 0.0)
+    aspect_ratio = float((image_profile or {}).get("aspect_ratio", 1.0) or 1.0)
+    width = int((image_profile or {}).get("width", 0) or 0)
+    height = int((image_profile or {}).get("height", 0) or 0)
+    room_key = (room_type or "").strip().lower()
+
+    openness_score = 0.0
+    if brightness >= 0.66:
+        openness_score += 0.55
+    elif brightness >= 0.48:
+        openness_score += 0.3
+    if width >= 900 and height >= 650:
+        openness_score += 0.18
+    if 1.2 <= aspect_ratio <= 1.9:
+        openness_score += 0.12
+    if {"clean", "simple", "neutral", "white"} & tag_pool:
+        openness_score += 0.18
+    openness = _banded_level(openness_score, low_cutoff=0.24, high_cutoff=0.65)
+
+    clutter_score = 0.0
+    if {"patterns", "eclectic", "ornate", "colorful", "rich-colors"} & tag_pool:
+        clutter_score += 0.42
+    if len(tag_pool) >= 6:
+        clutter_score += 0.24
+    if saturation >= 0.58:
+        clutter_score += 0.18
+    if {"clean", "simple", "functional"} & tag_pool:
+        clutter_score -= 0.22
+    clutter_level = _banded_level(clutter_score, low_cutoff=0.05, high_cutoff=0.46)
+
+    contrast_score = 0.0
+    if saturation >= 0.46:
+        contrast_score += 0.34
+    if brightness <= 0.3 or brightness >= 0.8:
+        contrast_score += 0.22
+    if {"monochrome", "metal", "sleek", "rich-colors"} & tag_pool:
+        contrast_score += 0.2
+    if {"neutral", "light-wood", "simple"} & tag_pool:
+        contrast_score -= 0.08
+    contrast_level = _banded_level(contrast_score, low_cutoff=0.08, high_cutoff=0.42)
+
+    density_score = 0.0
+    if room_key in {"living room", "dining room"}:
+        density_score += 0.1
+    if {"cozy", "plants", "rich-colors", "patterns"} & tag_pool:
+        density_score += 0.2
+    if {"functional", "simple", "clean"} & tag_pool:
+        density_score -= 0.16
+    if warmth >= 0.16:
+        density_score += 0.08
+    furnishing_density = _banded_level(density_score, low_cutoff=0.02, high_cutoff=0.3)
+
+    cues = []
+    if openness == "high":
+        cues.append("The room reads visually open and can support a stronger anchor piece.")
+    elif openness == "low":
+        cues.append("The room reads compact, so edits should protect circulation and negative space.")
+    if clutter_level == "high":
+        cues.append("Visual clutter appears elevated, so fewer but clearer style moves will read better.")
+    elif clutter_level == "low":
+        cues.append("The room reads relatively tidy, which supports cleaner style reinforcement.")
+    if contrast_level == "high":
+        cues.append("The room already carries noticeable contrast, so finishing choices should be deliberate.")
+    elif contrast_level == "low":
+        cues.append("Contrast is limited, so one stronger finish or material shift can help the style read more clearly.")
+    if furnishing_density == "high":
+        cues.append("The space feels furnishing-heavy, so subtractive or consolidating moves may work better than adding volume.")
+    elif furnishing_density == "low":
+        cues.append("The space feels lightly furnished, so one larger supporting piece can improve balance.")
+
+    return {
+        "openness": openness,
+        "clutter_level": clutter_level,
+        "contrast_level": contrast_level,
+        "furnishing_density": furnishing_density,
+        "cues": _dedupe_strings(cues)[:6],
+    }
+
+
+def validate_scan_inputs(
+    *,
+    image_profile: Optional[dict],
+    detected_tags: Iterable[str],
+) -> Optional[str]:
+    if image_profile is None:
+        if not any(tag.strip() for tag in detected_tags if isinstance(tag, str)):
+            return "Analysis requires either a valid room image profile or detected room tags."
+        return None
+
+    width = int(image_profile.get("width", 0) or 0)
+    height = int(image_profile.get("height", 0) or 0)
+    aspect_ratio = float(image_profile.get("aspect_ratio", 0.0) or 0.0)
+    brightness = float(image_profile.get("average_brightness", 0.0) or 0.0)
+
+    if width < 240 or height < 240:
+        return "Room image is too small to analyze reliably. Upload an image at least 240 by 240 pixels."
+    if aspect_ratio and (aspect_ratio < 0.28 or aspect_ratio > 4.2):
+        return "Room image framing is too extreme to analyze reliably. Try a more standard room photo."
+    if brightness < 0.04:
+        return "Room image is too dark to analyze reliably. Upload a brighter photo."
+    return None
+
+
 def _build_image_profile_from_run(run: Optional[ProjectAnalysisRun]) -> Optional[dict]:
     if run is None:
         return None
@@ -414,6 +703,42 @@ def _build_image_profile_from_run(run: Optional[ProjectAnalysisRun]) -> Optional
         "warmth_bias": float(values["warmth_bias"] or 0.0),
         "dominant_hex": values["dominant_hex"],
     }
+
+
+def _build_scan_assessment_from_run(run: Optional[ProjectAnalysisRun]) -> Optional[dict]:
+    if run is None:
+        return None
+    if (
+        run.scan_confidence_score is None
+        and not run.scan_confidence_label
+        and not run.scan_warnings_json
+    ):
+        return None
+
+    return {
+        "confidence_score": round(float(run.scan_confidence_score or 0.0), 2),
+        "confidence_label": run.scan_confidence_label or _confidence_label_for_scan_score(float(run.scan_confidence_score or 0.0)),
+        "signal_count": len(_decode_detected_tags(run.detected_tags_json)) + sum(
+            1
+            for value in (
+                run.image_width,
+                run.image_height,
+                run.image_aspect_ratio,
+                run.image_average_brightness,
+                run.image_average_saturation,
+                run.image_warmth_bias,
+                run.image_dominant_hex,
+            )
+            if value is not None and value != ""
+        ),
+        "warnings": _decode_scan_warnings(run.scan_warnings_json),
+    }
+
+
+def _build_room_state_from_run(run: Optional[ProjectAnalysisRun]) -> Optional[dict]:
+    if run is None:
+        return None
+    return _decode_room_state(run.room_state_json)
 
 
 def _build_saved_tag_records_from_run(
@@ -517,6 +842,8 @@ def build_saved_recommendation_context(
             if latest_run is not None
             else _infer_budget_tier_from_value(project.budget)
         ),
+        scan_assessment=_build_scan_assessment_from_run(latest_run),
+        room_state=_build_room_state_from_run(latest_run),
     )
 
 
@@ -808,12 +1135,22 @@ def load_saved_project_analysis(
         f"{selected_style.name} scored {ranked_scores[0].score_value:.0f}% for this {project.room_type.lower()} "
         f"based on {len(suggested_tags_payload)} saved design signals."
     )
+    scan_assessment = _build_scan_assessment_from_run(latest_run)
+    room_state = _build_room_state_from_run(latest_run)
+    if scan_assessment is not None:
+        summary = (
+            f"{summary} "
+            f"Scan confidence is {scan_assessment['confidence_label']} "
+            f"({round(scan_assessment['confidence_score'] * 100):.0f}%)."
+        )
 
     return {
         "project": project,
         "selected_style": selected_style,
         "summary": summary,
         "image_profile": _build_image_profile_from_run(latest_run),
+        "scan_assessment": scan_assessment,
+        "room_state": room_state,
         "suggested_tags": suggested_tags_payload,
         "style_scores": style_scores_payload,
         "recommendations": saved_recommendations,
@@ -977,6 +1314,16 @@ def analyze_project_design(
                 for tag_name in ("rich-colors", "colorful", "eclectic"):
                     register_tag(tag_name, "dominant-color", 0.64)
 
+    scan_assessment = build_scan_assessment(
+        image_profile=image_profile,
+        detected_tags=normalized_detected,
+    )
+    room_state = build_room_state_signals(
+        room_type=room_type or project.room_type,
+        image_profile=image_profile,
+        detected_tags=normalized_detected,
+    )
+
     db.query(RoomTag).filter(RoomTag.room_project_id == project.id).delete(synchronize_session=False)
     db.query(ResemblanceScore).filter(ResemblanceScore.room_project_id == project.id).delete(synchronize_session=False)
 
@@ -1052,6 +1399,8 @@ def analyze_project_design(
         intensity=intensity,
         lighting=lighting,
         budget_tier=budget_tier,
+        scan_assessment=scan_assessment,
+        room_state=room_state,
     )
 
     suggested_tags_payload = [
@@ -1074,12 +1423,20 @@ def analyze_project_design(
         f"{selected_style.name} scored {best_score['score_value']:.0f}% for this {project.room_type.lower()} "
         f"based on {len(suggested_tags_payload)} saved design signals."
     )
+    summary = (
+        f"{summary} "
+        f"Scan confidence is {scan_assessment['confidence_label']} "
+        f"({round(scan_assessment['confidence_score'] * 100):.0f}%)."
+    )
+    summary = f"{summary} Room openness reads {room_state['openness']} and clutter reads {room_state['clutter_level']}."
 
     return {
         "project": project,
         "selected_style": selected_style,
         "summary": summary,
         "image_profile": image_profile,
+        "scan_assessment": scan_assessment,
+        "room_state": room_state,
         "suggested_tags": suggested_tags_payload,
         "style_scores": style_scores_payload,
         "recommendations": recommendations,
@@ -1103,6 +1460,8 @@ def refresh_project_recommendations(
     intensity: int,
     lighting: str,
     budget_tier: str,
+    scan_assessment: Optional[dict] = None,
+    room_state: Optional[dict] = None,
 ) -> list[Recommendation]:
     """Create a fresh recommendation set from saved scores."""
     sorted_scores = sorted(style_scores, key=lambda item: item["score_value"], reverse=True)
@@ -1131,6 +1490,11 @@ def refresh_project_recommendations(
     anchor_blueprint = _get_shopping_blueprint(room_label)[0]
     matched_phrase = ", ".join(strongest_matched) if strongest_matched else primary_a
     missing_phrase = ", ".join(strongest_missing) if strongest_missing else selected_style.name.lower()
+    scan_label = (scan_assessment or {}).get("confidence_label", "medium")
+    openness = (room_state or {}).get("openness", "medium")
+    clutter_level = (room_state or {}).get("clutter_level", "medium")
+    contrast_level = (room_state or {}).get("contrast_level", "medium")
+    furnishing_density = (room_state or {}).get("furnishing_density", "medium")
 
     scan_line = (
         f"Protect the strongest scan signals, especially {matched_phrase}, and repeat them across one major finish and one smaller accent so the room reads cohesive."
@@ -1172,41 +1536,122 @@ def refresh_project_recommendations(
         else f"Protect the budget by choosing an affordable {anchor_blueprint['label'].lower()} first and delaying secondary decor until the core direction feels right."
     )
 
-    recommendation_specs = [
-        (
-            f"Anchor the {room_label} around {primary_a} and {primary_b} cues to strengthen the {selected_style.name.lower()} direction.",
-            9.4,
-            max(180.0, budget_value * 0.34),
-        ),
-        (
-            gap_line,
-            8.7,
-            max(120.0, budget_value * 0.18),
-        ),
-        (
-            lighting_line,
-            8.1,
-            max(140.0, budget_value * 0.22),
-        ),
-        (
-            intensity_line,
-            7.4,
-            max(90.0, budget_value * 0.12),
-        ),
-        (
-            f"{scan_line} {cross_style_line} {budget_line}",
-            6.9,
-            max(70.0, budget_value * 0.1),
-        ),
-    ]
+    room_state_line = (
+        "Preserve circulation and visible floor area before adding more volume."
+        if openness == "low" or furnishing_density == "high"
+        else "The room can support one stronger anchor move without feeling overcrowded."
+        if openness == "high" and furnishing_density != "high"
+        else "Balance the next purchase against the room's current visual weight."
+    )
+    contrast_line = (
+        "Add one sharper contrast move so the style reads more clearly at a glance."
+        if contrast_level == "low"
+        else "Keep contrast disciplined so the current visual energy does not scatter."
+        if contrast_level == "high"
+        else "Let one finish carry the main contrast while the rest stays supportive."
+    )
+    clutter_line = (
+        "Start with subtractive edits and cleaner surfaces before layering more decor."
+        if clutter_level == "high"
+        else "The room is controlled enough to support one additional styled layer."
+        if clutter_level == "low"
+        else "Keep smaller accessories edited so the room does not feel visually noisy."
+    )
+
+    if scan_label == "low":
+        recommendation_specs = [
+            {
+                "description": f"Start with one flexible {anchor_blueprint['label'].lower()} move that nudges the {room_label} toward {selected_style.name.lower()} without locking in a full redesign.",
+                "priority_score": 8.8,
+                "estimated_cost": max(140.0, budget_value * 0.28),
+                "reason_summary": "Scan confidence is low, so this recommendation stays broad and reversible while still reinforcing the intended style.",
+            },
+            {
+                "description": f"Improve the room read first by clarifying lighting, contrast, and the clearest {selected_style.name.lower()} material cue before investing in multiple accessories.",
+                "priority_score": 8.1,
+                "estimated_cost": max(90.0, budget_value * 0.12),
+                "reason_summary": "Low-confidence scans are more trustworthy when the next step strengthens the room's overall read instead of assuming specific missing items.",
+            },
+            {
+                "description": f"{room_state_line} {clutter_line}",
+                "priority_score": 7.5,
+                "estimated_cost": max(70.0, budget_value * 0.08),
+                "reason_summary": "The room-state estimate suggests spatial editing is as important as adding new pieces right now.",
+            },
+            {
+                "description": f"{contrast_line} {budget_line}",
+                "priority_score": 6.9,
+                "estimated_cost": max(65.0, budget_value * 0.08),
+                "reason_summary": "This keeps spending disciplined while the scan confidence is still too weak for highly specific sourcing advice.",
+            },
+        ]
+    else:
+        recommendation_specs = [
+            {
+                "description": f"Anchor the {room_label} around {primary_a} and {primary_b} cues to strengthen the {selected_style.name.lower()} direction.",
+                "priority_score": 9.4,
+                "estimated_cost": max(180.0, budget_value * 0.34),
+                "reason_summary": (
+                    f"Chosen because {matched_phrase} already appears in the room signals, so anchoring one major "
+                    f"{anchor_blueprint['category'].lower()} purchase should reinforce the strongest style cues."
+                ),
+            },
+            {
+                "description": gap_line,
+                "priority_score": 8.7,
+                "estimated_cost": max(120.0, budget_value * 0.18),
+                "reason_summary": (
+                    f"Chosen because {missing_phrase} is underrepresented compared with the selected "
+                    f"{selected_style.name.lower()} direction, making it the clearest style gap to close next."
+                ),
+            },
+            {
+                "description": lighting_line,
+                "priority_score": 8.1,
+                "estimated_cost": max(140.0, budget_value * 0.22),
+                "reason_summary": (
+                    f"Chosen because the room is being tuned for {lighting} lighting, and lighting shifts perceived tone "
+                    "faster than most furniture swaps."
+                ),
+            },
+            {
+                "description": f"{intensity_line} {room_state_line}",
+                "priority_score": 7.4,
+                "estimated_cost": max(90.0, budget_value * 0.12),
+                "reason_summary": (
+                    f"Chosen because the requested intensity level is {intensity}, while the room-state estimate says "
+                    f"openness is {openness} and furnishing density is {furnishing_density}."
+                ),
+            },
+            {
+                "description": f"{scan_line} {contrast_line} {cross_style_line} {budget_line}",
+                "priority_score": 6.9,
+                "estimated_cost": max(70.0, budget_value * 0.1),
+                "reason_summary": (
+                    f"Chosen because it protects the {budget_tier} budget while repeating the strongest scan cues through "
+                    "smaller supporting layers."
+                ),
+            },
+        ]
+
+    selected_style_score = float(sorted_scores[0]["score_value"] or 0.0) if sorted_scores else 0.0
+    scan_score = float((scan_assessment or {}).get("confidence_score", 0.45) or 0.45)
+    signal_strength = min(1.0, (len(primary_tags) * 0.12) + (len(strongest_matched) * 0.18))
+    base_confidence = min(
+        0.96,
+        0.28 + (selected_style_score / 100.0) * 0.24 + scan_score * 0.3 + signal_strength,
+    )
 
     created = []
-    for description, priority_score, estimated_cost in recommendation_specs:
+    for index, spec in enumerate(recommendation_specs):
+        confidence_score = round(max(0.34, min(0.97, base_confidence - index * 0.06)), 2)
         recommendation = Recommendation(
             room_project_id=project.id,
-            description=description,
-            priority_score=round(priority_score, 1),
-            estimated_cost=round(estimated_cost, 2),
+            description=spec["description"],
+            priority_score=round(spec["priority_score"], 1),
+            estimated_cost=round(spec["estimated_cost"], 2),
+            confidence_score=confidence_score,
+            reason_summary=spec["reason_summary"],
         )
         db.add(recommendation)
         created.append(recommendation)

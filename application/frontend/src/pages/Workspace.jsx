@@ -29,13 +29,13 @@ const formatWorkspaceRequestError = (error, stage = 'analyze-room') => {
   const detail = error?.response?.data?.detail;
   const status = error?.response?.status;
   const stageCopy = {
-    'create-project': 'create the project workspace',
-    'update-project': 'save the project brief',
+    'create-project': 'start your plan',
+    'update-project': 'save your room settings',
     'upload-photo': 'upload the room photo',
-    'extract-signals': 'read the room image',
-    'analyze-room': 'analyze the room against the selected style',
+    'extract-signals': 'read the room photo',
+    'analyze-room': 'build the plan',
   };
-  const action = stageCopy[stage] || 'complete this workspace action';
+  const action = stageCopy[stage] || 'complete this step';
 
   if (status === 401) return 'Your session expired. Please log in again.';
   if (status === 403) return 'Access denied for this room project.';
@@ -46,7 +46,7 @@ const formatWorkspaceRequestError = (error, stage = 'analyze-room') => {
   if (status && status >= 400) return detail || `Could not ${action}.`;
   if (error?.code === 'ECONNABORTED') return `Request timed out while trying to ${action}.`;
   if (error?.message?.toLowerCase().includes('network')) {
-    return `Network issue while trying to ${action}. Check the backend connection and try again.`;
+    return `Network issue while trying to ${action}. Check your connection and try again.`;
   }
   return detail || `Could not ${action}. Please try again.`;
 };
@@ -140,6 +140,22 @@ const Workspace = () => {
       || analysisResult.style_scores[0];
   }, [analysisResult, styleInfo.name]);
   const workspaceTone = String(styleInfo.key || styleKey || 'default').toLowerCase();
+  const intensityGuidance = useMemo(() => {
+    if (intensity <= 33) {
+      return 'Low intensity keeps recommendations closer to the room you already have.';
+    }
+    if (intensity >= 67) {
+      return 'High intensity pushes bolder style changes and more visible statement pieces.';
+    }
+    return 'Medium intensity balances practical updates with visible style change.';
+  }, [intensity]);
+  const generateGuidance = roomImage
+    ? 'Generate Plan will review the room, save your plan, and build recommendations plus a shopping plan.'
+    : 'Load a sample room or upload your own photo to enable Generate Plan.';
+  const budgetGuidance = useMemo(
+    () => `This sets the shopping-plan target at about $${budgetAmount.toLocaleString()}. It is guidance, not a required spend.`,
+    [budgetAmount],
+  );
 
   const steps = useMemo(() => {
     const uploadDone = !!roomImage;
@@ -382,7 +398,7 @@ const Workspace = () => {
     setShowSuccessGlow(false);
     setPreviewState('processing');
     setProcessingLevel(0.08);
-    setProcessingText('Creating project workspace...');
+    setProcessingText('Preparing your saved plan...');
     setStatus('Syncing project...');
 
     try {
@@ -414,7 +430,7 @@ const Workspace = () => {
       if (roomFile) {
         stage = 'upload-photo';
         setStatus('Uploading room photo...');
-        setProcessingText('Saving the selected room photo to the backend...');
+        setProcessingText('Saving the selected room photo...');
         setProcessingLevel(0.32);
         const photoResponse = await projectsAPI.uploadPhoto(project.id, roomFile);
         project = photoResponse.data;
@@ -423,14 +439,14 @@ const Workspace = () => {
 
       stage = 'extract-signals';
       setStatus('Extracting room signals...');
-      setProcessingText('Reading light, color, and composition cues from the room image...');
+      setProcessingText('Reading light, color, and layout cues from the room image...');
       setProcessingLevel(0.5);
       const imageProfile = roomFile ? await extractImageProfile(roomImage) : null;
       const detectedTags = inferDetectedTags(imageProfile);
 
       stage = 'analyze-room';
       setStatus('Calculating style scores...');
-      setProcessingText(`Comparing the saved room with ${styleInfo.name} and the rest of the Home4U style library...`);
+      setProcessingText(`Comparing the room with ${styleInfo.name} and nearby style directions...`);
       setProcessingLevel(0.72);
       const analysisResponse = await projectsAPI.analyze(project.id, {
         style_id: selectedStyleId,
@@ -448,7 +464,7 @@ const Workspace = () => {
       setAnalysisProject(nextAnalysis.project);
 
       setStatus('Rendering concept board...');
-      setProcessingText('Composing a presentation-ready concept board from the backend analysis...');
+      setProcessingText('Turning the analysis into a visual plan preview...');
       setProcessingLevel(0.9);
       let conceptBoard = roomImage;
       try {
@@ -459,7 +475,7 @@ const Workspace = () => {
         }) || roomImage;
       } catch {
         conceptBoard = roomImage;
-        setWorkspaceNotice('Plan generated, but the concept board preview fell back to the original room image.');
+        setWorkspaceNotice('Plan generated, but the visual preview used the original room image.');
       }
 
       if (!isMountedRef.current) return;
@@ -544,7 +560,7 @@ const Workspace = () => {
             </p>
             <h1>{styleInfo.name}</h1>
             <p className="workspace-sub">
-              {styleInfo.description} Upload a room, sync a real project to the backend, and generate a scored concept board with saved recommendations.
+              {styleInfo.description} Upload a room, set your preferences, and generate a saved plan with tailored recommendations.
             </p>
             <div className="workspace-hero-metrics studio-hero-metrics" aria-label="Workspace overview">
               <div className="hero-metric-card studio-hero-card">
@@ -614,7 +630,7 @@ const Workspace = () => {
                 {roomImage ? (
                   <img src={roomImage} alt="Uploaded room" className="preview-img" />
                 ) : (
-                  <span className="preview-placeholder">Upload a room photo to sync a real project and generate a backend-backed concept board.</span>
+                  <span className="preview-placeholder">Upload a room photo or load a sample room to generate your plan preview.</span>
                 )}
               </div>
               <div className="preview after base">
@@ -712,7 +728,7 @@ const Workspace = () => {
               <span>Selected Style</span>
               <span className="pill">{styleInfo.name || styleKey || 'custom'}</span>
             </div>
-            <p className="control-sub">This workspace now saves a real project, uploads local room photos, and persists recommendations to the backend.</p>
+            <p className="control-sub">Set the room details below, then use a sample room or upload your own photo to generate a saved design plan.</p>
           </div>
 
           <div className="control-group">
@@ -722,6 +738,7 @@ const Workspace = () => {
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
+            <p className="control-sub compact">This helps Home4U prioritize the right layout, furniture, and styling moves for the room.</p>
           </div>
 
           <div className="control-group">
@@ -736,9 +753,10 @@ const Workspace = () => {
             />
             <div className="slider-meta">
               <span>Subtle</span>
-              <span>{intensity}</span>
+              <span>{intensity}%</span>
               <span>Bold</span>
             </div>
+            <p className="control-sub compact">{intensityGuidance}</p>
           </div>
 
           <div className="control-group">
@@ -748,7 +766,7 @@ const Workspace = () => {
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
-            <div className="budget-note">Backed by an estimated project budget of ${budgetAmount.toLocaleString()}.</div>
+            <div className="budget-note">{budgetGuidance}</div>
           </div>
 
           <div className="control-group toggle-group">
@@ -771,16 +789,18 @@ const Workspace = () => {
                 Cool
               </button>
             </div>
+            <p className="control-sub compact">Choose the mood you want the finished room to support, not necessarily the current lighting in the photo.</p>
           </div>
 
           <div className="control-group actions">
             <div className="demo-rooms-section">
               <span className="demo-rooms-label">Load Sample Room</span>
+              <p className="control-sub compact">Choose one room source: use a sample room to try the flow quickly, or upload your own photo for a personalized plan.</p>
               <div className="demo-rooms-buttons">
                 <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-1598928506311-c55dd12966c4?auto=format&fit=crop&q=80&w=800', 'Living Room')}>Living Room</button>
                 <button type="button" className="demo-try-btn" onClick={() => loadDemo('https://images.unsplash.com/photo-15569101031-c02745a828?auto=format&fit=crop&q=80&w=800', 'Kitchen')}>Kitchen</button>
               </div>
-              <p className="control-sub compact">Sample rooms stay local for preview, but they still generate a saved backend plan.</p>
+              <p className="control-sub compact">Sample rooms are quick demos, but Home4U still saves the resulting plan so you can revisit it later.</p>
             </div>
             {selectedRoomLabel && (
               <p className="control-sub compact">Loaded asset: {selectedRoomLabel}</p>
@@ -794,6 +814,7 @@ const Workspace = () => {
                 hidden
               />
             </label>
+            <p className="control-sub compact">PNG, JPG, or WebP. Large images are optimized automatically before upload when possible.</p>
             <button 
               type="button"
               ref={generateBtnRef}
@@ -804,15 +825,16 @@ const Workspace = () => {
             >
               {isGenerating ? 'Syncing…' : 'Generate Plan'}
             </button>
+            <p className="control-sub compact">{generateGuidance}</p>
             <button
               type="button"
               className="secondary-link-btn"
               onClick={() => shoppingPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               disabled={!analysisResult?.shopping_plan?.length}
               aria-disabled={!analysisResult?.shopping_plan?.length}
-              title={analysisResult?.shopping_plan?.length ? 'Jump to the shopping plan' : 'Run analysis to unlock sourcing'}
+              title={analysisResult?.shopping_plan?.length ? 'Jump to the shopping plan' : 'Finish a plan first to unlock the shopping plan'}
             >
-              {analysisResult?.shopping_plan?.length ? 'Open Shopping Plan' : 'Run Analysis To Unlock Sourcing'}
+              {analysisResult?.shopping_plan?.length ? 'Open Shopping Plan' : 'Unlock Shopping After Planning'}
             </button>
             {(workspaceError || workspaceNotice) && (
               <div className="workspace-feedback">
@@ -840,13 +862,13 @@ const Workspace = () => {
 
           <div className="control-group">
             <div className="control-head">
-              <span>Project Sync</span>
-              <span className="metric-pill">{analysisProject ? `#${analysisProject.id}` : 'Not saved yet'}</span>
+              <span>Saved Plan</span>
+              <span className="metric-pill">{analysisProject ? `#${analysisProject.id}` : 'Ready to save'}</span>
             </div>
             <p className="control-sub">
               {analysisProject
-                ? `Room type and budget are now linked to project #${analysisProject.id}.`
-                : 'The next analysis run will create a real project record in the backend.'}
+                ? `Your room settings and latest plan are saved to project #${analysisProject.id}.`
+                : 'Your first successful plan will be saved automatically so you can reopen it later.'}
             </p>
             {analysisProject && (
               <button type="button" className="secondary-link-btn" onClick={() => navigate(`/project/${analysisProject.id}`)}>
@@ -868,11 +890,35 @@ const Workspace = () => {
                   <span className="analysis-chip studio-chip">Brightness {Math.round((analysisResult.image_profile.average_brightness || 0) * 100)}%</span>
                 </div>
               )}
+              {analysisResult.scan_assessment && (
+                <div className="analysis-chip-row studio-chip-row">
+                  <span className={`analysis-chip studio-chip scan-confidence-chip scan-confidence-${analysisResult.scan_assessment.confidence_label}`}>
+                    Scan {analysisResult.scan_assessment.confidence_label} ({Math.round(analysisResult.scan_assessment.confidence_score * 100)}%)
+                  </span>
+                  {analysisResult.scan_assessment.signal_count > 0 && (
+                    <span className="analysis-chip studio-chip">
+                      {analysisResult.scan_assessment.signal_count} signal{analysisResult.scan_assessment.signal_count !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              )}
               {!!analysisResult.suggested_tags?.length && (
                 <div className="analysis-chip-row studio-chip-row">
                   {analysisResult.suggested_tags.slice(0, 4).map((tag) => (
                     <span key={tag.id} className="analysis-chip studio-chip">{tag.name}</span>
                   ))}
+                </div>
+              )}
+              {analysisResult.room_state && (
+                <div className="room-state-block">
+                  <div className="analysis-chip-row studio-chip-row">
+                    <span className="analysis-chip studio-chip">Open {analysisResult.room_state.openness}</span>
+                    <span className="analysis-chip studio-chip">Clutter {analysisResult.room_state.clutter_level}</span>
+                    <span className="analysis-chip studio-chip">Contrast {analysisResult.room_state.contrast_level}</span>
+                  </div>
+                  {analysisResult.room_state.cues?.[0] && (
+                    <p className="control-sub compact">{analysisResult.room_state.cues[0]}</p>
+                  )}
                 </div>
               )}
               {!!analysisResult.recommendations?.length && (
@@ -882,6 +928,9 @@ const Workspace = () => {
                       <span className="analysis-list-score">{recommendation.priority_score.toFixed(1)}</span>
                       <div>
                         <p>{recommendation.description}</p>
+                        {recommendation.reason_summary && (
+                          <p className="analysis-rec-reason">{recommendation.reason_summary}</p>
+                        )}
                         <span>${Number(recommendation.estimated_cost).toLocaleString()}</span>
                       </div>
                     </div>

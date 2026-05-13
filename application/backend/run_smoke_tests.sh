@@ -16,6 +16,7 @@ echo "Running backend smoke tests..."
 .venv/bin/python app/tests_api_smoke.py
 .venv/bin/python app/tests_search_smoke.py
 .venv/bin/python app/tests_workspace_analysis_smoke.py
+.venv/bin/python app/tests_analysis_quality_benchmark.py
 .venv/bin/python app/tests_auth_rate_limit.py
 
 echo "All backend smoke tests passed."

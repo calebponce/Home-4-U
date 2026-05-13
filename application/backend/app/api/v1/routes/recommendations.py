@@ -198,6 +198,8 @@ def generate_recommendations(
         intensity=saved_context.intensity,
         lighting=saved_context.lighting,
         budget_tier=saved_context.budget_tier,
+        scan_assessment=saved_context.scan_assessment,
+        room_state=saved_context.room_state,
     )
 
     db.commit()

@@ -28,6 +28,7 @@ from app.services.project_analysis import (
     analyze_project_design,
     load_saved_project_analysis,
     resolve_style_for_analysis,
+    validate_scan_inputs,
 )
 from app.utils.dependencies import get_current_user
 
@@ -67,6 +68,43 @@ def _serialize_analysis_run(run: ProjectAnalysisRun) -> dict:
             "dominant_hex": run.image_dominant_hex,
         }
 
+    scan_assessment = None
+    if (
+        run.scan_confidence_score is not None
+        or run.scan_confidence_label
+        or run.scan_warnings_json
+    ):
+        warnings = []
+        if run.scan_warnings_json:
+            try:
+                parsed_warnings = json.loads(run.scan_warnings_json)
+            except json.JSONDecodeError:
+                parsed_warnings = []
+            if isinstance(parsed_warnings, list):
+                warnings = [item for item in parsed_warnings if isinstance(item, str)]
+        scan_assessment = {
+            "confidence_score": round(float(run.scan_confidence_score or 0.0), 2),
+            "confidence_label": run.scan_confidence_label or "low",
+            "signal_count": int(run.scan_signal_count or 0),
+            "warnings": warnings[:6],
+        }
+
+    room_state = None
+    if run.room_state_json:
+        try:
+            parsed_room_state = json.loads(run.room_state_json)
+        except json.JSONDecodeError:
+            parsed_room_state = None
+        if isinstance(parsed_room_state, dict):
+            cues = parsed_room_state.get("cues")
+            room_state = {
+                "openness": parsed_room_state.get("openness", "medium"),
+                "clutter_level": parsed_room_state.get("clutter_level", "medium"),
+                "contrast_level": parsed_room_state.get("contrast_level", "medium"),
+                "furnishing_density": parsed_room_state.get("furnishing_density", "medium"),
+                "cues": [item for item in cues if isinstance(item, str)] if isinstance(cues, list) else [],
+            }
+
     return {
         "id": run.id,
         "project_id": run.project_id,
@@ -79,9 +117,12 @@ def _serialize_analysis_run(run: ProjectAnalysisRun) -> dict:
         "lighting": run.lighting,
         "budget_tier": run.budget_tier,
         "image_profile": image_profile,
+        "scan_assessment": scan_assessment,
+        "room_state": room_state,
         "detected_tags": detected_tags,
         "top_score": run.top_score,
         "recommendation_count": run.recommendation_count,
+        "analysis_duration_ms": run.analysis_duration_ms,
         "error_message": run.error_message,
         "started_at": run.started_at,
         "completed_at": run.completed_at,
@@ -361,8 +402,21 @@ def analyze_project(
     db.add(run)
     db.commit()
     db.refresh(run)
+    analysis_started_at = datetime.utcnow()
 
     try:
+        validation_error = validate_scan_inputs(
+            image_profile=analysis_request.image_profile.model_dump() if analysis_request.image_profile else None,
+            detected_tags=analysis_request.detected_tags,
+        )
+        if validation_error:
+            run.status = "failed"
+            run.error_message = validation_error
+            run.completed_at = datetime.utcnow()
+            run.analysis_duration_ms = int((run.completed_at - analysis_started_at).total_seconds() * 1000)
+            db.commit()
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=validation_error)
+
         selected_style = resolve_style_for_analysis(
             db,
             style_id=analysis_request.style_id,
@@ -402,10 +456,16 @@ def analyze_project(
         run.status = "succeeded"
         run.selected_style_id = selected_style.id
         run.selected_style_name = selected_style.name
+        run.scan_confidence_score = payload["scan_assessment"]["confidence_score"]
+        run.scan_confidence_label = payload["scan_assessment"]["confidence_label"]
+        run.scan_signal_count = payload["scan_assessment"]["signal_count"]
+        run.scan_warnings_json = json.dumps(payload["scan_assessment"]["warnings"])
+        run.room_state_json = json.dumps(payload["room_state"])
         run.top_score = selected_score
         run.recommendation_count = len(payload["recommendations"])
         run.error_message = None
         run.completed_at = datetime.utcnow()
+        run.analysis_duration_ms = int((run.completed_at - analysis_started_at).total_seconds() * 1000)
 
         db.commit()
         db.refresh(project)
@@ -421,6 +481,7 @@ def analyze_project(
                 persisted_run.status = "failed"
                 persisted_run.error_message = "Analysis request failed"
                 persisted_run.completed_at = datetime.utcnow()
+                persisted_run.analysis_duration_ms = int((persisted_run.completed_at - analysis_started_at).total_seconds() * 1000)
                 db.commit()
         raise
     except Exception as exc:
@@ -430,5 +491,6 @@ def analyze_project(
             persisted_run.status = "failed"
             persisted_run.error_message = str(exc)[:500]
             persisted_run.completed_at = datetime.utcnow()
+            persisted_run.analysis_duration_ms = int((persisted_run.completed_at - analysis_started_at).total_seconds() * 1000)
             db.commit()
         raise
