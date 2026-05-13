@@ -55,6 +55,13 @@ def _run_sqlite_compat_migrations():
 
     with engine.begin() as conn:
         room_project_columns = _existing_columns(conn, "room_projects")
+        if "name" not in room_project_columns:
+            conn.execute(text("ALTER TABLE room_projects ADD COLUMN name VARCHAR(160)"))
+        conn.execute(text(
+            "UPDATE room_projects "
+            "SET name = TRIM(room_type) || ' Project #' || id "
+            "WHERE name IS NULL OR TRIM(name) = ''"
+        ))
         if "photo_url" not in room_project_columns:
             conn.execute(text("ALTER TABLE room_projects ADD COLUMN photo_url VARCHAR(500)"))
 

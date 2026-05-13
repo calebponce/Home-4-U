@@ -39,6 +39,7 @@ const deriveProjectTone = (analysis, project) => {
 };
 
 const formatCurrency = (value) => `$${Number(value || 0).toLocaleString()}`;
+const getProjectDisplayName = (project) => project?.name || project?.room_type || 'Untitled Project';
 
 const resolveProjectImageUrl = (photoUrl) => {
   if (!photoUrl) return '';
@@ -109,6 +110,9 @@ const ProjectDetails = () => {
   const [loadError, setLoadError] = useState('');
   const [actionMessage, setActionMessage] = useState(null);
   const [budget, setBudget] = useState('');
+  const [projectNameDraft, setProjectNameDraft] = useState('');
+  const [isRenamingProject, setIsRenamingProject] = useState(false);
+  const [savingProjectName, setSavingProjectName] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [savingBudget, setSavingBudget] = useState(false);
   const [completingRecommendationId, setCompletingRecommendationId] = useState(null);
@@ -171,6 +175,10 @@ const ProjectDetails = () => {
     return () => window.clearTimeout(timer);
   }, [actionMessage]);
 
+  useEffect(() => {
+    setProjectNameDraft(project?.name || '');
+  }, [project?.name]);
+
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
     const nextBudget = Number(budget);
@@ -194,6 +202,38 @@ const ProjectDetails = () => {
       });
     } finally {
       setSavingBudget(false);
+    }
+  };
+
+  const handleRenameProject = async (e) => {
+    e.preventDefault();
+    const trimmedName = projectNameDraft.trim();
+    if (!trimmedName) {
+      setActionMessage({ type: 'error', text: 'Project name cannot be empty.' });
+      return;
+    }
+
+    if (trimmedName === (project?.name || '').trim()) {
+      setIsRenamingProject(false);
+      return;
+    }
+
+    setSavingProjectName(true);
+    setActionMessage(null);
+    try {
+      const response = await projectsAPI.update(id, { name: trimmedName });
+      setProject((current) => ({ ...current, ...response.data }));
+      setProjectNameDraft(response.data.name || trimmedName);
+      setIsRenamingProject(false);
+      setActionMessage({ type: 'success', text: 'Project renamed.' });
+    } catch (err) {
+      console.error('Error renaming project:', err);
+      setActionMessage({
+        type: 'error',
+        text: formatProjectRequestError(err, 'Could not rename this project.'),
+      });
+    } finally {
+      setSavingProjectName(false);
     }
   };
 
@@ -300,6 +340,10 @@ const ProjectDetails = () => {
 
   const tone = deriveProjectTone(analysis, project);
   const selectedStyleName = analysis?.selected_style?.name || 'Saved Project';
+  const selectedStyleSlug = analysis?.selected_style?.name
+    ? styleSlug(analysis.selected_style.name)
+    : '';
+  const projectDisplayName = getProjectDisplayName(project);
   const projectBudget = Number(project?.budget) || 0;
   const recommendationList = analysis?.recommendations || recommendations;
   const suggestedTags = analysis?.suggested_tags || [];
@@ -357,10 +401,47 @@ const ProjectDetails = () => {
             <ChevronLeft size={16} /> Back to Dashboard
           </button>
           <p className="project-eyebrow">Project Command Deck</p>
-          <h1 className="p-title">{selectedStyleName}</h1>
+          <h1 className="p-title">{projectDisplayName}</h1>
           <div className="p-meta">
-            {project?.room_type} studio brief • Project #{id}
+            {project?.room_type} studio brief • {selectedStyleName} direction • Project #{id}
             {analysis ? ` • ${Math.round(selectedScore?.score_value || 0)}% aligned` : ''}
+          </div>
+          <div className="project-name-tools">
+            {isRenamingProject ? (
+              <form className="project-name-form" onSubmit={handleRenameProject}>
+                <input
+                  type="text"
+                  value={projectNameDraft}
+                  onChange={(e) => setProjectNameDraft(e.target.value)}
+                  maxLength={160}
+                  placeholder="Rename project"
+                  aria-label="Project name"
+                  disabled={savingProjectName}
+                />
+                <button type="submit" disabled={savingProjectName}>
+                  {savingProjectName ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  type="button"
+                  className="feature-secondary"
+                  onClick={() => {
+                    setProjectNameDraft(project?.name || '');
+                    setIsRenamingProject(false);
+                  }}
+                  disabled={savingProjectName}
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="feature-secondary"
+                onClick={() => setIsRenamingProject(true)}
+              >
+                Rename Project
+              </button>
+            )}
           </div>
           <div className="project-hero-metrics studio-hero-metrics">
             <div className="project-hero-card studio-hero-card">
@@ -498,9 +579,19 @@ const ProjectDetails = () => {
               <button
                 type="button"
                 className="feature-primary"
-                onClick={() => navigate(`/workspace?style=${encodeURIComponent(styleSlug(selectedStyleName))}`, {
-                  state: analysis?.selected_style ? { selectedStyle: analysis.selected_style } : undefined,
-                })}
+                onClick={() => navigate(
+                  selectedStyleSlug
+                    ? `/workspace?style=${encodeURIComponent(selectedStyleSlug)}`
+                    : '/workspace',
+                  {
+                    state: {
+                      projectId: project?.id ?? null,
+                      roomType: project?.room_type ?? null,
+                      budget: project?.budget ?? null,
+                      ...(analysis?.selected_style ? { selectedStyle: analysis.selected_style } : {}),
+                    },
+                  },
+                )}
               >
                 Open Workspace
               </button>

@@ -49,7 +49,12 @@ def test_workspace_analysis():
             tag_names=["cozy", "natural", "light-wood", "functional", "white"],
         )
 
-        project = RoomProject(user_id=user.id, room_type="Living Room", budget=2600)
+        project = RoomProject(
+            user_id=user.id,
+            name="Living Room Project",
+            room_type="Living Room",
+            budget=2600,
+        )
         db.add(project)
         db.commit()
         db.refresh(project)

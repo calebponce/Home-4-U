@@ -378,6 +378,8 @@ const formatSearchError = (err) => {
   return 'Search failed.';
 };
 
+const getProjectDisplayName = (project) => project?.name || project?.room_type || 'Project';
+
 const withRetry = async (fn, retries = 2, delay = 350) => {
   let lastError;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -409,6 +411,9 @@ const Dashboard = () => {
   const [searchError, setSearchError] = useState(null);
   const [searchNotice, setSearchNotice] = useState('');
   const [deletingProjectId, setDeletingProjectId] = useState(null);
+  const [renameProjectTarget, setRenameProjectTarget] = useState(null);
+  const [renameDraft, setRenameDraft] = useState('');
+  const [savingRenameProjectId, setSavingRenameProjectId] = useState(null);
   const [actionMessage, setActionMessage] = useState(null);
   const [initStyle, setInitStyle] = useState(null);
   const [initLoading, setInitLoading] = useState(false);
@@ -939,7 +944,7 @@ const Dashboard = () => {
       await projectsAPI.create(newProjectType);
       setNewProjectType('');
       setShowNewProject(false);
-      setActionMessage({ type: 'success', text: `${newProjectType} project created.` });
+      setActionMessage({ type: 'success', text: 'Project created.' });
       await fetchData({ showSkeleton: false, preserveData: true });
     } catch (err) {
       console.error('Error creating project:', err);
@@ -961,6 +966,44 @@ const Dashboard = () => {
       setActionMessage({ type: 'error', text: formatActionError(err, 'Could not delete project.') });
     } finally {
       setDeletingProjectId(null);
+    }
+  };
+
+  const handleStartRenameProject = (project) => {
+    setRenameProjectTarget(project);
+    setRenameDraft(getProjectDisplayName(project));
+    setActionMessage(null);
+  };
+
+  const handleCancelRenameProject = () => {
+    setRenameProjectTarget(null);
+    setRenameDraft('');
+  };
+
+  const handleSubmitRenameProject = async (projectId) => {
+    const trimmedName = renameDraft.trim();
+    if (!trimmedName) {
+      setActionMessage({ type: 'error', text: 'Project name cannot be empty.' });
+      return;
+    }
+
+    setSavingRenameProjectId(projectId);
+    try {
+      const response = await projectsAPI.update(projectId, { name: trimmedName });
+      setProjects((current) => current.map((project) => (
+        project.id === projectId ? { ...project, ...response.data } : project
+      )));
+      projectsRef.current = projectsRef.current.map((project) => (
+        project.id === projectId ? { ...project, ...response.data } : project
+      ));
+      setRenameProjectTarget(null);
+      setRenameDraft('');
+      setActionMessage({ type: 'success', text: 'Project renamed.' });
+    } catch (err) {
+      console.error('Error renaming project:', err);
+      setActionMessage({ type: 'error', text: formatActionError(err, 'Could not rename project.') });
+    } finally {
+      setSavingRenameProjectId(null);
     }
   };
 
@@ -1161,7 +1204,7 @@ const Dashboard = () => {
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <div className="recent-project-top">
-                  <span className="recent-project-title">{project.room_type || 'Project'}</span>
+                  <span className="recent-project-title">{getProjectDisplayName(project)}</span>
                   <span className="recent-project-date">
                     {project.created_at ? new Date(project.created_at).toLocaleDateString() : ''}
                   </span>
@@ -1728,10 +1771,18 @@ const Dashboard = () => {
                       className="project-card"
                     >
                       <div className="project-card-header">
-                        <h3>{project.room_type}</h3>
-                        <span className="status-badge">Live</span>
+                        <h3>{getProjectDisplayName(project)}</h3>
+                        <button
+                          type="button"
+                          className="rename-project-badge"
+                          onClick={() => handleStartRenameProject(project)}
+                          disabled={savingRenameProjectId === project.id}
+                        >
+                          {savingRenameProjectId === project.id ? 'Saving…' : 'Rename'}
+                        </button>
                       </div>
                       <div className="project-meta">
+                        <p><strong>Room:</strong> {project.room_type}</p>
                         <p><strong>Investment:</strong> ${project.budget ? Number(project.budget).toLocaleString() : 0}</p>
                         <p><strong>Initiated:</strong> {new Date(project.created_at).toLocaleDateString()}</p>
                       </div>
@@ -1763,6 +1814,74 @@ const Dashboard = () => {
           </section>
       </div>
       </div>
+
+      {renameProjectTarget && (
+        <div className="project-rename-modal-backdrop" role="presentation" onClick={handleCancelRenameProject}>
+          <div
+            className="project-rename-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-project-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="project-rename-modal-head">
+              <div>
+                <p className="virtual-eyebrow">Project Rename</p>
+                <h3 id="rename-project-title">Rename this project</h3>
+                <p className="project-rename-modal-copy">
+                  Update the display name for {renameProjectTarget.room_type}. This saves to the database.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="project-rename-close"
+                aria-label="Close rename dialog"
+                onClick={handleCancelRenameProject}
+                disabled={savingRenameProjectId === renameProjectTarget.id}
+              >
+                ×
+              </button>
+            </div>
+
+            <form
+              className="project-rename-modal-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmitRenameProject(renameProjectTarget.id);
+              }}
+            >
+              <label className="project-rename-label" htmlFor="project-rename-input">Project name</label>
+              <input
+                id="project-rename-input"
+                type="text"
+                value={renameDraft}
+                onChange={(e) => setRenameDraft(e.target.value)}
+                maxLength={160}
+                placeholder="Enter project name"
+                disabled={savingRenameProjectId === renameProjectTarget.id}
+                autoFocus
+              />
+              <div className="project-rename-modal-actions">
+                <button
+                  type="button"
+                  className="project-rename-cancel"
+                  onClick={handleCancelRenameProject}
+                  disabled={savingRenameProjectId === renameProjectTarget.id}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="project-rename-save"
+                  disabled={savingRenameProjectId === renameProjectTarget.id}
+                >
+                  {savingRenameProjectId === renameProjectTarget.id ? 'Saving...' : 'Save Name'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="dashboard-footer">

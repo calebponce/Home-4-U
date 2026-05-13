@@ -31,6 +31,7 @@ class RoomProject(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String(160), nullable=False)
     room_type = Column(String(100), nullable=False)
     budget = Column(Float, default=0.0)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -40,14 +41,14 @@ class RoomProject(Base):
     
     # Relationships
     user = relationship("User", back_populates="room_projects")
-    room_tags = relationship("RoomTag", back_populates="room_project")
-    room_dimensions = relationship("RoomDimension", back_populates="room_project")
-    room_furniture = relationship("RoomFurniture", back_populates="room_project")
-    room_objects = relationship("RoomObject", back_populates="room_project")
-    resemblance_scores = relationship("ResemblanceScore", back_populates="room_project")
-    recommendations = relationship("Recommendation", back_populates="room_project")
-    budget_plans = relationship("BudgetPlan", back_populates="room_project")
-    analysis_runs = relationship("ProjectAnalysisRun", back_populates="room_project")
+    room_tags = relationship("RoomTag", back_populates="room_project", cascade="all, delete-orphan")
+    room_dimensions = relationship("RoomDimension", back_populates="room_project", cascade="all, delete-orphan")
+    room_furniture = relationship("RoomFurniture", back_populates="room_project", cascade="all, delete-orphan")
+    room_objects = relationship("RoomObject", back_populates="room_project", cascade="all, delete-orphan")
+    resemblance_scores = relationship("ResemblanceScore", back_populates="room_project", cascade="all, delete-orphan")
+    recommendations = relationship("Recommendation", back_populates="room_project", cascade="all, delete-orphan")
+    budget_plans = relationship("BudgetPlan", back_populates="room_project", cascade="all, delete-orphan")
+    analysis_runs = relationship("ProjectAnalysisRun", back_populates="room_project", cascade="all, delete-orphan")
 
 class Style(Base):
     __tablename__ = "styles"
