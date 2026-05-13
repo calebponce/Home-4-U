@@ -396,6 +396,7 @@ const withRetry = async (fn, retries = 2, delay = 350) => {
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [styles, setStyles] = useState([]);
+  const [apiStyles, setApiStyles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshingData, setIsRefreshingData] = useState(false);
   const [loadError, setLoadError] = useState('');
@@ -826,6 +827,7 @@ const Dashboard = () => {
         const merged = styleData && styleData.length > 0 ? mergeStylesWithDefaults(styleData) : defaultStyles;
         stylesRef.current = merged;
         setStyles(merged);
+        if (styleData && styleData.length > 0) setApiStyles(styleData);
       } else {
         console.error('Error fetching styles:', stylesResult.reason);
         shouldKeepStyles = preserveData && stylesRef.current.length > 0;
@@ -1676,11 +1678,11 @@ const Dashboard = () => {
                     ))}
                   </select>
                 </div>
-                {styles.length > 0 && (
+                {(apiStyles.length > 0 || styles.length > 0) && (
                   <div className="new-project-style-picker">
                     <p className="form-subtitle">Style direction <span className="optional-label">(optional)</span></p>
                     <div className="style-pill-grid">
-                      {styles.map((style) => (
+                      {(apiStyles.length > 0 ? apiStyles : styles).map((style) => (
                         <button
                           key={style.name}
                           type="button"

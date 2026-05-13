@@ -78,11 +78,6 @@ const Workspace = () => {
   const selectedStyleId = fetchedStyle?.id ?? selectedStyle?.id ?? null;
 
   useEffect(() => {
-    if (selectedStyle) {
-      setFetchedStyle(selectedStyle);
-      return undefined;
-    }
-
     let cancelled = false;
     setFetchedStyle(null);
 
@@ -90,6 +85,17 @@ const Workspace = () => {
       .then((response) => {
         if (cancelled) return;
         const styles = response.data || [];
+        const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // When a style was passed via navigation, resolve it by name against the live API
+        // so we always use the canonical DB id rather than a stale default id.
+        if (selectedStyle) {
+          const incoming = normalize(selectedStyle.name || selectedStyle.slug || '');
+          const nameMatch = styles.find((s) => normalize(s.name) === incoming);
+          setFetchedStyle(serializeStyleContext(nameMatch || selectedStyle));
+          return;
+        }
+
         const explicitMatch = styles.find((style) => (
           styleSlug(style?.name) === styleKey || String(style?.name || '').toLowerCase() === styleKey
         ));
@@ -98,7 +104,7 @@ const Workspace = () => {
         setFetchedStyle(resolvedStyle ? serializeStyleContext(resolvedStyle) : null);
       })
       .catch(() => {
-        if (!cancelled) setFetchedStyle(null);
+        if (!cancelled) setFetchedStyle(selectedStyle ?? null);
       });
 
     return () => {

@@ -1189,15 +1189,20 @@ def resolve_style_for_analysis(
     normalized_slug = _normalize_key(style_slug)
     normalized_name = _normalize_key(style_name)
 
+    # Name and slug are authoritative — the user explicitly chose a style by name,
+    # so match those first before falling back to id (which may be stale from a cached default).
     for style in styles:
-        if style_id is not None and style.id == style_id:
-            return style
-
         normalized_style_name = _normalize_key(style.name)
         if normalized_slug and normalized_style_name == normalized_slug:
             return style
         if normalized_name and normalized_style_name == normalized_name:
             return style
+
+    # Id fallback — only used when no name/slug was provided or matched.
+    if style_id is not None:
+        for style in styles:
+            if style.id == style_id:
+                return style
 
     return None
 
