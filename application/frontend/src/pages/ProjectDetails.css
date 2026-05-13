@@ -84,6 +84,30 @@
   max-width: 60ch;
 }
 
+.project-name-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.project-name-form {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto auto;
+  gap: 0.75rem;
+  width: min(100%, 760px);
+}
+
+.project-name-form input {
+  margin-bottom: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
+  border: 1px solid var(--pd-border);
+  background: var(--pd-surface-strong);
+  color: var(--pd-text);
+  box-shadow: none;
+}
+
 .project-hero-metrics {
   margin-top: 0;
 }
@@ -381,8 +405,10 @@
 }
 
 .budget-form input:focus,
+.project-name-form input:focus,
 .feature-primary:focus-visible,
 .feature-secondary:focus-visible,
+.project-name-form button:focus-visible,
 .budget-form button:focus-visible,
 .k-action-btn:focus-visible,
 .shopping-source-link:focus-visible,
@@ -986,6 +1012,10 @@
   }
 
   .budget-form {
+    grid-template-columns: 1fr;
+  }
+
+  .project-name-form {
     grid-template-columns: 1fr;
   }
 

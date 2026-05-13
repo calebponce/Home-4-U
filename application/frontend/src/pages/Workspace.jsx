@@ -25,6 +25,14 @@ const ROOM_TYPE_OPTIONS = [
 
 const ALLOWED_ROOM_UPLOAD_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
+const resolveWorkspaceProjectImageUrl = (photoUrl) => {
+  if (!photoUrl) return '';
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) return photoUrl;
+  if (photoUrl.startsWith('/uploads')) return photoUrl;
+  if (photoUrl.startsWith('uploads/')) return `/${photoUrl}`;
+  return `/uploads/${photoUrl}`;
+};
+
 const formatWorkspaceRequestError = (error, stage = 'analyze-room') => {
   const detail = error?.response?.data?.detail;
   const status = error?.response?.status;
@@ -56,6 +64,7 @@ const Workspace = () => {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const styleKey = (params.get('style') || '').toLowerCase();
+  const incomingProjectId = Number(location.state?.projectId || 0) || null;
   const selectedStyle = (
     location.state?.selectedStyle && typeof location.state.selectedStyle === 'object'
       ? location.state.selectedStyle
@@ -74,10 +83,6 @@ const Workspace = () => {
       setFetchedStyle(selectedStyle);
       return undefined;
     }
-    if (!styleKey) {
-      setFetchedStyle(null);
-      return undefined;
-    }
 
     let cancelled = false;
     setFetchedStyle(null);
@@ -85,10 +90,13 @@ const Workspace = () => {
     stylesAPI.getAll()
       .then((response) => {
         if (cancelled) return;
-        const match = (response.data || []).find((style) => (
+        const styles = response.data || [];
+        const explicitMatch = styles.find((style) => (
           styleSlug(style?.name) === styleKey || String(style?.name || '').toLowerCase() === styleKey
         ));
-        setFetchedStyle(match ? serializeStyleContext(match) : null);
+        const defaultMatch = styles.find((style) => styleSlug(style?.name) === 'modern') || styles[0] || null;
+        const resolvedStyle = styleKey ? explicitMatch : defaultMatch;
+        setFetchedStyle(resolvedStyle ? serializeStyleContext(resolvedStyle) : null);
       })
       .catch(() => {
         if (!cancelled) setFetchedStyle(null);
@@ -232,6 +240,40 @@ const Workspace = () => {
     }
   }, [location.state]);
 
+  useEffect(() => {
+    if (!incomingProjectId) return undefined;
+
+    let cancelled = false;
+
+    projectsAPI.getById(incomingProjectId)
+      .then((response) => {
+        if (cancelled) return;
+        const project = response.data;
+        setAnalysisProject(project);
+        if (project?.room_type) {
+          setRoomType(project.room_type);
+        }
+        const nextBudget = Number(project?.budget || 0);
+        if (Number.isFinite(nextBudget)) {
+          setBudget(nextBudget >= 5000 ? 'high' : nextBudget > 0 && nextBudget < 2000 ? 'low' : 'medium');
+        }
+        if (!roomFile && !roomImage && project?.photo_url) {
+          setRoomImage(resolveWorkspaceProjectImageUrl(project.photo_url));
+          setSelectedRoomLabel(`${project.room_type || 'Room'} project photo`);
+          setStatus('Project loaded');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWorkspaceNotice('Could not load the saved project. A new project will be created on the next plan run.');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [incomingProjectId, roomFile, roomImage]);
+
   const loadDemo = (url, nextRoomType) => {
     clearGenerationTimers();
     setIsGenerating(false);
@@ -241,7 +283,6 @@ const Workspace = () => {
     setWorkspaceError('');
     setWorkspaceNotice('');
     setAnalysisResult(null);
-    setAnalysisProject(null);
     setRoomImage(url);
     setRoomFile(null);
     setGeneratedImage(null);
@@ -342,7 +383,6 @@ const Workspace = () => {
       setProcessingText('');
       setProcessingLevel(0);
       setAnalysisResult(null);
-      setAnalysisProject(null);
       setRoomFile(normalizedUpload.file);
       setRoomImage(normalizedUpload.previewUrl || null);
       setGeneratedImage(null);
@@ -583,7 +623,7 @@ const Workspace = () => {
           ))}
         </div>
 
-        <section className={`workspace-canvas state-${previewState}`} data-tilt>
+        <section className={`workspace-canvas state-${previewState}`}>
           <div className="canvas-header">
             <span>Room Review</span>
             <span className="status">{status}</span>
@@ -706,7 +746,7 @@ const Workspace = () => {
           </div>
         </section>
 
-        <aside className="workspace-controls" data-tilt>
+        <aside className="workspace-controls">
           <div className="control-group">
             <div className="control-head">
               <span>Selected Style</span>

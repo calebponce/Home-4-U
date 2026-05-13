@@ -282,9 +282,9 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--dash-border);
   background:
-    radial-gradient(circle at 100% 0%, rgb(var(--color-brass-300-rgb) / 0.7), transparent 42%),
-    radial-gradient(circle at 0% 0%, rgb(var(--color-steel-500-rgb) / 0.46), transparent 34%),
-    linear-gradient(180deg, rgb(var(--color-paper-50-rgb) / 0.92), rgb(var(--color-stone-100-rgb) / 0.9));
+    radial-gradient(circle at 100% 0%, rgb(var(--color-brass-300-rgb) / 0.18), transparent 42%),
+    radial-gradient(circle at 0% 0%, rgb(var(--color-steel-500-rgb) / 0.16), transparent 34%),
+    linear-gradient(180deg, rgb(var(--color-primary-slate-rgb) / 0.94), rgb(16 22 35 / 0.96));
   box-shadow: var(--dash-card-shadow);
   text-align: left;
   overflow: hidden;
@@ -311,7 +311,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgb(var(--color-slate-400-rgb) / 0.9);
+  color: rgb(var(--color-secondary-arctic-rgb) / 0.78);
 }
 
 .zero-state-header h3 {
@@ -324,7 +324,7 @@
 
 .zero-state-header p {
   margin: 0;
-  color: rgb(var(--color-slate-400-rgb) / 0.92);
+  color: rgb(var(--color-secondary-arctic-rgb) / 0.86);
   max-width: 64ch;
   line-height: 1.55;
 }
@@ -341,14 +341,14 @@
 .zero-state-step {
   min-height: 46px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgb(var(--color-graphite-900-rgb) / 0.08);
-  background: rgb(var(--color-paper-50-rgb) / 0.6);
+  border: 1px solid rgb(var(--color-secondary-arctic-rgb) / 0.12);
+  background: rgb(var(--color-primary-slate-rgb) / 0.62);
   padding: 0.65rem 0.75rem;
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
   font-size: 0.83rem;
-  color: var(--dash-text);
+  color: rgb(var(--color-paper-50-rgb) / 0.92);
 }
 
 .step-index {
@@ -374,8 +374,8 @@
 .template-card {
   min-height: 124px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgb(var(--color-graphite-900-rgb) / 0.08);
-  background: rgb(var(--color-paper-50-rgb) / 0.68);
+  border: 1px solid rgb(var(--color-secondary-arctic-rgb) / 0.12);
+  background: rgb(var(--color-primary-slate-rgb) / 0.7);
   color: inherit;
   cursor: pointer;
   display: grid;
@@ -393,9 +393,9 @@
 
 .template-card:hover {
   transform: translateY(-1px);
-  border-color: rgb(var(--color-graphite-900-rgb) / 0.12);
-  background: rgb(var(--color-paper-50-rgb) / 0.88);
-  box-shadow: 0 22px 40px -34px rgb(var(--color-graphite-950-rgb) / 0.24);
+  border-color: rgb(var(--color-camel-400-rgb) / 0.26);
+  background: rgb(var(--color-primary-slate-rgb) / 0.82);
+  box-shadow: 0 22px 40px -34px rgb(var(--color-graphite-950-rgb) / 0.55);
 }
 
 .template-card:focus-visible {
@@ -406,8 +406,8 @@
 .template-card.is-selected {
   border-color: rgb(var(--color-brass-400-rgb) / 0.44);
   background:
-    linear-gradient(155deg, rgb(var(--color-brass-300-rgb) / 0.84), transparent 68%),
-    rgb(var(--color-paper-50-rgb) / 0.9);
+    linear-gradient(155deg, rgb(var(--color-brass-300-rgb) / 0.18), transparent 68%),
+    rgb(var(--color-primary-slate-rgb) / 0.86);
 }
 
 .template-img {
@@ -474,6 +474,30 @@
   font-weight: 700;
 }
 
+.rename-project-badge {
+  font-size: 0.72rem;
+  padding: 0.4rem 0.72rem;
+  border-radius: 0;
+  border: 1px solid var(--dash-border);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--dash-text);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: transform 170ms ease, background-color 170ms ease, border-color 170ms ease;
+}
+
+.rename-project-badge:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgb(255 255 255 / 0.1);
+  border-color: rgb(var(--color-camel-400-rgb) / 0.34);
+}
+
+.rename-project-badge:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
 .project-meta {
   font-size: 0.9rem;
   color: var(--dash-muted);
@@ -482,6 +506,116 @@
 
 .project-meta p {
   margin-bottom: 0.25rem;
+}
+
+.project-rename-cancel {
+  background: rgb(255 255 255 / 0.05) !important;
+  color: var(--dash-text) !important;
+}
+
+.rename-project-badge:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--color-camel-400-rgb) / 0.18);
+}
+
+.project-rename-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgb(var(--color-graphite-950-rgb) / 0.38);
+  backdrop-filter: blur(6px);
+}
+
+.project-rename-modal {
+  width: min(560px, 100%);
+  padding: 1.35rem;
+  border: 1px solid var(--dash-border);
+  background: linear-gradient(160deg, rgb(var(--color-primary-slate-rgb) / 0.96), rgb(12 19 31 / 0.98));
+  box-shadow: 0 28px 60px -38px rgb(0 0 0 / 0.95);
+  display: grid;
+  gap: 1rem;
+}
+
+.project-rename-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.project-rename-modal-head h3 {
+  margin: 0.18rem 0 0;
+  color: rgb(var(--color-paper-50-rgb) / 0.96);
+}
+
+.project-rename-modal-copy {
+  margin: 0.35rem 0 0;
+  color: var(--dash-muted);
+  font-size: 0.92rem;
+}
+
+.project-rename-close {
+  min-width: 42px;
+  min-height: 42px;
+  border: 1px solid var(--dash-border);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--dash-text);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.project-rename-modal-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.project-rename-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dash-muted);
+}
+
+.project-rename-modal-form input {
+  margin: 0;
+  min-width: 0;
+  padding: 0.92rem 1rem;
+  border: 1px solid var(--dash-border);
+  background: rgb(var(--color-primary-slate-rgb) / 0.88);
+  color: rgb(var(--color-paper-50-rgb) / 0.96);
+  font-size: 1rem;
+}
+
+.project-rename-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.project-rename-save {
+  background: var(--dash-brand);
+  color: var(--color-primary-slate);
+}
+
+.project-rename-close:hover:not(:disabled),
+.project-rename-cancel:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.1) !important;
+}
+
+.project-rename-save:hover:not(:disabled) {
+  filter: brightness(1.04);
+}
+
+.project-rename-modal-form input:focus,
+.project-rename-close:focus-visible,
+.project-rename-modal-form button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(var(--color-camel-400-rgb) / 0.18);
 }
 
 .project-actions {
