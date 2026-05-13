@@ -185,6 +185,8 @@ csc648-848-project-sp26-vibecoding-for-internship/
 | httpx | 0.27.2 | HTTP client used by FastAPI test tooling |
 | alembic | 1.13.1 | Utility |
 | psycopg[binary] | 3.1.18 | Utility |
+| Pillow | 10.4.0 | Utility |
+| anthropic>=0.40.0 | latest | Utility |
 
 
 ### Frontend
@@ -430,5 +432,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-05-13 06:53:48*
+*Last Updated: 2026-05-13 13:56:03*
 *This document is maintained by the repository documentation generator.*
