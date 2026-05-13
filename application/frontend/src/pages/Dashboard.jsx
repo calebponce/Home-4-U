@@ -1682,10 +1682,10 @@ const Dashboard = () => {
                     <div className="style-pill-grid">
                       {styles.map((style) => (
                         <button
-                          key={style.id}
+                          key={style.name}
                           type="button"
-                          className={`style-pill${newProjectStyle?.id === style.id ? ' is-selected' : ''}`}
-                          onClick={() => setNewProjectStyle(newProjectStyle?.id === style.id ? null : style)}
+                          className={`style-pill${newProjectStyle?.name === style.name ? ' is-selected' : ''}`}
+                          onClick={() => setNewProjectStyle(newProjectStyle?.name === style.name ? null : style)}
                         >
                           {style.name}
                         </button>
