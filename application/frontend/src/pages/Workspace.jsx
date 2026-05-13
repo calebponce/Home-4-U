@@ -969,6 +969,9 @@ const Workspace = () => {
               <div className="control-head">
                 <span>Analysis Snapshot</span>
                 <div className="analysis-head-right">
+                  {analysisResult.selected_style?.name && (
+                    <span className="metric-pill style-pill-result">{analysisResult.selected_style.name}</span>
+                  )}
                   <span className="metric-pill">{Math.round(selectedScore?.score_value || 0)}% Match</span>
                 </div>
               </div>
@@ -1013,6 +1016,11 @@ const Workspace = () => {
               )}
               {!!analysisResult.recommendations?.length && (
                 <div className="analysis-list">
+                  {analysisResult.selected_style?.name && (
+                    <p className="control-sub compact analysis-style-label">
+                      Recommendations for {analysisResult.selected_style.name}
+                    </p>
+                  )}
                   {analysisResult.recommendations.slice(0, 3).map((recommendation) => (
                     <div key={recommendation.id} className="analysis-list-item">
                       <span className="analysis-list-score">{recommendation.priority_score.toFixed(1)}</span>

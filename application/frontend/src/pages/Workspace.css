@@ -557,6 +557,21 @@
   color: var(--ws-text);
 }
 
+.metric-pill.style-pill-result {
+  background: rgb(var(--ws-secondary-rgb) / 0.18);
+  border-color: rgb(var(--ws-secondary-rgb) / 0.35);
+  color: var(--ws-secondary);
+}
+
+.analysis-style-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ws-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
 .workspace input[type="range"] {
   -webkit-appearance: none;
   appearance: none;

@@ -1088,8 +1088,8 @@ const Dashboard = () => {
               type="button"
               className="header-action header-action-primary studio-btn studio-btn--primary"
               onClick={() => {
+                if (!newProjectType) setNewProjectType('Living Room');
                 setShowNewProject(true);
-                // Keep user oriented: jump to the creation area.
                 requestAnimationFrame(() => {
                   document.querySelector('.projects-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
@@ -1653,7 +1653,7 @@ const Dashboard = () => {
               <h2>My Room Projects</h2>
               <button 
                 type="button"
-                onClick={() => setShowNewProject(!showNewProject)}
+                onClick={() => { if (!newProjectType) setNewProjectType('Living Room'); setShowNewProject(!showNewProject); }}
                 className="new-project-btn studio-btn studio-btn--secondary"
               >
                 {showNewProject ? 'Close' : '+ New Project'}
@@ -1788,7 +1788,7 @@ const Dashboard = () => {
                       whileHover={{ y: -1 }}
                       whileTap={{ y: 0 }}
                       className="new-project-btn cta-primary studio-btn studio-btn--primary"
-                      onClick={() => setShowNewProject(true)}
+                      onClick={() => { if (!newProjectType) setNewProjectType('Living Room'); setShowNewProject(true); }}
                     >
                       {newProjectType ? `Continue with ${newProjectType}` : 'Create Custom Project'}
                     </motion.button>
