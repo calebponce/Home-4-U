@@ -23,7 +23,9 @@ from app.schemas.schemas import (
     RoomProjectCreate,
     RoomProjectUpdate,
     RoomProjectResponse,
+    UploadPhotoResponse,
 )
+from app.services.image_ai_feedback import build_image_upload_feedback
 from app.services.project_analysis import (
     analyze_project_design,
     load_saved_project_analysis,
@@ -341,7 +343,7 @@ def delete_project(
     return None
 
 
-@router.post("/{project_id}/photo", response_model=RoomProjectResponse)
+@router.post("/{project_id}/photo", response_model=UploadPhotoResponse)
 async def upload_project_photo(
     project_id: int,
     file: UploadFile = File(...),
@@ -385,9 +387,18 @@ async def upload_project_photo(
     (UPLOAD_DIR / filename).write_bytes(data)
 
     project.photo_url = build_public_asset_url(f"/uploads/{filename}")
+    upload_feedback = None
+    try:
+        upload_feedback = await build_image_upload_feedback(data, room_type=project.room_type)
+    except Exception:
+        upload_feedback = None
+
     db.commit()
     db.refresh(project)
-    return project
+    return {
+        "project": project,
+        "upload_feedback": upload_feedback,
+    }
 
 
 @router.post("/{project_id}/analysis", response_model=ProjectAnalysisResponse)

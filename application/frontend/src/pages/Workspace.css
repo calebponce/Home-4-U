@@ -526,6 +526,14 @@
   color: var(--ws-muted);
 }
 
+.analysis-head-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+
 .metric-pill {
   display: inline-flex;
   align-items: center;
@@ -782,6 +790,51 @@
 
 .workspace-retry-btn {
   width: 100%;
+}
+
+.workspace-upload-feedback {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgb(var(--ws-accent-rgb) / 0.2);
+  background: rgb(var(--ws-accent-rgb) / 0.08);
+}
+
+.workspace-upload-feedback .control-head {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.workspace-upload-feedback .control-sub {
+  font-size: 0.82rem;
+  color: rgb(232 244 255 / 0.94);
+}
+
+.upload-feedback-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  color: var(--ws-text);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.upload-feedback-list.suggestions {
+  color: rgb(224 236 255 / 0.96);
+}
+
+.upload-confidence-high {
+  border-color: rgb(var(--ws-accent-rgb) / 0.42);
+}
+
+.upload-confidence-medium {
+  border-color: rgb(var(--ws-secondary-rgb) / 0.4);
+}
+
+.upload-confidence-low {
+  border-color: rgb(var(--color-danger-500-rgb) / 0.35);
 }
 
 .analysis-group {

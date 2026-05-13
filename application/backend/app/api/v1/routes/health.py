@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.database import engine
-from app.core.settings import APP_VERSION
+from app.core.settings import AI_ANALYSIS_ENABLED, AI_ANALYSIS_MODEL, APP_VERSION
 
 router = APIRouter()
 
@@ -29,6 +29,8 @@ def health():
         ),
         "python": platform.python_version(),
         "version": APP_VERSION,
+        "ai_enabled": AI_ANALYSIS_ENABLED,
+        "ai_model": AI_ANALYSIS_MODEL if AI_ANALYSIS_ENABLED else None,
     }
 
     try:

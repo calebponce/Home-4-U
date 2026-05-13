@@ -6,6 +6,7 @@ from urllib.parse import quote_plus, urlparse
 
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.settings import AI_ANALYSIS_ENABLED, AI_ANALYSIS_MODEL
 from app.models.database import (
     ProductItem,
     ProjectAnalysisRun,
@@ -1314,6 +1315,27 @@ def analyze_project_design(
                 for tag_name in ("rich-colors", "colorful", "eclectic"):
                     register_tag(tag_name, "dominant-color", 0.64)
 
+    # --- Comprehensive AI vision analysis: image vs. target style ---
+    ai_powered = False
+    ai_model: Optional[str] = None
+    _ai_comprehensive = None
+    if AI_ANALYSIS_ENABLED and project.photo_url:
+        from app.services.ai_analysis import analyze_room_vs_style_with_claude
+        _ai_comprehensive = analyze_room_vs_style_with_claude(
+            project.photo_url,
+            room_type=room_type or project.room_type,
+            style_name=selected_style.name,
+            style_tags=[st.tag.name for st in selected_style.style_tags if st.tag],
+            budget=float(project.budget or DEFAULT_BUDGET_BY_TIER.get(budget_tier, 2600.0)),
+            budget_tier=budget_tier,
+            available_tag_names=list(available_tags.keys()),
+        )
+        if _ai_comprehensive:
+            for item in (_ai_comprehensive.get("suggested_tags") or []):
+                register_tag(item["tag_name"], "claude", item["confidence"])
+            ai_powered = True
+            ai_model = AI_ANALYSIS_MODEL
+
     scan_assessment = build_scan_assessment(
         image_profile=image_profile,
         detected_tags=normalized_detected,
@@ -1323,6 +1345,18 @@ def analyze_project_design(
         image_profile=image_profile,
         detected_tags=normalized_detected,
     )
+
+    if _ai_comprehensive:
+        for key in ("confidence_score", "confidence_label", "style_cues"):
+            val = _ai_comprehensive.get(key)
+            if val is not None:
+                scan_assessment[key] = val
+        scan_assessment["ai_source"] = "claude"
+        for key in ("openness", "clutter_level", "furnishing_density", "contrast_level"):
+            val = _ai_comprehensive.get(key)
+            if val is not None:
+                room_state[key] = val
+        room_state["ai_source"] = "claude"
 
     db.query(RoomTag).filter(RoomTag.room_project_id == project.id).delete(synchronize_session=False)
     db.query(ResemblanceScore).filter(ResemblanceScore.room_project_id == project.id).delete(synchronize_session=False)
@@ -1387,6 +1421,18 @@ def analyze_project_design(
             }
         )
 
+    # --- AI resemblance scoring: blend Claude's visual match score for the selected style ---
+    if _ai_comprehensive:
+        ai_selected_score = _ai_comprehensive.get("style_match_score")
+        if ai_selected_score is not None:
+            for score_item in style_scores_payload:
+                if score_item["style_id"] == selected_style.id:
+                    score_item["score_value"] = round(
+                        score_item["score_value"] * 0.5 + float(ai_selected_score) * 0.5, 1
+                    )
+                    break
+            style_scores_payload.sort(key=lambda item: item["score_value"], reverse=True)
+
     db.flush()
     db.query(Recommendation).filter(Recommendation.room_project_id == project.id).delete(synchronize_session=False)
 
@@ -1401,6 +1447,7 @@ def analyze_project_design(
         budget_tier=budget_tier,
         scan_assessment=scan_assessment,
         room_state=room_state,
+        ai_recommendations=(_ai_comprehensive.get("recommendations") if _ai_comprehensive else None),
     )
 
     suggested_tags_payload = [
@@ -1447,6 +1494,8 @@ def analyze_project_design(
             suggested_tags=list(suggested_map.values()),
             budget_tier=budget_tier,
         ),
+        "ai_powered": ai_powered,
+        "ai_model": ai_model,
     }
 
 
@@ -1462,6 +1511,7 @@ def refresh_project_recommendations(
     budget_tier: str,
     scan_assessment: Optional[dict] = None,
     room_state: Optional[dict] = None,
+    ai_recommendations: Optional[list[dict]] = None,
 ) -> list[Recommendation]:
     """Create a fresh recommendation set from saved scores."""
     sorted_scores = sorted(style_scores, key=lambda item: item["score_value"], reverse=True)
@@ -1558,7 +1608,9 @@ def refresh_project_recommendations(
         else "Keep smaller accessories edited so the room does not feel visually noisy."
     )
 
-    if scan_label == "low":
+    if ai_recommendations is not None:
+        recommendation_specs = ai_recommendations
+    elif scan_label == "low":
         recommendation_specs = [
             {
                 "description": f"Start with one flexible {anchor_blueprint['label'].lower()} move that nudges the {room_label} toward {selected_style.name.lower()} without locking in a full redesign.",

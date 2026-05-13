@@ -126,6 +126,7 @@ const Workspace = () => {
   const [analysisProject, setAnalysisProject] = useState(null);
   const [workspaceError, setWorkspaceError] = useState('');
   const [workspaceNotice, setWorkspaceNotice] = useState('');
+  const [uploadFeedback, setUploadFeedback] = useState(null);
   const [selectedRoomLabel, setSelectedRoomLabel] = useState('');
   const shoppingPlanRef = useRef(null);
   const generateBtnRef = useRef(null);
@@ -242,6 +243,7 @@ const Workspace = () => {
     setAnalysisResult(null);
     setWorkspaceError('');
     setWorkspaceNotice('');
+    setUploadFeedback(null);
     lastSuccessfulRunRef.current = null;
     stopRevealDrag();
   }, [styleInfo.key, clearGenerationTimers, stopRevealDrag]);
@@ -298,6 +300,7 @@ const Workspace = () => {
     setProcessingLevel(0);
     setWorkspaceError('');
     setWorkspaceNotice('');
+    setUploadFeedback(null);
     setAnalysisResult(null);
     setRoomImage(url);
     setRoomFile(null);
@@ -473,7 +476,11 @@ const Workspace = () => {
         setProcessingText('Saving the selected room photo...');
         setProcessingLevel(0.32);
         const photoResponse = await projectsAPI.uploadPhoto(project.id, roomFile);
-        project = photoResponse.data;
+        project = photoResponse.data?.project || photoResponse.data;
+        setUploadFeedback(photoResponse.data?.upload_feedback || null);
+        if (photoResponse.data?.upload_feedback?.summary) {
+          setWorkspaceNotice(photoResponse.data.upload_feedback.summary);
+        }
         setAnalysisProject(project);
       }
 
@@ -898,6 +905,31 @@ const Workspace = () => {
                 )}
               </div>
             )}
+            {uploadFeedback && (
+              <div className="workspace-upload-feedback" role="status" aria-live="polite">
+                <div className="control-head">
+                  <span>Upload AI Feedback</span>
+                  <span className={`metric-pill upload-confidence-${uploadFeedback.confidence_label}`}>
+                    {Math.round((uploadFeedback.confidence_score || 0) * 100)}% {uploadFeedback.confidence_label}
+                  </span>
+                </div>
+                <p className="control-sub">{uploadFeedback.summary}</p>
+                {!!uploadFeedback.issues?.length && (
+                  <ul className="upload-feedback-list">
+                    {uploadFeedback.issues.map((issue) => (
+                      <li key={issue}>{issue}</li>
+                    ))}
+                  </ul>
+                )}
+                {!!uploadFeedback.suggestions?.length && (
+                  <ul className="upload-feedback-list suggestions">
+                    {uploadFeedback.suggestions.slice(0, 2).map((tip) => (
+                      <li key={tip}>{tip}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="control-group">
@@ -921,7 +953,9 @@ const Workspace = () => {
             <div className="control-group analysis-group">
               <div className="control-head">
                 <span>Analysis Snapshot</span>
-                <span className="metric-pill">{Math.round(selectedScore?.score_value || 0)}% Match</span>
+                <div className="analysis-head-right">
+                  <span className="metric-pill">{Math.round(selectedScore?.score_value || 0)}% Match</span>
+                </div>
               </div>
               <p className="control-sub">{analysisResult.summary}</p>
               {analysisResult.image_profile?.dominant_hex && (

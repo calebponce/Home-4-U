@@ -51,6 +51,29 @@ class RoomProjectResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class ImageUploadFeedbackMetrics(BaseModel):
+    width: int = Field(ge=1)
+    height: int = Field(ge=1)
+    megapixels: float = Field(ge=0.0)
+    brightness: float = Field(ge=0.0, le=1.0)
+    aspect_ratio: float = Field(ge=0.1)
+    issue_count: int = Field(ge=0)
+
+
+class ImageUploadFeedback(BaseModel):
+    summary: str
+    confidence_score: float = Field(ge=0.0, le=1.0)
+    confidence_label: Literal["low", "medium", "high"] = "low"
+    issues: List[str] = Field(default_factory=list)
+    suggestions: List[str] = Field(default_factory=list)
+    metrics: ImageUploadFeedbackMetrics
+
+
+class UploadPhotoResponse(BaseModel):
+    project: RoomProjectResponse
+    upload_feedback: Optional[ImageUploadFeedback] = None
+
 # Style Schemas
 class StyleResponse(BaseModel):
     id: int
@@ -230,6 +253,8 @@ class ProjectAnalysisResponse(BaseModel):
     style_scores: List[StyleScoreDetail]
     recommendations: List[RecommendationResponse]
     shopping_plan: List[ShoppingPlanItem] = []
+    ai_powered: bool = False
+    ai_model: Optional[str] = None
 
 
 class ProjectAnalysisRunResponse(BaseModel):

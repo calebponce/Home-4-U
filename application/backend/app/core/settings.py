@@ -63,6 +63,20 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")
 DATABASE_BACKEND = DATABASE_URL.split(":", 1)[0].lower()
 IS_SQLITE = DATABASE_BACKEND == "sqlite"
 
+# AI vision feedback configuration (OpenAI-compatible endpoint)
+AI_VISION_PROVIDER = os.getenv("HOME4U_AI_VISION_PROVIDER", "openai").strip().lower() or "openai"
+AI_VISION_BASE_URL = os.getenv("HOME4U_AI_VISION_BASE_URL", "https://api.openai.com/v1").strip().rstrip("/")
+AI_VISION_API_KEY = os.getenv("HOME4U_AI_VISION_API_KEY", "").strip()
+AI_VISION_MODEL = os.getenv("HOME4U_AI_VISION_MODEL", "").strip()
+AI_VISION_TIMEOUT_SECONDS = _read_int_env("HOME4U_AI_VISION_TIMEOUT_SECONDS", 18, 3)
+AI_VISION_ENABLED = bool(AI_VISION_API_KEY and AI_VISION_MODEL)
+
+# Anthropic Claude — AI analysis features (tag suggestions, resemblance, recommendations)
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
+AI_ANALYSIS_MODEL = os.getenv("HOME4U_AI_ANALYSIS_MODEL", "claude-haiku-4-5-20251001").strip()
+AI_ANALYSIS_TIMEOUT_SECONDS = _read_int_env("HOME4U_AI_ANALYSIS_TIMEOUT_SECONDS", 25, 5)
+AI_ANALYSIS_ENABLED = bool(ANTHROPIC_API_KEY and AI_ANALYSIS_MODEL)
+
 
 def build_public_asset_url(path: str) -> str:
     normalized = path if path.startswith("/") else f"/{path}"
