@@ -401,6 +401,7 @@ const Dashboard = () => {
   const [loadError, setLoadError] = useState('');
   const [loadNotice, setLoadNotice] = useState('');
   const [newProjectType, setNewProjectType] = useState('');
+  const [newProjectStyle, setNewProjectStyle] = useState(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -941,9 +942,23 @@ const Dashboard = () => {
 
     setIsCreatingProject(true);
     try {
-      await projectsAPI.create(newProjectType);
+      const response = await projectsAPI.create(newProjectType);
+      const newProject = response.data;
+      const chosenStyle = newProjectStyle;
       setNewProjectType('');
+      setNewProjectStyle(null);
       setShowNewProject(false);
+      if (chosenStyle) {
+        navigate('/workspace', {
+          state: {
+            projectId: newProject.id,
+            roomType: newProject.room_type,
+            budget: newProject.budget ?? null,
+            selectedStyle: serializeStyleContext(chosenStyle),
+          },
+        });
+        return;
+      }
       setActionMessage({ type: 'success', text: 'Project created.' });
       await fetchData({ showSkeleton: false, preserveData: true });
     } catch (err) {
@@ -1647,22 +1662,43 @@ const Dashboard = () => {
               <form onSubmit={handleCreateProject} className="new-project-form">
                 <div className="form-text">
                   <p className="form-title">Create a new room project</p>
-                  <p className="form-subtitle">Pick a room to start your plan and recommendations.</p>
+                  <p className="form-subtitle">Pick a room type and style direction to get started.</p>
                 </div>
-                <select
-                  value={newProjectType}
-                  onChange={(e) => setNewProjectType(e.target.value)}
-                  required
-                >
-                  <option value="">Select room type</option>
-                  {roomTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-                <button type="submit" disabled={isCreatingProject || !newProjectType}>
-                  {isCreatingProject ? 'Creating...' : 'Create'}
-                </button>
-                <button type="button" onClick={() => setShowNewProject(false)}>Cancel</button>
+                <div className="new-project-fields">
+                  <select
+                    value={newProjectType}
+                    onChange={(e) => setNewProjectType(e.target.value)}
+                    required
+                  >
+                    <option value="">Select room type</option>
+                    {roomTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                {styles.length > 0 && (
+                  <div className="new-project-style-picker">
+                    <p className="form-subtitle">Style direction <span className="optional-label">(optional)</span></p>
+                    <div className="style-pill-grid">
+                      {styles.map((style) => (
+                        <button
+                          key={style.id}
+                          type="button"
+                          className={`style-pill${newProjectStyle?.id === style.id ? ' is-selected' : ''}`}
+                          onClick={() => setNewProjectStyle(newProjectStyle?.id === style.id ? null : style)}
+                        >
+                          {style.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="new-project-form-actions">
+                  <button type="submit" disabled={isCreatingProject || !newProjectType}>
+                    {isCreatingProject ? 'Creating…' : newProjectStyle ? `Create with ${newProjectStyle.name}` : 'Create Project'}
+                  </button>
+                  <button type="button" onClick={() => { setShowNewProject(false); setNewProjectStyle(null); setNewProjectType(''); }}>Cancel</button>
+                </div>
               </form>
             )}
 

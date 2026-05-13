@@ -2428,7 +2428,6 @@
 
 .new-project-form {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
   gap: var(--space-2);
   margin-bottom: var(--space-3);
   padding: var(--space-3);
@@ -2451,20 +2450,65 @@
   color: var(--dash-muted);
 }
 
-.new-project-form select {
+.optional-label {
+  font-weight: 400;
+  opacity: 0.65;
+}
+
+.new-project-fields select {
+  width: 100%;
   margin: 0;
   background: var(--dash-surface-strong);
   color: var(--dash-text);
   border: 1px solid var(--dash-border);
 }
 
-.new-project-form button:nth-child(2) {
-  background: var(--dash-brand);
-  color: var(--color-primary-slate);
+.new-project-style-picker {
+  display: grid;
+  gap: 0.5rem;
 }
 
-.new-project-form button:nth-child(3),
-.new-project-form button:nth-child(4) {
+.style-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.style-pill {
+  padding: 0.32rem 0.7rem;
+  border-radius: 99px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface-strong);
+  color: var(--dash-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.style-pill:hover {
+  border-color: rgb(var(--dash-accent-rgb) / 0.4);
+  background: rgb(var(--dash-accent-rgb) / 0.08);
+}
+
+.style-pill.is-selected {
+  border-color: rgb(var(--dash-accent-rgb) / 0.6);
+  background: rgb(var(--dash-accent-rgb) / 0.15);
+  color: var(--dash-brand);
+  font-weight: 600;
+}
+
+.new-project-form-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.new-project-form-actions button:first-child {
+  background: var(--dash-brand);
+  color: var(--color-primary-slate);
+  flex: 1;
+}
+
+.new-project-form-actions button:last-child {
   background: var(--dash-surface-strong);
   color: var(--dash-text);
 }
