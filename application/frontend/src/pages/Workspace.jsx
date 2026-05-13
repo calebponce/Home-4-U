@@ -967,13 +967,8 @@ const Workspace = () => {
               {analysisResult.scan_assessment && (
                 <div className="analysis-chip-row studio-chip-row">
                   <span className={`analysis-chip studio-chip scan-confidence-chip scan-confidence-${analysisResult.scan_assessment.confidence_label}`}>
-                    Scan {analysisResult.scan_assessment.confidence_label} ({Math.round(analysisResult.scan_assessment.confidence_score * 100)}%)
+                    {{ high: 'Strong scan quality', medium: 'Good scan quality', low: 'Limited scan data' }[analysisResult.scan_assessment.confidence_label] ?? `Scan ${analysisResult.scan_assessment.confidence_label}`}
                   </span>
-                  {analysisResult.scan_assessment.signal_count > 0 && (
-                    <span className="analysis-chip studio-chip">
-                      {analysisResult.scan_assessment.signal_count} signal{analysisResult.scan_assessment.signal_count !== 1 ? 's' : ''}
-                    </span>
-                  )}
                 </div>
               )}
               {!!analysisResult.suggested_tags?.length && (
@@ -986,9 +981,15 @@ const Workspace = () => {
               {analysisResult.room_state && (
                 <div className="room-state-block">
                   <div className="analysis-chip-row studio-chip-row">
-                    <span className="analysis-chip studio-chip">Open {analysisResult.room_state.openness}</span>
-                    <span className="analysis-chip studio-chip">Clutter {analysisResult.room_state.clutter_level}</span>
-                    <span className="analysis-chip studio-chip">Contrast {analysisResult.room_state.contrast_level}</span>
+                    <span className="analysis-chip studio-chip">
+                      {{ high: 'Spacious', medium: 'Open layout', low: 'Compact' }[analysisResult.room_state.openness] ?? analysisResult.room_state.openness}
+                    </span>
+                    <span className="analysis-chip studio-chip">
+                      {{ low: 'Tidy', medium: 'Some clutter', high: 'Busy' }[analysisResult.room_state.clutter_level] ?? analysisResult.room_state.clutter_level}
+                    </span>
+                    <span className="analysis-chip studio-chip">
+                      {{ low: 'Soft tones', medium: 'Balanced tones', high: 'Bold contrast' }[analysisResult.room_state.contrast_level] ?? analysisResult.room_state.contrast_level}
+                    </span>
                   </div>
                   {analysisResult.room_state.cues?.[0] && (
                     <p className="control-sub compact">{analysisResult.room_state.cues[0]}</p>
@@ -1093,6 +1094,15 @@ const Workspace = () => {
                     ))}
                   </div>
                 </div>
+              )}
+              {analysisProject && (
+                <button
+                  type="button"
+                  className="secondary-link-btn"
+                  onClick={() => navigate(`/project/${analysisProject.id}`)}
+                >
+                  View Saved Plan
+                </button>
               )}
             </div>
           )}
