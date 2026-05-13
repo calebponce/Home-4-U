@@ -5,7 +5,6 @@ import { projectsAPI, stylesAPI } from '../services/api';
 import { resolveStyleContext, serializeStyleContext, styleSlug } from '../utils/styleContext';
 import {
   extractImageProfile,
-  getBudgetAmount,
   inferDetectedTags,
   normalizeRoomUpload,
   renderConceptPreview,
@@ -108,9 +107,8 @@ const Workspace = () => {
   }, [selectedStyle, styleKey]);
 
   const projectBudget = Number(location.state?.budget || 0);
-  const inferredBudgetTier = projectBudget >= 5000 ? 'high' : projectBudget > 0 && projectBudget < 2000 ? 'low' : 'medium';
   const [intensity, setIntensity] = useState(60);
-  const [budget, setBudget] = useState(inferredBudgetTier);
+  const [budget, setBudget] = useState(projectBudget > 0 ? projectBudget : 2500);
   const [lighting, setLighting] = useState('warm');
   const [roomType, setRoomType] = useState(location.state?.roomType || 'Living Room');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -142,7 +140,8 @@ const Workspace = () => {
     revealRaf: null,
   });
   const revealHintId = useId();
-  const budgetAmount = useMemo(() => getBudgetAmount(budget), [budget]);
+  const budgetAmount = budget;
+  const budgetTier = budget <= 1500 ? 'low' : budget >= 4500 ? 'high' : 'medium';
   const selectedScore = useMemo(() => {
     if (!analysisResult?.style_scores?.length) return null;
     return analysisResult.style_scores.find((item) => item.style_name === (analysisResult.selected_style?.name || styleInfo.name))
@@ -161,10 +160,11 @@ const Workspace = () => {
   const generateGuidance = roomImage
     ? 'Generate Plan will review the room, save your plan, and build recommendations plus a shopping plan.'
     : 'Load a sample room or upload your own photo to enable Generate Plan.';
-  const budgetGuidance = useMemo(
-    () => `This sets the shopping-plan target at about $${budgetAmount.toLocaleString()}. It is guidance, not a required spend.`,
-    [budgetAmount],
-  );
+  const budgetGuidance = budget <= 1500
+    ? 'Entry-level picks — affordable updates with high impact per dollar.'
+    : budget >= 4500
+      ? 'Premium range — investment pieces and full-room transformations.'
+      : 'Mid-range — solid quality upgrades that move the style forward.';
 
   const steps = useMemo(() => {
     const uploadDone = !!roomImage;
@@ -254,7 +254,7 @@ const Workspace = () => {
     }
     if (location.state?.budget) {
       const nextBudget = Number(location.state.budget || 0);
-      setBudget(nextBudget >= 5000 ? 'high' : nextBudget > 0 && nextBudget < 2000 ? 'low' : 'medium');
+      if (nextBudget > 0) setBudget(nextBudget);
     }
   }, [location.state]);
 
@@ -272,8 +272,8 @@ const Workspace = () => {
           setRoomType(project.room_type);
         }
         const nextBudget = Number(project?.budget || 0);
-        if (Number.isFinite(nextBudget)) {
-          setBudget(nextBudget >= 5000 ? 'high' : nextBudget > 0 && nextBudget < 2000 ? 'low' : 'medium');
+        if (Number.isFinite(nextBudget) && nextBudget > 0) {
+          setBudget(nextBudget);
         }
         if (!roomFile && !roomImage && project?.photo_url) {
           setRoomImage(resolveWorkspaceProjectImageUrl(project.photo_url));
@@ -502,7 +502,7 @@ const Workspace = () => {
         room_type: roomType,
         intensity,
         lighting,
-        budget_tier: budget,
+        budget_tier: budgetTier,
         image_profile: imageProfile,
         detected_tags: detectedTags,
       });
@@ -807,13 +807,22 @@ const Workspace = () => {
           </div>
 
           <div className="control-group">
-            <label htmlFor="budget">Budget Range</label>
-            <select id="budget" value={budget} onChange={(e) => setBudget(e.target.value)}>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-            <div className="budget-note">{budgetGuidance}</div>
+            <label htmlFor="budget">Budget</label>
+            <input
+              id="budget"
+              type="range"
+              min="200"
+              max="15000"
+              step="100"
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+            />
+            <div className="slider-meta">
+              <span>$200</span>
+              <span className="budget-amount">${budget.toLocaleString()}</span>
+              <span>$15k</span>
+            </div>
+            <p className="control-sub compact">{budgetGuidance}</p>
           </div>
 
           <div className="control-group toggle-group">

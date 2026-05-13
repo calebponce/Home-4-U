@@ -526,6 +526,14 @@
   color: var(--ws-muted);
 }
 
+.budget-amount {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ws-text);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .analysis-head-right {
   display: flex;
   align-items: center;
