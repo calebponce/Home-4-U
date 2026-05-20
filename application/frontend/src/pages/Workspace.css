@@ -252,8 +252,8 @@
   inset: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3px;
-  background: rgb(0 0 0 / 0.45);
+  gap: 0;
+  background: #0a0a0c;
 }
 
 .concept-panel {
@@ -269,7 +269,81 @@
 }
 
 .concept-panel--before .concept-img {
-  filter: saturate(0.82) brightness(0.93);
+  filter: saturate(0.45) brightness(0.82) contrast(0.92);
+}
+
+/* After panel: crisper and slightly more vivid */
+.concept-img--after {
+  filter: brightness(1.07) contrast(1.06) saturate(1.12);
+}
+
+/* Before — subtle dark vignette to reinforce "old" mood */
+.concept-before-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.38) 100%);
+  pointer-events: none;
+}
+
+/* "Current State" label at the bottom of the before panel */
+.concept-before-label {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.38);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Center divider */
+.concept-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.concept-divider-line {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgb(255 255 255 / 0.35) 15%,
+    rgb(255 255 255 / 0.55) 45%,
+    rgb(255 255 255 / 0.55) 55%,
+    rgb(255 255 255 / 0.35) 85%,
+    transparent 100%
+  );
+}
+
+.concept-divider-knob {
+  position: relative;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  color: #1a1a1a;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+  flex-shrink: 0;
 }
 
 /* Per-style colour grade overlay on the After panel */
@@ -292,6 +366,27 @@
 .concept-grade--traditional   { background: rgba(185,148,94,0.28);  mix-blend-mode: screen; }
 .concept-grade--coastal       { background: rgba(145,198,225,0.30); mix-blend-mode: screen; }
 .concept-grade--default       { background: rgba(205,188,155,0.26); mix-blend-mode: screen; }
+
+/* Secondary blend layer — subtle texture reinforcement */
+.concept-grade-secondary {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.concept-grade-secondary--modern        { background: rgba(140,170,210,0.14); mix-blend-mode: overlay; }
+.concept-grade-secondary--scandinavian  { background: rgba(200,195,170,0.14); mix-blend-mode: overlay; }
+.concept-grade-secondary--industrial    { background: rgba(180,155,120,0.16); mix-blend-mode: screen; }
+.concept-grade-secondary--bohemian      { background: rgba(200,120,55,0.16);  mix-blend-mode: overlay; }
+.concept-grade-secondary--midcentury    { background: rgba(185,145,70,0.15);  mix-blend-mode: overlay; }
+.concept-grade-secondary--mediterranean { background: rgba(200,110,55,0.16);  mix-blend-mode: overlay; }
+.concept-grade-secondary--japandi       { background: rgba(160,148,122,0.13); mix-blend-mode: overlay; }
+.concept-grade-secondary--japanese      { background: rgba(150,138,112,0.12); mix-blend-mode: overlay; }
+.concept-grade-secondary--minimalist    { background: rgba(220,220,218,0.16); mix-blend-mode: overlay; }
+.concept-grade-secondary--farmhouse     { background: rgba(175,150,118,0.14); mix-blend-mode: overlay; }
+.concept-grade-secondary--traditional   { background: rgba(160,128,82,0.14);  mix-blend-mode: overlay; }
+.concept-grade-secondary--coastal       { background: rgba(115,170,200,0.15); mix-blend-mode: overlay; }
+.concept-grade-secondary--default       { background: rgba(175,160,130,0.14); mix-blend-mode: overlay; }
 
 /* Before / After corner badges */
 .concept-badge {
@@ -352,6 +447,60 @@
   font-weight: 600;
   color: rgb(255 255 255 / 0.7);
   letter-spacing: 0.04em;
+}
+
+.concept-score-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.15);
+  color: rgb(255 255 255 / 0.9);
+  letter-spacing: 0.03em;
+  border: 1px solid rgb(255 255 255 / 0.2);
+}
+
+.concept-score-bar {
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  overflow: hidden;
+}
+
+.concept-score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(99,211,160,0.9), rgba(147,230,196,1));
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.concept-top-move {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.42rem 0.55rem;
+  border-radius: 8px;
+  background: rgb(0 0 0 / 0.32);
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.concept-top-move-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.45);
+}
+
+.concept-top-move-text {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.88);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .concept-pills {

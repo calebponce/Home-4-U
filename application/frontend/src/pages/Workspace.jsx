@@ -236,7 +236,12 @@ const Workspace = () => {
       const nextBudget = Number(location.state.budget || 0);
       if (nextBudget > 0) setBudget(nextBudget);
     }
-  }, [location.state]);
+    if (location.state?.photo_url && !roomFile && !roomImage) {
+      setRoomImage(resolveWorkspaceProjectImageUrl(location.state.photo_url));
+      setSelectedRoomLabel('Saved room photo');
+      setStatus('Project photo loaded');
+    }
+  }, [location.state, roomFile, roomImage]);
 
   useEffect(() => {
     if (!incomingProjectId) return undefined;
@@ -606,29 +611,57 @@ const Workspace = () => {
               )}
               {previewState !== 'processing' && generatedImage && analysisResult && (
                 <div className="concept-split">
+                  {/* Before panel */}
                   <div className="concept-panel concept-panel--before">
                     <img src={roomImage} alt="Before" className="concept-img" />
+                    <div className="concept-before-vignette" aria-hidden="true" />
                     <span className="concept-badge concept-badge--before">Before</span>
+                    <div className="concept-before-label">Current State</div>
                   </div>
+
+                  {/* Center divider */}
+                  <div className="concept-divider" aria-hidden="true">
+                    <div className="concept-divider-line" />
+                    <div className="concept-divider-knob">⟷</div>
+                  </div>
+
+                  {/* After panel */}
                   <div className="concept-panel concept-panel--after">
-                    <img src={roomImage} alt="After" className="concept-img" />
+                    <img src={roomImage} alt="After" className="concept-img concept-img--after" />
                     <div className={`concept-grade concept-grade--${workspaceTone}`} aria-hidden="true" />
+                    <div className={`concept-grade-secondary concept-grade-secondary--${workspaceTone}`} aria-hidden="true" />
                     <span className="concept-badge concept-badge--after">After</span>
                     <div className="concept-info-overlay">
                       <div className="concept-info-top">
                         <span className="concept-style-name">{styleInfo.name}</span>
                         {selectedScore && (
-                          <span className="concept-score">{Math.round(selectedScore.score)}%</span>
+                          <span className="concept-score-badge">{Math.round(selectedScore.score)}% match</span>
                         )}
                       </div>
+                      {selectedScore && (
+                        <div className="concept-score-bar">
+                          <div
+                            className="concept-score-bar-fill"
+                            style={{ width: `${Math.round(selectedScore.score)}%` }}
+                          />
+                        </div>
+                      )}
                       {(analysisResult.matching_aspects?.length > 0 || analysisResult.gap_aspects?.length > 0) && (
                         <div className="concept-pills">
                           {analysisResult.matching_aspects?.slice(0, 2).map((aspect) => (
-                            <span key={aspect} className="concept-pill concept-pill--match">{aspect}</span>
+                            <span key={aspect} className="concept-pill concept-pill--match">✓ {aspect}</span>
                           ))}
                           {analysisResult.gap_aspects?.slice(0, 2).map((aspect) => (
-                            <span key={aspect} className="concept-pill concept-pill--gap">{aspect}</span>
+                            <span key={aspect} className="concept-pill concept-pill--gap">↑ {aspect}</span>
                           ))}
+                        </div>
+                      )}
+                      {(analysisResult.recommendations?.[0]?.description || analysisResult.shopping_plan?.[0]?.item_name) && (
+                        <div className="concept-top-move">
+                          <span className="concept-top-move-label">Top move</span>
+                          <span className="concept-top-move-text">
+                            {analysisResult.recommendations?.[0]?.description || analysisResult.shopping_plan?.[0]?.item_name}
+                          </span>
                         </div>
                       )}
                     </div>

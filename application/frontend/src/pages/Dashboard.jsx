@@ -1047,6 +1047,7 @@ const Dashboard = () => {
         projectId: project?.id ?? null,
         roomType: project?.room_type ?? null,
         budget: project?.budget ?? null,
+        photo_url: project?.photo_url ?? null,
       },
     });
   }, [navigate]);
@@ -1808,6 +1809,22 @@ const Dashboard = () => {
                       transition={{ delay: index * 0.05 }}
                       className="project-card"
                     >
+                      {project.photo_url && (
+                        <div className="project-card-thumb" onClick={() => openProjectWorkspace(project)}>
+                          <img
+                            src={
+                              project.photo_url.startsWith('http') || project.photo_url.startsWith('/uploads')
+                                ? project.photo_url
+                                : `/uploads/${project.photo_url}`
+                            }
+                            alt={`${getProjectDisplayName(project)} room`}
+                            loading="lazy"
+                          />
+                          <div className="project-card-thumb-overlay">
+                            <span>Open Studio</span>
+                          </div>
+                        </div>
+                      )}
                       <div className="project-card-header">
                         <h3>{getProjectDisplayName(project)}</h3>
                         <button
