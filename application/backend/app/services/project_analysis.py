@@ -1507,6 +1507,32 @@ def analyze_project_design(
                     break
             style_scores_payload.sort(key=lambda item: item["score_value"], reverse=True)
 
+    # --- Score normalization: spread scores across a wider, more readable range ---
+    # Maps raw scores so the best style is clearly distinguished from the rest.
+    # Only applied when there are multiple styles and a meaningful score spread.
+    if len(style_scores_payload) >= 2:
+        raw_scores = [item["score_value"] for item in style_scores_payload]
+        raw_min = min(raw_scores)
+        raw_max = max(raw_scores)
+        score_spread = raw_max - raw_min
+        # Only normalize when spread is narrow (< 30 points) — if already wide, keep as-is
+        if score_spread < 30.0 and raw_max > 8.0:
+            target_min = max(12.0, raw_min - 8.0)
+            target_max = min(98.0, raw_max + max(10.0, 28.0 - score_spread * 0.6))
+            target_spread = target_max - target_min
+            for score_item in style_scores_payload:
+                if score_spread > 0:
+                    normalized = target_min + (score_item["score_value"] - raw_min) / score_spread * target_spread
+                else:
+                    normalized = score_item["score_value"]
+                score_item["score_value"] = round(min(98.0, max(12.0, normalized)), 1)
+            # Sync the updated normalized values back to the persisted ResemblanceScore rows
+            for score_item in style_scores_payload:
+                db.query(ResemblanceScore).filter(
+                    ResemblanceScore.room_project_id == project.id,
+                    ResemblanceScore.style_id == score_item["style_id"],
+                ).update({"score_value": score_item["score_value"]}, synchronize_session=False)
+
     db.flush()
     db.query(Recommendation).filter(Recommendation.room_project_id == project.id).delete(synchronize_session=False)
 

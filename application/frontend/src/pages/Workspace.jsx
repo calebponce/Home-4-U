@@ -121,6 +121,8 @@ const Workspace = () => {
   const [status, setStatus] = useState('Awaiting upload');
   const [roomImage, setRoomImage] = useState(null);
   const [roomFile, setRoomFile] = useState(null);
+  const roomImageRef = useRef(null);
+  const roomFileRef = useRef(null);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isPlanStale, setIsPlanStale] = useState(false);
   const [showSuccessGlow, setShowSuccessGlow] = useState(false);
@@ -236,12 +238,14 @@ const Workspace = () => {
       const nextBudget = Number(location.state.budget || 0);
       if (nextBudget > 0) setBudget(nextBudget);
     }
-    if (location.state?.photo_url && !roomFile && !roomImage) {
-      setRoomImage(resolveWorkspaceProjectImageUrl(location.state.photo_url));
+    if (location.state?.photo_url && !roomFileRef.current && !roomImageRef.current) {
+      const resolved = resolveWorkspaceProjectImageUrl(location.state.photo_url);
+      roomImageRef.current = resolved;
+      setRoomImage(resolved);
       setSelectedRoomLabel('Saved room photo');
       setStatus('Project photo loaded');
     }
-  }, [location.state, roomFile, roomImage]);
+  }, [location.state]);
 
   useEffect(() => {
     if (!incomingProjectId) return undefined;
@@ -260,8 +264,10 @@ const Workspace = () => {
         if (Number.isFinite(nextBudget) && nextBudget > 0) {
           setBudget(nextBudget);
         }
-        if (!roomFile && !roomImage && project?.photo_url) {
-          setRoomImage(resolveWorkspaceProjectImageUrl(project.photo_url));
+        if (!roomFileRef.current && !roomImageRef.current && project?.photo_url) {
+          const resolved = resolveWorkspaceProjectImageUrl(project.photo_url);
+          roomImageRef.current = resolved;
+          setRoomImage(resolved);
           setSelectedRoomLabel(`${project.room_type || 'Room'} project photo`);
           setStatus('Project loaded');
         }
@@ -275,7 +281,7 @@ const Workspace = () => {
     return () => {
       cancelled = true;
     };
-  }, [incomingProjectId, roomFile, roomImage]);
+  }, [incomingProjectId]);
 
   const loadDemo = (url, nextRoomType) => {
     clearGenerationTimers();
@@ -287,6 +293,8 @@ const Workspace = () => {
     setWorkspaceNotice('');
     setUploadFeedback(null);
     setAnalysisResult(null);
+    roomImageRef.current = url;
+    roomFileRef.current = null;
     setRoomImage(url);
     setRoomFile(null);
     setGeneratedImage(null);
@@ -356,6 +364,8 @@ const Workspace = () => {
       setProcessingText('');
       setProcessingLevel(0);
       setAnalysisResult(null);
+      roomFileRef.current = normalizedUpload.file;
+      roomImageRef.current = normalizedUpload.previewUrl || null;
       setRoomFile(normalizedUpload.file);
       setRoomImage(normalizedUpload.previewUrl || null);
       setSelectedRoomLabel(file.name);
@@ -610,7 +620,7 @@ const Workspace = () => {
                 </div>
               )}
               {previewState !== 'processing' && generatedImage && analysisResult && (
-                <div className="concept-split">
+                <div className="concept-split" data-tone={workspaceTone}>
                   {/* Before panel */}
                   <div className="concept-panel concept-panel--before">
                     <img src={roomImage} alt="Before" className="concept-img" />
@@ -635,16 +645,39 @@ const Workspace = () => {
                       <div className="concept-info-top">
                         <span className="concept-style-name">{styleInfo.name}</span>
                         {selectedScore && (
-                          <span className="concept-score-badge">{Math.round(selectedScore.score)}% match</span>
+                          <span className="concept-score-badge">
+                            {Math.round(selectedScore.score_value || 0)}% Style Match
+                          </span>
                         )}
                       </div>
                       {selectedScore && (
-                        <div className="concept-score-bar">
-                          <div
-                            className="concept-score-bar-fill"
-                            style={{ width: `${Math.round(selectedScore.score)}%` }}
-                          />
-                        </div>
+                        <>
+                          <div className="concept-score-bar">
+                            <div
+                              className="concept-score-bar-fill"
+                              style={{
+                                width: `${Math.round(selectedScore.score_value || 0)}%`,
+                                background: (selectedScore.score_value || 0) >= 70
+                                  ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                                  : (selectedScore.score_value || 0) >= 45
+                                    ? 'linear-gradient(90deg, #f59e0b, #d97706)'
+                                    : 'linear-gradient(90deg, #f97316, #ea580c)',
+                              }}
+                            />
+                          </div>
+                          {analysisResult?.style_scores?.length > 1 && (
+                            <div className="concept-style-comparison">
+                              {analysisResult.style_scores.slice(0, 3).map((s) => (
+                                <span
+                                  key={s.style_id}
+                                  className={`concept-style-chip${s.style_id === selectedScore.style_id ? ' concept-style-chip--active' : ''}`}
+                                >
+                                  {s.style_name} {Math.round(s.score_value || 0)}%
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </>
                       )}
                       {(analysisResult.matching_aspects?.length > 0 || analysisResult.gap_aspects?.length > 0) && (
                         <div className="concept-pills">

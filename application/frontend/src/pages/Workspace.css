@@ -272,10 +272,41 @@
   filter: saturate(0.45) brightness(0.82) contrast(0.92);
 }
 
-/* After panel: crisper and slightly more vivid */
-.concept-img--after {
-  filter: brightness(1.07) contrast(1.06) saturate(1.12);
+/* After panel: left border to visually distinguish from Before */
+.concept-panel--after {
+  border-left: 2px solid rgb(255 255 255 / 0.18);
 }
+
+/* Bottom vignette pseudo-element on the After panel */
+.concept-panel--after::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* After panel: base filter — style-specific overrides via [data-tone] below */
+.concept-img--after {
+  filter: contrast(1.12) saturate(1.18) brightness(1.06);
+}
+
+/* Style-specific filter stacks applied via data-tone on .concept-split */
+[data-tone="modern"]        .concept-img--after { filter: contrast(1.18) saturate(0.85) brightness(1.08) hue-rotate(200deg) sepia(0.08); }
+[data-tone="scandinavian"]  .concept-img--after { filter: contrast(1.1) saturate(0.78) brightness(1.12) sepia(0.12) hue-rotate(30deg); }
+[data-tone="industrial"]    .concept-img--after { filter: contrast(1.25) saturate(0.55) brightness(0.92) sepia(0.18); }
+[data-tone="bohemian"]      .concept-img--after { filter: contrast(1.08) saturate(1.35) brightness(1.04) hue-rotate(15deg) sepia(0.1); }
+[data-tone="midcentury"]    .concept-img--after { filter: contrast(1.12) saturate(1.22) brightness(1.05) sepia(0.22) hue-rotate(-8deg); }
+[data-tone="mediterranean"] .concept-img--after { filter: contrast(1.1) saturate(1.28) brightness(1.08) sepia(0.25) hue-rotate(10deg); }
+[data-tone="japandi"]       .concept-img--after { filter: contrast(1.08) saturate(0.72) brightness(1.06) sepia(0.15); }
+[data-tone="japanese"]      .concept-img--after { filter: contrast(1.06) saturate(0.68) brightness(1.08) sepia(0.18); }
+[data-tone="minimalist"]    .concept-img--after { filter: contrast(1.15) saturate(0.60) brightness(1.1); }
+[data-tone="farmhouse"]     .concept-img--after { filter: contrast(1.1) saturate(0.88) brightness(1.06) sepia(0.28) hue-rotate(5deg); }
+[data-tone="traditional"]   .concept-img--after { filter: contrast(1.12) saturate(1.15) brightness(0.96) sepia(0.22); }
+[data-tone="coastal"]       .concept-img--after { filter: contrast(1.08) saturate(1.2) brightness(1.1) hue-rotate(185deg) sepia(0.1); }
+[data-tone="default"]       .concept-img--after { filter: contrast(1.1) saturate(1.1) brightness(1.05); }
 
 /* Before — subtle dark vignette to reinforce "old" mood */
 .concept-before-vignette {
@@ -353,19 +384,19 @@
   pointer-events: none;
 }
 
-.concept-grade--modern        { background: rgba(170,205,240,0.32); mix-blend-mode: screen; }
-.concept-grade--scandinavian  { background: rgba(255,248,225,0.30); mix-blend-mode: screen; }
-.concept-grade--industrial    { background: rgba(110,90,68,0.28);   mix-blend-mode: multiply; }
-.concept-grade--bohemian      { background: rgba(225,138,60,0.32);  mix-blend-mode: screen; }
-.concept-grade--midcentury    { background: rgba(210,168,78,0.30);  mix-blend-mode: screen; }
-.concept-grade--mediterranean { background: rgba(228,125,58,0.34);  mix-blend-mode: screen; }
-.concept-grade--japandi       { background: rgba(225,212,188,0.26); mix-blend-mode: screen; }
-.concept-grade--japanese      { background: rgba(232,218,190,0.24); mix-blend-mode: screen; }
-.concept-grade--minimalist    { background: rgba(252,252,250,0.34); mix-blend-mode: screen; }
-.concept-grade--farmhouse     { background: rgba(218,192,155,0.28); mix-blend-mode: screen; }
-.concept-grade--traditional   { background: rgba(185,148,94,0.28);  mix-blend-mode: screen; }
-.concept-grade--coastal       { background: rgba(145,198,225,0.30); mix-blend-mode: screen; }
-.concept-grade--default       { background: rgba(205,188,155,0.26); mix-blend-mode: screen; }
+.concept-grade--modern        { background: linear-gradient(180deg, rgba(170,205,240,0.55) 0%, rgba(120,165,220,0.20) 100%); mix-blend-mode: screen; }
+.concept-grade--scandinavian  { background: linear-gradient(180deg, rgba(255,248,225,0.52) 0%, rgba(210,200,175,0.18) 100%); mix-blend-mode: screen; }
+.concept-grade--industrial    { background: linear-gradient(180deg, rgba(110,90,68,0.58) 0%, rgba(80,62,45,0.22) 100%);   mix-blend-mode: multiply; }
+.concept-grade--bohemian      { background: linear-gradient(180deg, rgba(225,138,60,0.60) 0%, rgba(185,100,40,0.22) 100%);  mix-blend-mode: screen; }
+.concept-grade--midcentury    { background: linear-gradient(180deg, rgba(210,168,78,0.58) 0%, rgba(175,135,55,0.20) 100%); mix-blend-mode: screen; }
+.concept-grade--mediterranean { background: linear-gradient(180deg, rgba(228,125,58,0.62) 0%, rgba(190,90,38,0.22) 100%);  mix-blend-mode: screen; }
+.concept-grade--japandi       { background: linear-gradient(180deg, rgba(225,212,188,0.52) 0%, rgba(185,172,148,0.18) 100%); mix-blend-mode: screen; }
+.concept-grade--japanese      { background: linear-gradient(180deg, rgba(232,218,190,0.50) 0%, rgba(192,178,150,0.16) 100%); mix-blend-mode: screen; }
+.concept-grade--minimalist    { background: linear-gradient(180deg, rgba(252,252,250,0.60) 0%, rgba(235,235,232,0.22) 100%); mix-blend-mode: screen; }
+.concept-grade--farmhouse     { background: linear-gradient(180deg, rgba(218,192,155,0.55) 0%, rgba(180,155,118,0.20) 100%); mix-blend-mode: screen; }
+.concept-grade--traditional   { background: linear-gradient(180deg, rgba(185,148,94,0.56) 0%, rgba(150,115,65,0.20) 100%);  mix-blend-mode: screen; }
+.concept-grade--coastal       { background: linear-gradient(180deg, rgba(145,198,225,0.55) 0%, rgba(105,165,200,0.20) 100%); mix-blend-mode: screen; }
+.concept-grade--default       { background: linear-gradient(180deg, rgba(205,188,155,0.52) 0%, rgba(168,152,120,0.18) 100%); mix-blend-mode: screen; }
 
 /* Secondary blend layer — subtle texture reinforcement */
 .concept-grade-secondary {
@@ -374,19 +405,19 @@
   pointer-events: none;
 }
 
-.concept-grade-secondary--modern        { background: rgba(140,170,210,0.14); mix-blend-mode: overlay; }
-.concept-grade-secondary--scandinavian  { background: rgba(200,195,170,0.14); mix-blend-mode: overlay; }
-.concept-grade-secondary--industrial    { background: rgba(180,155,120,0.16); mix-blend-mode: screen; }
-.concept-grade-secondary--bohemian      { background: rgba(200,120,55,0.16);  mix-blend-mode: overlay; }
-.concept-grade-secondary--midcentury    { background: rgba(185,145,70,0.15);  mix-blend-mode: overlay; }
-.concept-grade-secondary--mediterranean { background: rgba(200,110,55,0.16);  mix-blend-mode: overlay; }
-.concept-grade-secondary--japandi       { background: rgba(160,148,122,0.13); mix-blend-mode: overlay; }
-.concept-grade-secondary--japanese      { background: rgba(150,138,112,0.12); mix-blend-mode: overlay; }
-.concept-grade-secondary--minimalist    { background: rgba(220,220,218,0.16); mix-blend-mode: overlay; }
-.concept-grade-secondary--farmhouse     { background: rgba(175,150,118,0.14); mix-blend-mode: overlay; }
-.concept-grade-secondary--traditional   { background: rgba(160,128,82,0.14);  mix-blend-mode: overlay; }
-.concept-grade-secondary--coastal       { background: rgba(115,170,200,0.15); mix-blend-mode: overlay; }
-.concept-grade-secondary--default       { background: rgba(175,160,130,0.14); mix-blend-mode: overlay; }
+.concept-grade-secondary--modern        { background: linear-gradient(0deg, rgba(140,170,210,0.50) 0%, rgba(140,170,210,0.12) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--scandinavian  { background: linear-gradient(0deg, rgba(200,195,170,0.48) 0%, rgba(200,195,170,0.10) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--industrial    { background: linear-gradient(0deg, rgba(80,62,45,0.55) 0%, rgba(180,155,120,0.14) 60%); mix-blend-mode: multiply; }
+.concept-grade-secondary--bohemian      { background: linear-gradient(0deg, rgba(200,120,55,0.52) 0%, rgba(200,120,55,0.14) 60%);  mix-blend-mode: overlay; }
+.concept-grade-secondary--midcentury    { background: linear-gradient(0deg, rgba(185,145,70,0.50) 0%, rgba(185,145,70,0.12) 60%);  mix-blend-mode: overlay; }
+.concept-grade-secondary--mediterranean { background: linear-gradient(0deg, rgba(200,110,55,0.52) 0%, rgba(200,110,55,0.14) 60%);  mix-blend-mode: overlay; }
+.concept-grade-secondary--japandi       { background: linear-gradient(0deg, rgba(160,148,122,0.48) 0%, rgba(160,148,122,0.10) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--japanese      { background: linear-gradient(0deg, rgba(150,138,112,0.46) 0%, rgba(150,138,112,0.08) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--minimalist    { background: linear-gradient(0deg, rgba(220,220,218,0.52) 0%, rgba(220,220,218,0.14) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--farmhouse     { background: linear-gradient(0deg, rgba(175,150,118,0.50) 0%, rgba(175,150,118,0.12) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--traditional   { background: linear-gradient(0deg, rgba(160,128,82,0.50) 0%, rgba(160,128,82,0.12) 60%);  mix-blend-mode: overlay; }
+.concept-grade-secondary--coastal       { background: linear-gradient(0deg, rgba(115,170,200,0.50) 0%, rgba(115,170,200,0.12) 60%); mix-blend-mode: overlay; }
+.concept-grade-secondary--default       { background: linear-gradient(0deg, rgba(175,160,130,0.48) 0%, rgba(175,160,130,0.10) 60%); mix-blend-mode: overlay; }
 
 /* Before / After corner badges */
 .concept-badge {
@@ -471,7 +502,32 @@
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(99,211,160,0.9), rgba(147,230,196,1));
-  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease;
+}
+
+.concept-style-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+}
+
+.concept-style-chip {
+  font-size: 0.58rem;
+  font-weight: 600;
+  padding: 0.14rem 0.42rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  color: rgb(255 255 255 / 0.6);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.concept-style-chip--active {
+  background: rgb(255 255 255 / 0.2);
+  color: rgb(255 255 255 / 0.95);
+  border-color: rgb(255 255 255 / 0.35);
 }
 
 .concept-top-move {
