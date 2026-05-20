@@ -360,7 +360,7 @@ Frontend URLs:
 - `HOME4U_CORS_ORIGINS` can be used to allow direct cross-origin backend access when the app is not using the same-origin `/api` proxy.
 - `HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS`, and `HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS` tune failed-login throttling; defaults are `5`, `20`, and `300`.
 - Public-facing repo docs and smoke-test snippets should derive from a single `HOME4U_PUBLIC_URL` value that points to a stable domain or Elastic-IP-backed hostname.
-- The current stable public base URL is `https://home4uu.duckdns.org/`, secured with Let's Encrypt SSL. The Elastic IP `18.225.42.247` is used for SSH access only.
+- The current stable public base URL is `http://18.225.42.247/`, backed by the instance Elastic IP.
 - The production systemd unit supports an optional `/etc/home4u/home4u.env` file for backend environment variables.
 - The backend currently starts without requiring an AI provider key; Workspace analysis is implemented through deterministic backend scoring rather than an external model call.
 
@@ -436,5 +436,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-05-20 05:53:27*
+*Last Updated: 2026-05-20 14:34:27*
 *This document is maintained by the repository documentation generator.*
