@@ -1,10 +1,10 @@
 # Manual Fix Instructions for AWS Server
 
 Since I cannot connect to your AWS server remotely, please follow these steps manually.
-Stable Elastic IP in these commands: `18.225.42.247`.
+Stable Elastic IP (SSH only): `18.225.42.247`.
 AWS-generated DNS: `ec2-18-225-42-247.us-east-2.compute.amazonaws.com`.
-Public app URL: `http://18.225.42.247/`.
-Because the instance now uses an Elastic IP, the public IP-based URL should remain stable across restarts.
+Public app URL: `https://home4uu.duckdns.org/` (HTTPS, secured with Let's Encrypt).
+Because the instance uses an Elastic IP, the IP remains stable across restarts. The domain `home4uu.duckdns.org` is kept in sync via a systemd timer running every 5 minutes.
 
 ---
 

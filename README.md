@@ -127,13 +127,13 @@ Elastic-IP-backed hostname instead of the temporary EC2-generated public DNS nam
 
 | Team Alias | Project Name | Project URL | Decision Making Policy |
 |:----------:|:------------:|:-----------:|:----------------------:|
-| Vibecoding for Internship | Home4U | http://18.225.42.247/ | Consensus |
+| Vibecoding for Internship | Home4U | https://home4uu.duckdns.org/ | Consensus |
 
 ## Deployment Info
 
 Set one public base URL and reuse it across all manual smoke tests:
 ```bash
-export HOME4U_PUBLIC_URL="http://18.225.42.247"
+export HOME4U_PUBLIC_URL="https://home4uu.duckdns.org"
 ```
 
 - Public App URL: `$HOME4U_PUBLIC_URL`

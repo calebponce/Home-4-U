@@ -4,12 +4,12 @@
 > Treat any PEM file that was previously committed here as compromised and rotate it in AWS before further use.
 >
 > Current host values:
-> - Elastic IP: `18.225.42.247`
+> - Elastic IP: `18.225.42.247` (used for SSH only)
 > - AWS-generated DNS: `ec2-18-225-42-247.us-east-2.compute.amazonaws.com`
-> - App URL: `http://18.225.42.247/`
+> - **App URL: `https://home4uu.duckdns.org/`** (HTTPS, Let's Encrypt SSL)
 >
-> The Elastic IP is the stable public address for SSH and the web app. Use the
-> AWS-generated DNS only as a secondary reference.
+> The domain `home4uu.duckdns.org` is the canonical public URL. The Elastic IP is
+> used for SSH access only. Use the domain for all links, smoke tests, and browser access.
 
 ---
 
@@ -73,7 +73,7 @@ sqlite3 /home/ec2-user/data/home4u.db
 | **Instance Type** | t3.micro |
 | **Elastic IP Address** | 18.225.42.247 |
 | **AWS-generated DNS** | ec2-18-225-42-247.us-east-2.compute.amazonaws.com |
-| **Public App URL** | http://18.225.42.247/ |
+| **Public App URL** | https://home4uu.duckdns.org/ |
 | **SSH Username** | ec2-user |
 | **SSH Port** | 22 |
 
@@ -259,7 +259,7 @@ sudo yum install -y sqlite
 | Task | Command |
 |------|---------|
 | **SSH Connect** | `ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247` |
-| **Open App** | `http://18.225.42.247/` |
+| **Open App** | `https://home4uu.duckdns.org/` |
 | **List users** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"` |
 | **Count projects** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"` |
 | **Open DB shell** | `sqlite3 /home/ec2-user/data/home4u.db` |
@@ -270,7 +270,7 @@ sudo yum install -y sqlite
 
 ## What to Do If Still Having Issues
 
-1. **Double-check the IP address**: Make sure you're using `18.225.42.247`
+1. **Double-check the IP address**: Make sure you're using `18.225.42.247` for SSH (app URL is `https://home4uu.duckdns.org/`)
 2. **Verify key file location**: Use the full path like `~/.ssh/home4u-rotated`
 3. **Check permissions**: Run `ls -la ~/.ssh/home4u-rotated` - should show `-r--------`
 4. **Try with verbose mode**: `ssh -v -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247`
