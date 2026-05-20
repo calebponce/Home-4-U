@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback, useId } from 'react';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Upload, Wand2, CheckCircle2, ChevronLeft, ChevronRight, Sparkles, ArrowUpRight } from 'lucide-react';
+import { Upload, Wand2, CheckCircle2, ChevronLeft, Sparkles, ArrowUpRight } from 'lucide-react';
 import { projectsAPI, stylesAPI } from '../services/api';
 import { resolveStyleContext, serializeStyleContext, styleSlug } from '../utils/styleContext';
 import {
@@ -123,8 +123,7 @@ const Workspace = () => {
   const [roomImage, setRoomImage] = useState(null);
   const [roomFile, setRoomFile] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
-  const [revealPct, setRevealPct] = useState(0); // 0=after fully, 100=before fully
-  const [isRevealDragging, setIsRevealDragging] = useState(false);
+  const [isPlanStale, setIsPlanStale] = useState(false);
   const [showSuccessGlow, setShowSuccessGlow] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analysisProject, setAnalysisProject] = useState(null);
@@ -135,9 +134,7 @@ const Workspace = () => {
   const shoppingPlanRef = useRef(null);
   const generateBtnRef = useRef(null);
   const previewComboRef = useRef(null);
-  const comparisonHandleRef = useRef(null);
   const isMountedRef = useRef(false);
-  const isRevealDraggingRef = useRef(false);
   const lastSuccessfulRunRef = useRef(null);
   const generationTimersRef = useRef({
     textInterval: null,
@@ -145,8 +142,6 @@ const Workspace = () => {
     glowTimeout: null,
     revealRaf: null,
   });
-  const revealHintId = useId();
-  const budgetAmount = budget;
   const budgetTier = budget <= 1500 ? 'low' : budget >= 4500 ? 'high' : 'medium';
   const selectedScore = useMemo(() => {
     if (!analysisResult?.style_scores?.length) return null;
@@ -209,33 +204,13 @@ const Workspace = () => {
     }
   }, []);
 
-  const clampRevealPct = useCallback((value) => {
-    setRevealPct(Math.min(100, Math.max(0, value)));
-  }, []);
-
-  const updateRevealFromClientX = useCallback((clientX) => {
-    const rect = previewComboRef.current?.getBoundingClientRect();
-    if (!rect?.width) return;
-    const nextPct = ((clientX - rect.left) / rect.width) * 100;
-    clampRevealPct(nextPct);
-  }, [clampRevealPct]);
-
-  const stopRevealDrag = useCallback((event) => {
-    if (event?.currentTarget && event.pointerId !== undefined && event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    isRevealDraggingRef.current = false;
-    setIsRevealDragging(false);
-  }, []);
-
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
       clearGenerationTimers();
-      stopRevealDrag();
     };
-  }, [clearGenerationTimers, stopRevealDrag]);
+  }, [clearGenerationTimers]);
 
   useEffect(() => {
     clearGenerationTimers();
@@ -246,13 +221,13 @@ const Workspace = () => {
     setStatus('Awaiting upload');
     setPreviewState('before');
     setGeneratedImage(null);
+    setIsPlanStale(false);
     setAnalysisResult(null);
     setWorkspaceError('');
     setWorkspaceNotice('');
     setUploadFeedback(null);
     lastSuccessfulRunRef.current = null;
-    stopRevealDrag();
-  }, [styleInfo.key, clearGenerationTimers, stopRevealDrag]);
+  }, [styleInfo.key, clearGenerationTimers]);
 
   useEffect(() => {
     if (location.state?.roomType) {
@@ -339,38 +314,7 @@ const Workspace = () => {
     };
   }, [styleInfo.key, styleKey]);
 
-  useEffect(() => {
-    if (generatedImage && previewState !== 'processing') return;
-    stopRevealDrag();
-  }, [generatedImage, previewState, stopRevealDrag]);
-
-  const revealValueText = useMemo(() => {
-    const beforePct = Math.round(revealPct);
-    const afterPct = Math.max(0, 100 - beforePct);
-    return `Before ${beforePct} percent visible, After ${afterPct} percent visible`;
-  }, [revealPct]);
-
-  const triggerSuccessState = useCallback(() => {
-    setRevealPct(0);
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const start = performance.now();
-      const duration = 800;
-      const animate = (now) => {
-        if (!isMountedRef.current) return;
-        const t = Math.min(1, (now - start) / duration);
-        const easeOutQuart = 1 - Math.pow(1 - t, 4);
-        setRevealPct(60 * easeOutQuart);
-        if (t < 1) {
-          generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
-        } else {
-          generationTimersRef.current.revealRaf = null;
-        }
-      };
-      generationTimersRef.current.revealRaf = window.requestAnimationFrame(animate);
-    } else {
-      setRevealPct(60);
-    }
-
+  const triggerSuccessGlow = useCallback(() => {
     setShowSuccessGlow(true);
     generationTimersRef.current.glowTimeout = window.setTimeout(() => {
       generationTimersRef.current.glowTimeout = null;
@@ -410,10 +354,13 @@ const Workspace = () => {
       setAnalysisResult(null);
       setRoomFile(normalizedUpload.file);
       setRoomImage(normalizedUpload.previewUrl || null);
-      setGeneratedImage(null);
-      setPreviewState('before');
       setSelectedRoomLabel(file.name);
-      lastSuccessfulRunRef.current = null;
+      // Keep the existing concept board visible — mark stale so user knows to re-run
+      if (generatedImage) {
+        setIsPlanStale(true);
+      } else {
+        setPreviewState('before');
+      }
       setWorkspaceNotice(normalizedUpload.notice || '');
       setStatus('Room loaded');
     } catch (error) {
@@ -444,6 +391,7 @@ const Workspace = () => {
     setWorkspaceNotice('');
     setAnalysisResult(null);
     setGeneratedImage(null);
+    setIsPlanStale(false);
     setShowSuccessGlow(false);
     setPreviewState('processing');
     setProcessingLevel(0.08);
@@ -460,7 +408,7 @@ const Workspace = () => {
 
       const needsProjectUpdate = (
         project.room_type !== roomType
-        || Math.round(Number(project.budget || 0)) !== budgetAmount
+        || Math.round(Number(project.budget || 0)) !== budget
       );
       if (needsProjectUpdate) {
         stage = 'update-project';
@@ -469,7 +417,7 @@ const Workspace = () => {
         setProcessingLevel(0.18);
         const updatedProject = await projectsAPI.update(project.id, {
           room_type: roomType,
-          budget: budgetAmount,
+          budget: budget,
         });
         project = updatedProject.data;
       }
@@ -537,13 +485,13 @@ const Workspace = () => {
       setProcessingText('Plan generated');
       setProcessingLevel(1);
       setPreviewState('after');
+      setIsPlanStale(false);
       lastSuccessfulRunRef.current = {
         analysisResult: nextAnalysis,
         analysisProject: nextAnalysis.project,
         generatedImage: conceptBoard,
-        revealPct: 60,
       };
-      triggerSuccessState();
+      triggerSuccessGlow();
     } catch (error) {
       const recoveredPreviousPlan = Boolean(previousSuccessfulRun?.analysisResult && previousSuccessfulRun?.generatedImage);
       if (recoveredPreviousPlan) {
@@ -551,7 +499,6 @@ const Workspace = () => {
         setAnalysisProject(previousSuccessfulRun.analysisProject || null);
         setGeneratedImage(previousSuccessfulRun.generatedImage);
         setPreviewState('after');
-        setRevealPct(previousSuccessfulRun.revealPct ?? 60);
         setStatus('Previous plan restored');
         setWorkspaceNotice('Your previous plan is still available while you retry.');
       } else {
@@ -618,7 +565,7 @@ const Workspace = () => {
             <div className="workspace-hero-metrics studio-hero-metrics" aria-label="Workspace overview">
               <div className="hero-metric-card studio-hero-card">
                 <span className="hero-metric-label studio-hero-label">Budget Rail</span>
-                <strong className="studio-hero-value">${budgetAmount.toLocaleString()}</strong>
+                <strong className="studio-hero-value">${budget.toLocaleString()}</strong>
               </div>
               <div className="hero-metric-card studio-hero-card">
                 <span className="hero-metric-label studio-hero-label">Lighting Bias</span>
@@ -660,118 +607,37 @@ const Workspace = () => {
           <div className="canvas-body">
             <div
               ref={previewComboRef}
-              className={`preview-combo ${previewState === 'processing' ? 'is-processing' : ''} ${generatedImage ? 'compare-enabled' : ''} ${isRevealDragging ? 'is-dragging' : ''}`}
-              onPointerDown={(e) => {
-                if (!generatedImage || previewState === 'processing') return;
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                e.preventDefault();
-                e.currentTarget.setPointerCapture?.(e.pointerId);
-                isRevealDraggingRef.current = true;
-                setIsRevealDragging(true);
-                comparisonHandleRef.current?.focus();
-                updateRevealFromClientX(e.clientX);
-              }}
-              onPointerMove={(e) => {
-                if (!isRevealDraggingRef.current) return;
-                updateRevealFromClientX(e.clientX);
-              }}
-              onPointerUp={stopRevealDrag}
-              onPointerCancel={stopRevealDrag}
+              className={`preview-combo ${previewState === 'processing' ? 'is-processing' : ''}`}
             >
-              <div className="preview before">
-                <div className="preview-label badge">Before</div>
-                {roomImage ? (
-                  <img src={roomImage} alt="Uploaded room" className="preview-img" />
-                ) : (
-                  <span className="preview-placeholder">Upload a room photo or load a sample room to generate your plan preview.</span>
-                )}
-              </div>
-              <div className="preview after base">
-                <div className="preview-label badge">{previewState === 'processing' ? 'Processing…' : 'Concept Board'}</div>
-                {previewState === 'processing' && (
-                  <div className="processing-overlay" style={{ '--proc': processingLevel }}>
-                    <div className="processing-scanner"></div>
-                    <div className="processing-grid"></div>
-                    <div className="processing-content">
-                      <Sparkles className="processing-icon" size={32} />
-                      <span className="processing-text">{processingText}</span>
-                      <div className="processing-bar"><div className="processing-bar-fill"></div></div>
-                    </div>
+              {previewState === 'processing' && (
+                <div className="processing-overlay" style={{ '--proc': processingLevel }}>
+                  <div className="processing-scanner"></div>
+                  <div className="processing-grid"></div>
+                  <div className="processing-content">
+                    <Sparkles className="processing-icon" size={32} />
+                    <span className="processing-text">{processingText}</span>
+                    <div className="processing-bar"><div className="processing-bar-fill"></div></div>
                   </div>
-                )}
-                {previewState !== 'processing' && generatedImage && (
-                  <img src={generatedImage} alt="Generated concept board" className="preview-img styled-img" />
-                )}
-                {previewState !== 'processing' && !generatedImage && (
-                  <span className="preview-placeholder"></span>
-                )}
-              </div>
-              {generatedImage && (
-                <>
-                  <div
-                    className="reveal-layer"
-                    style={{ width: `${revealPct}%` }}
-                  >
-                    <img src={roomImage} alt="" aria-hidden="true" className="preview-img" />
-                  </div>
-                  <div
-                    ref={comparisonHandleRef}
-                    className="preview-divider handle"
-                    style={{ left: `${revealPct}%` }}
-                    role="slider"
-                    aria-label="Before and after comparison"
-                    aria-describedby={revealHintId}
-                    aria-orientation="horizontal"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(revealPct)}
-                    aria-valuetext={revealValueText}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      const isSpaceKey = e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space';
-                      if (e.key === 'ArrowLeft') {
-                        e.preventDefault();
-                        clampRevealPct(revealPct - 3);
-                      }
-                      if (e.key === 'ArrowRight') {
-                        e.preventDefault();
-                        clampRevealPct(revealPct + 3);
-                      }
-                      if (e.key === 'PageDown') {
-                        e.preventDefault();
-                        clampRevealPct(revealPct - 10);
-                      }
-                      if (e.key === 'PageUp') {
-                        e.preventDefault();
-                        clampRevealPct(revealPct + 10);
-                      }
-                      if (e.key === 'Home') {
-                        e.preventDefault();
-                        setRevealPct(0);
-                      }
-                      if (e.key === 'End') {
-                        e.preventDefault();
-                        setRevealPct(100);
-                      }
-                      if (isSpaceKey || e.key === 'Enter') {
-                        e.preventDefault();
-                        setRevealPct((current) => (current >= 50 ? 0 : 100));
-                      }
-                    }}
-                  >
-                    <span className="handle-knob" title="Drag to compare">
-                      <ChevronLeft size={16} />
-                      <ChevronRight size={16} />
-                    </span>
-                  </div>
-                  <span id={revealHintId} className="hold-hint">Drag to compare • Space toggles full before and after</span>
-                </>
+                </div>
+              )}
+              {previewState !== 'processing' && generatedImage && (
+                <div className="before-after-static">
+                  <img src={generatedImage} alt="Before and after concept board" className="preview-img" />
+                  {isPlanStale && (
+                    <div className="stale-plan-badge">New photo uploaded — re-run Generate Plan to update</div>
+                  )}
+                </div>
+              )}
+              {previewState !== 'processing' && !generatedImage && (
+                <div className="preview before">
+                  {roomImage ? (
+                    <img src={roomImage} alt="Uploaded room" className="preview-img" />
+                  ) : (
+                    <span className="preview-placeholder">Upload a room photo or load a sample room to generate your plan preview.</span>
+                  )}
+                </div>
               )}
             </div>
-          </div>
-          <div className="before-after-bar">
-            <span>Original Room</span>
-            <span>Concept Board</span>
           </div>
         </section>
 
