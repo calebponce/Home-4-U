@@ -7,7 +7,6 @@ import {
   extractImageProfile,
   inferDetectedTags,
   normalizeRoomUpload,
-  renderConceptPreview,
   ROOM_UPLOAD_SOURCE_MAX_BYTES,
   ROOM_UPLOAD_TARGET_MAX_BYTES,
 } from '../utils/workspaceDesign';
@@ -464,23 +463,8 @@ const Workspace = () => {
       setAnalysisResult(nextAnalysis);
       setAnalysisProject(nextAnalysis.project);
 
-      setStatus('Rendering concept board...');
-      setProcessingText('Turning the analysis into a visual plan preview...');
-      setProcessingLevel(0.9);
-      let conceptBoard = roomImage;
-      try {
-        conceptBoard = await renderConceptPreview({
-          sourceUrl: roomImage,
-          analysis: nextAnalysis,
-          styleInfo,
-        }) || roomImage;
-      } catch {
-        conceptBoard = roomImage;
-        setWorkspaceNotice('Plan generated, but the visual preview used the original room image.');
-      }
-
       if (!isMountedRef.current) return;
-      setGeneratedImage(conceptBoard);
+      setGeneratedImage(roomImage);
       setStatus('Analysis ready');
       setProcessingText('Plan generated');
       setProcessingLevel(1);
@@ -489,7 +473,7 @@ const Workspace = () => {
       lastSuccessfulRunRef.current = {
         analysisResult: nextAnalysis,
         analysisProject: nextAnalysis.project,
-        generatedImage: conceptBoard,
+        generatedImage: roomImage,
       };
       triggerSuccessGlow();
     } catch (error) {
@@ -620,12 +604,38 @@ const Workspace = () => {
                   </div>
                 </div>
               )}
-              {previewState !== 'processing' && generatedImage && (
-                <div className="before-after-static">
-                  <img src={generatedImage} alt="Before and after concept board" className="preview-img" />
-                  {isPlanStale && (
-                    <div className="stale-plan-badge">New photo uploaded — re-run Generate Plan to update</div>
-                  )}
+              {previewState !== 'processing' && generatedImage && analysisResult && (
+                <div className="concept-split">
+                  <div className="concept-panel concept-panel--before">
+                    <img src={roomImage} alt="Before" className="concept-img" />
+                    <span className="concept-badge concept-badge--before">Before</span>
+                  </div>
+                  <div className="concept-panel concept-panel--after">
+                    <img src={roomImage} alt="After" className="concept-img" />
+                    <div className={`concept-grade concept-grade--${workspaceTone}`} aria-hidden="true" />
+                    <span className="concept-badge concept-badge--after">After</span>
+                    <div className="concept-info-overlay">
+                      <div className="concept-info-top">
+                        <span className="concept-style-name">{styleInfo.name}</span>
+                        {selectedScore && (
+                          <span className="concept-score">{Math.round(selectedScore.score)}%</span>
+                        )}
+                      </div>
+                      {(analysisResult.matching_aspects?.length > 0 || analysisResult.gap_aspects?.length > 0) && (
+                        <div className="concept-pills">
+                          {analysisResult.matching_aspects?.slice(0, 2).map((aspect) => (
+                            <span key={aspect} className="concept-pill concept-pill--match">{aspect}</span>
+                          ))}
+                          {analysisResult.gap_aspects?.slice(0, 2).map((aspect) => (
+                            <span key={aspect} className="concept-pill concept-pill--gap">{aspect}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {isPlanStale && (
+                      <div className="stale-plan-badge">New photo uploaded — re-run Generate Plan to update</div>
+                    )}
+                  </div>
                 </div>
               )}
               {previewState !== 'processing' && !generatedImage && (
