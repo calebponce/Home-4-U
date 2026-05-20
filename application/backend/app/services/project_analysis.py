@@ -51,10 +51,13 @@ RETAILER_SEARCH_URLS = {
     "Amazon": "https://www.amazon.com/s?k={query}",
 }
 
-# Price-range suffixes appended when estimated_cost is known (keeps links within budget)
+# Price-range params appended to every retailer link so results open pre-filtered to budget.
+# All four retailers support URL-level price filtering.
 RETAILER_PRICE_SUFFIXES = {
-    "Amazon": "&low-price={min_price}&high-price={max_price}",
-    "Target": "&priceType=range&priceLow={min_price}&priceHigh={max_price}",
+    "Amazon":  "&low-price={min_price}&high-price={max_price}",
+    "Target":  "&priceType=range&priceLow={min_price}&priceHigh={max_price}",
+    "Wayfair": "&curprice={max_price}",
+    "IKEA":    "&filters=price%5B{min_price}-{max_price}%5D",
 }
 
 # Style-specific search qualifiers — makes item searches precise to the chosen style
@@ -887,8 +890,6 @@ def _build_shopping_query(
     room_label: str,
     blueprint: dict,
     primary_tags: list[str],
-    budget_tier: str,
-    per_item_ceiling: float = 0.0,
 ) -> str:
     style_key = "".join(ch for ch in selected_style.name.lower() if ch.isalnum())
     style_qualifier = STYLE_SEARCH_QUALIFIERS.get(style_key, selected_style.name.lower())
@@ -898,11 +899,7 @@ def _build_shopping_query(
         first_tag = primary_tags[0].split()[0]
         if first_tag not in style_qualifier:
             qualifiers.append(first_tag)
-    # Concrete price ceiling beats abstract tier language for search precision
-    if per_item_ceiling >= 20:
-        qualifiers.append(f"under ${int(per_item_ceiling)}")
-    else:
-        qualifiers.append(BUDGET_LANGUAGE.get(budget_tier, "mid-range"))
+    # Price is enforced by URL params on each retailer link — no text hint needed in query
     return " ".join(part for part in qualifiers if part).replace("  ", " ").strip()
 
 
@@ -1097,8 +1094,6 @@ def build_project_shopping_plan(
             room_label=room_label,
             blueprint=blueprint,
             primary_tags=primary_tags,
-            budget_tier=budget_tier,
-            per_item_ceiling=estimated_cost,
         )
         shopping_plan.append(
             {
