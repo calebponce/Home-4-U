@@ -85,6 +85,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 │   │   ├── run_migrations.sh
 │   │   ├── run_smoke_tests.sh
 │   │   ├── seed.py
+│   │   ├── start.cjs
 │   │   └── start_backend.sh
 │   ├── credentials
 │   │   └── README.md
@@ -164,6 +165,7 @@ csc648-848-project-sp26-vibecoding-for-internship/
 ├── PROJECT_DOCUMENTATION.md
 ├── README.md
 ├── TODO.md
+├── ecosystem.config.cjs
 └── requirements.txt
 ```
 
@@ -434,5 +436,5 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-05-20 05:46:38*
+*Last Updated: 2026-05-20 05:53:27*
 *This document is maintained by the repository documentation generator.*
