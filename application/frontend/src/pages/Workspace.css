@@ -1228,3 +1228,66 @@
     padding: 0.45rem 0.5rem;
   }
 }
+
+/* ── Style match / gap analysis ─────────────────────────────────────── */
+.analysis-match-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.analysis-match-section {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+
+.analysis-match-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.45rem;
+}
+
+.analysis-match-label.match {
+  color: var(--pd-accent, #6dbeab);
+}
+
+.analysis-match-label.gap {
+  color: #e0a060;
+}
+
+.analysis-match-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.analysis-match-item {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  padding-left: 1.1rem;
+  position: relative;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.analysis-match-item.match::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--pd-accent, #6dbeab);
+  font-weight: 700;
+}
+
+.analysis-match-item.gap::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #e0a060;
+  font-weight: 700;
+}

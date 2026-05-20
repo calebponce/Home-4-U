@@ -250,15 +250,90 @@ async def _fetch_openai_vision_feedback(
     )
 
 
+async def _fetch_gemini_vision_feedback(
+    image_bytes: bytes,
+    *,
+    room_type: str,
+    default_metrics: dict[str, Any],
+) -> dict[str, Any]:
+    """Use Google Gemini Nano (gemini-2.0-flash-lite) via the OpenAI-compatible endpoint."""
+    from app.core.settings import (
+        GOOGLE_API_KEY,
+        GOOGLE_GEMINI_BASE_URL,
+        GOOGLE_GEMINI_MODEL,
+        GOOGLE_GEMINI_TIMEOUT_SECONDS,
+    )
+
+    suffix = image_bytes[:4]
+    mime = "image/png" if suffix == b"\x89PNG" else "image/jpeg"
+    encoded_image = base64.b64encode(image_bytes).decode("ascii")
+    data_uri = f"data:{mime};base64,{encoded_image}"
+
+    prompt = (
+        "Analyze this interior room photo for design planning. "
+        "Return strict JSON only:\n"
+        '{"summary": "...", "confidence_score": 0.0-1.0, "confidence_label": "low|medium|high", '
+        '"issues": ["..."], "suggestions": ["..."], '
+        '"style_observations": ["visible design elements that define the room character"]}.\n'
+        "Focus on lighting quality, layout clarity, and visible design features."
+    )
+
+    body = {
+        "model": GOOGLE_GEMINI_MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": f"Room type: {room_type or 'room'}. {prompt}"},
+                    {"type": "image_url", "image_url": {"url": data_uri}},
+                ],
+            }
+        ],
+        "max_tokens": 350,
+    }
+    headers = {
+        "Authorization": f"Bearer {GOOGLE_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    async with httpx.AsyncClient(timeout=GOOGLE_GEMINI_TIMEOUT_SECONDS) as client:
+        response = await client.post(
+            f"{GOOGLE_GEMINI_BASE_URL}/chat/completions",
+            headers=headers,
+            json=body,
+        )
+        response.raise_for_status()
+        payload = response.json()
+
+    content = _extract_message_content(payload)
+    parsed = _parse_model_json(content)
+    if not parsed:
+        raise ValueError("Gemini response contained no valid JSON")
+    return _normalize_model_feedback(
+        raw_payload=parsed,
+        default_metrics=default_metrics,
+        room_type=room_type,
+    )
+
+
 async def build_image_upload_feedback(image_bytes: bytes, *, room_type: str = "room") -> dict[str, Any]:
     """
     Build upload feedback using a real vision model when configured.
-    Falls back to deterministic local analysis to keep uploads non-blocking.
+    Priority: Google Gemini Nano → OpenAI vision → deterministic fallback.
     """
     fallback = _deterministic_feedback(image_bytes, room_type=room_type)
-    if not AI_VISION_ENABLED:
-        return fallback
-    if AI_VISION_PROVIDER != "openai":
+
+    from app.core.settings import GOOGLE_GEMINI_ENABLED
+    if GOOGLE_GEMINI_ENABLED:
+        try:
+            return await _fetch_gemini_vision_feedback(
+                image_bytes,
+                room_type=room_type,
+                default_metrics=fallback["metrics"],
+            )
+        except Exception:
+            pass
+
+    if not AI_VISION_ENABLED or AI_VISION_PROVIDER != "openai":
         return fallback
 
     try:

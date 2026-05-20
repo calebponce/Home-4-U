@@ -253,6 +253,8 @@ class ProjectAnalysisResponse(BaseModel):
     style_scores: List[StyleScoreDetail]
     recommendations: List[RecommendationResponse]
     shopping_plan: List[ShoppingPlanItem] = []
+    matching_aspects: List[str] = []
+    gap_aspects: List[str] = []
     ai_powered: bool = False
     ai_model: Optional[str] = None
 

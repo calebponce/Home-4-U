@@ -18,6 +18,21 @@ const STYLE_POSTER_PALETTES = {
   default: { accent: '#a58b67', accentSoft: 'rgba(165, 139, 103, 0.22)', panel: 'rgba(28, 32, 35, 0.8)' },
 };
 
+// Style-specific color tints applied to the "after" canvas to visually simulate transformation.
+const STYLE_COLOR_GRADES = {
+  modern:        'rgba(200, 220, 240, 0.18)',
+  scandinavian:  'rgba(240, 235, 215, 0.20)',
+  industrial:    'rgba(160, 140, 115, 0.18)',
+  bohemian:      'rgba(210, 155, 90,  0.18)',
+  midcentury:    'rgba(195, 160, 85,  0.16)',
+  mediterranean: 'rgba(215, 145, 80,  0.20)',
+  japanese:      'rgba(225, 210, 185, 0.15)',
+  minimalist:    'rgba(240, 240, 238, 0.22)',
+  farmhouse:     'rgba(205, 185, 155, 0.18)',
+  traditional:   'rgba(175, 145, 100, 0.16)',
+  default:       'rgba(200, 185, 155, 0.15)',
+};
+
 const getBudgetAmount = (tier = 'medium') => DEFAULT_BUDGETS[tier] || DEFAULT_BUDGETS.medium;
 
 const getPosterPalette = (styleKey = '') => STYLE_POSTER_PALETTES[styleKey] || STYLE_POSTER_PALETTES.default;
@@ -390,6 +405,8 @@ const renderConceptPreview = async ({ sourceUrl, analysis, styleInfo }) => {
     if (!ctx) return sourceUrl;
 
     const palette = getPosterPalette(styleInfo?.key);
+
+    // --- Draw base room image ---
     if (image) {
       drawCoverImage(ctx, image, canvas.width, canvas.height);
     } else {
@@ -400,19 +417,38 @@ const renderConceptPreview = async ({ sourceUrl, analysis, styleInfo }) => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
+    // --- Apply style color grade to simulate transformation ---
+    const colorGrade = STYLE_COLOR_GRADES[styleInfo?.key] || STYLE_COLOR_GRADES.default;
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = colorGrade;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'source-over';
+
+    // --- Vignette for depth ---
+    const vignette = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, canvas.height * 0.28,
+      canvas.width / 2, canvas.height / 2, canvas.height * 0.85,
+    );
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, 'rgba(0,0,0,0.32)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // --- Scene gradient overlay ---
     const sceneGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    sceneGradient.addColorStop(0, 'rgba(10, 12, 15, 0.08)');
+    sceneGradient.addColorStop(0, 'rgba(10, 12, 15, 0.06)');
     sceneGradient.addColorStop(0.55, palette.accentSoft);
-    sceneGradient.addColorStop(1, 'rgba(7, 9, 11, 0.28)');
+    sceneGradient.addColorStop(1, 'rgba(7, 9, 11, 0.22)');
     ctx.fillStyle = sceneGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // --- Top header bar ---
     ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.fillRect(0, 0, canvas.width, 96);
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
     ctx.font = '600 20px Georgia, serif';
-    ctx.fillText('Design Analysis', 56, 54);
+    ctx.fillText('Concept Board  ·  After', 56, 54);
 
     ctx.font = '700 44px Georgia, serif';
     ctx.fillText(styleInfo?.name || 'Home4U', 56, 112);
@@ -423,39 +459,89 @@ const renderConceptPreview = async ({ sourceUrl, analysis, styleInfo }) => {
     ctx.fillStyle = palette.accent;
     ctx.fillText(`Match ${Math.round(selectedScore?.score_value || 0)}%`, 56, 152);
 
-    renderRoundedPanel(ctx, 810, 52, 414, 616, 28);
+    // --- Right info panel ---
+    renderRoundedPanel(ctx, 810, 52, 414, 636, 28);
     ctx.fillStyle = palette.panel;
     ctx.fill();
 
-    ctx.fillStyle = '#f6f0e8';
-    ctx.font = '600 16px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillText('Summary', 850, 104);
-    ctx.font = '700 30px Georgia, serif';
-    ctx.fillText(analysis.selected_style?.name || styleInfo?.name || 'Style Direction', 850, 148);
+    let panelY = 104;
 
-    ctx.fillStyle = 'rgba(246, 240, 232, 0.82)';
-    ctx.font = '500 18px ui-sans-serif, system-ui, sans-serif';
-    renderWrappedText(ctx, analysis.summary, 850, 188, 334, 28, 3);
-
+    // Style name
     ctx.fillStyle = '#f6f0e8';
-    ctx.font = '600 16px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillText('Top Signals', 850, 298);
-    ctx.font = '500 17px ui-sans-serif, system-ui, sans-serif';
-    (analysis.suggested_tags || []).slice(0, 4).forEach((tag, index) => {
-      renderRoundedPanel(ctx, 850, 320 + index * 52, 334, 36, 18);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-      ctx.fill();
+    ctx.font = '600 15px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillText('Style Direction', 850, panelY);
+    panelY += 38;
+    ctx.font = '700 28px Georgia, serif';
+    ctx.fillText(analysis.selected_style?.name || styleInfo?.name || 'Style', 850, panelY);
+    panelY += 28;
+
+    // Summary (2 lines)
+    ctx.fillStyle = 'rgba(246, 240, 232, 0.78)';
+    ctx.font = '500 16px ui-sans-serif, system-ui, sans-serif';
+    renderWrappedText(ctx, analysis.summary, 850, panelY, 340, 24, 2);
+    panelY += 62;
+
+    // Matching aspects — what already fits
+    const matchingAspects = (analysis.matching_aspects || []).slice(0, 2);
+    const gapAspects = (analysis.gap_aspects || []).slice(0, 2);
+    const hasMG = matchingAspects.length > 0 || gapAspects.length > 0;
+
+    if (hasMG) {
+      if (matchingAspects.length > 0) {
+        ctx.fillStyle = '#7ecfb8';
+        ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillText('✓ Already fits your style', 850, panelY);
+        panelY += 22;
+        ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(246, 240, 232, 0.85)';
+        matchingAspects.forEach((aspect) => {
+          renderWrappedText(ctx, `· ${aspect}`, 850, panelY, 340, 20, 1);
+          panelY += 24;
+        });
+        panelY += 8;
+      }
+      if (gapAspects.length > 0) {
+        ctx.fillStyle = '#e8a870';
+        ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillText('→ Transform these next', 850, panelY);
+        panelY += 22;
+        ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(246, 240, 232, 0.85)';
+        gapAspects.forEach((aspect) => {
+          renderWrappedText(ctx, `· ${aspect}`, 850, panelY, 340, 20, 1);
+          panelY += 24;
+        });
+        panelY += 8;
+      }
+    } else {
+      // Fallback: top design signals
       ctx.fillStyle = '#f6f0e8';
-      ctx.fillText(`${tag.name}  ${Math.round(tag.confidence * 100)}%`, 868, 344 + index * 52);
-    });
+      ctx.font = '600 15px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText('Top Signals', 850, panelY);
+      panelY += 26;
+      ctx.font = '500 16px ui-sans-serif, system-ui, sans-serif';
+      (analysis.suggested_tags || []).slice(0, 3).forEach((tag) => {
+        renderRoundedPanel(ctx, 850, panelY, 330, 32, 16);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fill();
+        ctx.fillStyle = '#f6f0e8';
+        ctx.fillText(`${tag.name}  ${Math.round(tag.confidence * 100)}%`, 866, panelY + 21);
+        panelY += 46;
+      });
+    }
 
-    ctx.fillStyle = '#f6f0e8';
-    ctx.font = '600 16px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillText('Priority Moves', 850, 562);
-    ctx.font = '500 17px ui-sans-serif, system-ui, sans-serif';
-    (analysis.recommendations || []).slice(0, 2).forEach((recommendation, index) => {
-      renderWrappedText(ctx, `${index + 1}. ${recommendation.description}`, 850, 592 + index * 56, 334, 24, 2);
-    });
+    // Priority move
+    const topRec = (analysis.recommendations || [])[0];
+    if (topRec) {
+      panelY = Math.max(panelY, 560);
+      ctx.fillStyle = palette.accent;
+      ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillText('Priority Move', 850, panelY);
+      panelY += 22;
+      ctx.fillStyle = 'rgba(246, 240, 232, 0.82)';
+      ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
+      renderWrappedText(ctx, topRec.description, 850, panelY, 340, 22, 2);
+    }
 
     return canvas.toDataURL('image/png');
   } catch {

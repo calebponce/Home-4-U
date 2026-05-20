@@ -47,8 +47,33 @@ HIGH_INTENSITY_TAGS = ("colorful", "patterns", "iconic", "ornate", "eclectic")
 RETAILER_SEARCH_URLS = {
     "IKEA": "https://www.ikea.com/us/en/search/?q={query}",
     "Target": "https://www.target.com/s?searchTerm={query}",
-    "Wayfair": "https://www.wayfair.com/keyword.php?keyword={query}",
+    "Wayfair": "https://www.wayfair.com/keyword.php?keyword={query}&sortby=pricelow",
     "Amazon": "https://www.amazon.com/s?k={query}",
+}
+
+# Price-range suffixes appended when estimated_cost is known (keeps links within budget)
+RETAILER_PRICE_SUFFIXES = {
+    "Amazon": "&low-price={min_price}&high-price={max_price}",
+    "Target": "&priceType=range&priceLow={min_price}&priceHigh={max_price}",
+}
+
+# Style-specific search qualifiers — makes item searches precise to the chosen style
+STYLE_SEARCH_QUALIFIERS: dict[str, str] = {
+    "modern": "contemporary modern",
+    "scandinavian": "nordic scandinavian minimalist",
+    "industrial": "industrial metal loft",
+    "bohemian": "boho eclectic artisan",
+    "midcenturymodern": "mid-century modern retro",
+    "midcentury": "mid-century modern",
+    "mediterranean": "mediterranean coastal terracotta",
+    "japandi": "japandi japanese minimalist",
+    "japanese": "japanese zen wabi-sabi",
+    "minimalist": "minimalist minimal clean",
+    "farmhouse": "farmhouse rustic shiplap",
+    "traditional": "traditional classic elegant",
+    "coastal": "coastal beach nautical",
+    "transitional": "transitional contemporary",
+    "eclectic": "eclectic mixed",
 }
 
 ROOM_SHOPPING_BLUEPRINTS = {
@@ -864,26 +889,39 @@ def _build_shopping_query(
     primary_tags: list[str],
     budget_tier: str,
 ) -> str:
-    qualifiers = [selected_style.name.lower(), room_label.lower(), blueprint["item_term"]]
-    qualifiers.extend(primary_tags[:2])
+    style_key = "".join(ch for ch in selected_style.name.lower() if ch.isalnum())
+    style_qualifier = STYLE_SEARCH_QUALIFIERS.get(style_key, selected_style.name.lower())
+    qualifiers = [style_qualifier, room_label.lower(), blueprint["item_term"]]
+    # Include first relevant tag word to sharpen style targeting
+    if primary_tags:
+        first_tag = primary_tags[0].split()[0]
+        if first_tag not in style_qualifier:
+            qualifiers.append(first_tag)
     qualifiers.append(BUDGET_LANGUAGE.get(budget_tier, "mid-range"))
     return " ".join(part for part in qualifiers if part).replace("  ", " ").strip()
 
 
-def _build_shopping_sources(search_query: str, retailers: tuple[str, ...]) -> list[dict]:
+def _build_shopping_sources(
+    search_query: str,
+    retailers: tuple[str, ...],
+    *,
+    estimated_cost: float = 0.0,
+) -> list[dict]:
     encoded = quote_plus(search_query)
+    min_price = max(1, int(estimated_cost * 0.65)) if estimated_cost > 0 else 0
+    max_price = max(min_price + 30, int(estimated_cost * 1.40)) if estimated_cost > 0 else 0
     sources = []
     for retailer in retailers:
         template = RETAILER_SEARCH_URLS.get(retailer)
         if template is None:
             continue
-        sources.append(
-            {
-                "retailer": retailer,
-                "search_query": search_query,
-                "url": template.format(query=encoded),
-            }
-        )
+        base_url = template.format(query=encoded)
+        if estimated_cost > 0 and retailer in RETAILER_PRICE_SUFFIXES:
+            suffix = RETAILER_PRICE_SUFFIXES[retailer].format(min_price=min_price, max_price=max_price)
+            url = base_url + suffix
+        else:
+            url = base_url
+        sources.append({"retailer": retailer, "search_query": search_query, "url": url})
     return sources
 
 
@@ -1056,7 +1094,7 @@ def build_project_shopping_plan(
                 "budget_share": round(min(1.0, estimated_cost / budget_value), 2) if budget_value else 0.0,
                 "is_completed": bool(recommendation.is_completed),
                 "search_query": search_query,
-                "sources": _build_shopping_sources(search_query, blueprint["retailers"]),
+                "sources": _build_shopping_sources(search_query, blueprint["retailers"], estimated_cost=estimated_cost),
             }
         )
         shopping_plan[-1]["products"] = _build_product_matches(
@@ -1155,6 +1193,8 @@ def load_saved_project_analysis(
         "suggested_tags": suggested_tags_payload,
         "style_scores": style_scores_payload,
         "recommendations": saved_recommendations,
+        "matching_aspects": [],
+        "gap_aspects": [],
         "shopping_plan": build_project_shopping_plan(
             project=project,
             selected_style=selected_style,
@@ -1385,6 +1425,7 @@ def analyze_project_design(
         total_weight = sum(style_weights.values()) or 1.0
         weighted_match = 0.0
         matched_tags = []
+        matched_count = 0
 
         for tag_name, weight in style_weights.items():
             tag = available_tags.get(tag_name)
@@ -1395,17 +1436,24 @@ def analyze_project_design(
                 continue
             weighted_match += record.confidence * weight
             matched_tags.append((tag.name, record.confidence * weight))
+            matched_count += 1
 
         coverage = weighted_match / total_weight
-        score_value = coverage * 84.0
 
-        if style.id == selected_style.id:
-            score_value += 8.5 + intensity * 0.035
+        # Depth bonus: reward matching more distinct tags (diminishing returns above 5)
+        depth_bonus = min(matched_count, 5) * 1.4
 
-        if lighting == "warm" and any(name in style_weights for name in ("cozy", "natural", "vintage")):
-            score_value += 2.5
-        if lighting == "cool" and any(name in style_weights for name in ("sleek", "metal", "monochrome")):
-            score_value += 2.5
+        score_value = coverage * 82.0 + depth_bonus
+
+        # Only grant selection/lighting bonus when there is real tag evidence
+        if style.id == selected_style.id and coverage >= 0.12:
+            score_value += 7.0 + intensity * 0.030
+
+        if coverage >= 0.10:
+            if lighting == "warm" and any(name in style_weights for name in ("cozy", "natural", "vintage")):
+                score_value += 2.5
+            if lighting == "cool" and any(name in style_weights for name in ("sleek", "metal", "monochrome")):
+                score_value += 2.5
 
         score_value = round(min(98.0, max(8.0, score_value)), 1)
         matched_tags.sort(key=lambda item: item[1], reverse=True)
@@ -1427,14 +1475,22 @@ def analyze_project_design(
         )
 
     # --- AI resemblance scoring: blend Claude's visual match score for the selected style ---
+    # Weight the AI score by scan confidence so high-quality images drive the result more.
     if _ai_comprehensive:
         ai_selected_score = _ai_comprehensive.get("style_match_score")
         if ai_selected_score is not None:
+            scan_conf = float((scan_assessment or {}).get("confidence_score", 0.5) or 0.5)
+            # ai_weight scales from 0.35 (low confidence) to 0.70 (high confidence)
+            ai_weight = 0.35 + scan_conf * 0.35
+            tag_weight = 1.0 - ai_weight
             for score_item in style_scores_payload:
                 if score_item["style_id"] == selected_style.id:
-                    score_item["score_value"] = round(
-                        score_item["score_value"] * 0.5 + float(ai_selected_score) * 0.5, 1
-                    )
+                    base = score_item["score_value"]
+                    blended = base * tag_weight + float(ai_selected_score) * ai_weight
+                    # Guard: cap the AI-driven boost to +20 over the raw tag score
+                    if base < 20.0:
+                        blended = min(blended, base + 20.0)
+                    score_item["score_value"] = round(min(98.0, max(8.0, blended)), 1)
                     break
             style_scores_payload.sort(key=lambda item: item["score_value"], reverse=True)
 
@@ -1482,6 +1538,15 @@ def analyze_project_design(
     )
     summary = f"{summary} Room openness reads {room_state['openness']} and clutter reads {room_state['clutter_level']}."
 
+    matching_aspects = (
+        [str(c)[:200] for c in (_ai_comprehensive.get("matching_aspects") or [])[:5]]
+        if _ai_comprehensive else []
+    )
+    gap_aspects = (
+        [str(c)[:200] for c in (_ai_comprehensive.get("gap_aspects") or [])[:5]]
+        if _ai_comprehensive else []
+    )
+
     return {
         "project": project,
         "selected_style": selected_style,
@@ -1499,6 +1564,8 @@ def analyze_project_design(
             suggested_tags=list(suggested_map.values()),
             budget_tier=budget_tier,
         ),
+        "matching_aspects": matching_aspects,
+        "gap_aspects": gap_aspects,
         "ai_powered": ai_powered,
         "ai_model": ai_model,
     }

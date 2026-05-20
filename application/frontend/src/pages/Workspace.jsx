@@ -996,6 +996,32 @@ const Workspace = () => {
                   ))}
                 </div>
               )}
+
+              {(!!analysisResult.matching_aspects?.length || !!analysisResult.gap_aspects?.length) && (
+                <div className="analysis-match-gap">
+                  {!!analysisResult.matching_aspects?.length && (
+                    <div className="analysis-match-section">
+                      <p className="analysis-match-label match">What we see in your photo</p>
+                      <ul className="analysis-match-list">
+                        {analysisResult.matching_aspects.map((aspect, i) => (
+                          <li key={i} className="analysis-match-item match">{aspect}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {!!analysisResult.gap_aspects?.length && (
+                    <div className="analysis-match-section">
+                      <p className="analysis-match-label gap">Style gaps to bridge</p>
+                      <ul className="analysis-match-list">
+                        {analysisResult.gap_aspects.map((aspect, i) => (
+                          <li key={i} className="analysis-match-item gap">{aspect}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {analysisResult.room_state && (
                 <div className="room-state-block">
                   <div className="analysis-chip-row studio-chip-row">

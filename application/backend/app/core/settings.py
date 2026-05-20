@@ -77,6 +77,15 @@ AI_ANALYSIS_MODEL = os.getenv("HOME4U_AI_ANALYSIS_MODEL", "claude-haiku-4-5-2025
 AI_ANALYSIS_TIMEOUT_SECONDS = _read_int_env("HOME4U_AI_ANALYSIS_TIMEOUT_SECONDS", 25, 5)
 AI_ANALYSIS_ENABLED = bool(ANTHROPIC_API_KEY and AI_ANALYSIS_MODEL)
 
+# Google Gemini Nano — lightweight vision provider for upload feedback and room analysis
+# Set GOOGLE_API_KEY to enable. Model defaults to gemini-2.0-flash-lite (the "nano" tier),
+# accessed via Google's OpenAI-compatible endpoint.
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "").strip()
+GOOGLE_GEMINI_MODEL = os.getenv("HOME4U_GOOGLE_GEMINI_MODEL", "gemini-2.0-flash-lite").strip()
+GOOGLE_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+GOOGLE_GEMINI_TIMEOUT_SECONDS = _read_int_env("HOME4U_GOOGLE_GEMINI_TIMEOUT_SECONDS", 20, 5)
+GOOGLE_GEMINI_ENABLED = bool(GOOGLE_API_KEY and GOOGLE_GEMINI_MODEL)
+
 
 def build_public_asset_url(path: str) -> str:
     normalized = path if path.startswith("/") else f"/{path}"
