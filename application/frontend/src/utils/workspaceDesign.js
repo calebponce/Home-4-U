@@ -18,19 +18,21 @@ const STYLE_POSTER_PALETTES = {
   default: { accent: '#a58b67', accentSoft: 'rgba(165, 139, 103, 0.22)', panel: 'rgba(28, 32, 35, 0.8)' },
 };
 
-// Style-specific color tints applied to the "after" canvas to visually simulate transformation.
-const STYLE_COLOR_GRADES = {
-  modern:        'rgba(200, 220, 240, 0.18)',
-  scandinavian:  'rgba(240, 235, 215, 0.20)',
-  industrial:    'rgba(160, 140, 115, 0.18)',
-  bohemian:      'rgba(210, 155, 90,  0.18)',
-  midcentury:    'rgba(195, 160, 85,  0.16)',
-  mediterranean: 'rgba(215, 145, 80,  0.20)',
-  japanese:      'rgba(225, 210, 185, 0.15)',
-  minimalist:    'rgba(240, 240, 238, 0.22)',
-  farmhouse:     'rgba(205, 185, 155, 0.18)',
-  traditional:   'rgba(175, 145, 100, 0.16)',
-  default:       'rgba(200, 185, 155, 0.15)',
+// Per-style grade layers: primary color/mode drives the look, secondary adds depth.
+const STYLE_GRADES = {
+  modern:        { primary: 'rgba(170, 205, 240, 0.32)', mode: 'screen',   secondary: 'rgba(140, 170, 210, 0.14)', mode2: 'overlay' },
+  scandinavian:  { primary: 'rgba(255, 248, 225, 0.30)', mode: 'screen',   secondary: 'rgba(200, 195, 170, 0.14)', mode2: 'overlay' },
+  industrial:    { primary: 'rgba(110, 90,  68,  0.28)', mode: 'multiply', secondary: 'rgba(180, 155, 120, 0.16)', mode2: 'screen'  },
+  bohemian:      { primary: 'rgba(225, 138, 60,  0.32)', mode: 'screen',   secondary: 'rgba(200, 120, 55,  0.16)', mode2: 'overlay' },
+  midcentury:    { primary: 'rgba(210, 168, 78,  0.30)', mode: 'screen',   secondary: 'rgba(185, 145, 70,  0.15)', mode2: 'overlay' },
+  mediterranean: { primary: 'rgba(228, 125, 58,  0.34)', mode: 'screen',   secondary: 'rgba(200, 110, 55,  0.16)', mode2: 'overlay' },
+  japandi:       { primary: 'rgba(225, 212, 188, 0.26)', mode: 'screen',   secondary: 'rgba(160, 148, 122, 0.13)', mode2: 'overlay' },
+  japanese:      { primary: 'rgba(232, 218, 190, 0.24)', mode: 'screen',   secondary: 'rgba(150, 138, 112, 0.12)', mode2: 'overlay' },
+  minimalist:    { primary: 'rgba(252, 252, 250, 0.34)', mode: 'screen',   secondary: 'rgba(220, 220, 218, 0.16)', mode2: 'overlay' },
+  farmhouse:     { primary: 'rgba(218, 192, 155, 0.28)', mode: 'screen',   secondary: 'rgba(175, 150, 118, 0.14)', mode2: 'overlay' },
+  traditional:   { primary: 'rgba(185, 148, 94,  0.28)', mode: 'screen',   secondary: 'rgba(160, 128, 82,  0.14)', mode2: 'overlay' },
+  coastal:       { primary: 'rgba(145, 198, 225, 0.30)', mode: 'screen',   secondary: 'rgba(115, 170, 200, 0.15)', mode2: 'overlay' },
+  default:       { primary: 'rgba(205, 188, 155, 0.26)', mode: 'screen',   secondary: 'rgba(175, 160, 130, 0.14)', mode2: 'overlay' },
 };
 
 const getBudgetAmount = (tier = 'medium') => DEFAULT_BUDGETS[tier] || DEFAULT_BUDGETS.medium;
@@ -351,6 +353,20 @@ const extractImageProfile = async (sourceUrl) => {
   }
 };
 
+const roundRect = (ctx, x, y, w, h, r) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+};
+
 const renderRoundedPanel = (ctx, x, y, width, height, radius) => {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -391,157 +407,192 @@ const renderConceptPreview = async ({ sourceUrl, analysis, styleInfo }) => {
 
   try {
     let image = null;
-    try {
-      image = await loadImage(sourceUrl);
-    } catch {
-      image = null;
-    }
+    try { image = await loadImage(sourceUrl); } catch { image = null; }
     if (!supportsCanvas()) return sourceUrl;
 
+    const W = 1280;
+    const H = 720;
+    const SPLIT = 618;  // x where Before ends
+    const GAP   = 6;    // divider width
+
     const canvas = document.createElement('canvas');
-    canvas.width = 1280;
-    canvas.height = 720;
+    canvas.width  = W;
+    canvas.height = H;
     const ctx = canvas.getContext('2d');
     if (!ctx) return sourceUrl;
 
     const palette = getPosterPalette(styleInfo?.key);
+    const grade   = STYLE_GRADES[styleInfo?.key] || STYLE_GRADES.default;
 
-    // --- Draw base room image ---
-    if (image) {
-      drawCoverImage(ctx, image, canvas.width, canvas.height);
-    } else {
-      const fallbackGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      fallbackGradient.addColorStop(0, '#eae4da');
-      fallbackGradient.addColorStop(1, '#bca68b');
-      ctx.fillStyle = fallbackGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+    const drawBase = () => {
+      if (image) {
+        drawCoverImage(ctx, image, W, H);
+      } else {
+        const g = ctx.createLinearGradient(0, 0, W, H);
+        g.addColorStop(0, '#cec5b8');
+        g.addColorStop(1, '#a89070');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+      }
+    };
 
-    // --- Apply style color grade to simulate transformation ---
-    const colorGrade = STYLE_COLOR_GRADES[styleInfo?.key] || STYLE_COLOR_GRADES.default;
-    ctx.globalCompositeOperation = 'screen';
-    ctx.fillStyle = colorGrade;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // ── LEFT: BEFORE ──────────────────────────────────────────────
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, SPLIT, H); ctx.clip();
+    drawBase();
+    // Desaturate slightly so "before" feels flatter than "after"
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(0, 0, SPLIT, H);
+    ctx.restore();
+
+    // ── RIGHT: AFTER ──────────────────────────────────────────────
+    const afterX = SPLIT + GAP;
+    const afterW = W - afterX;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(afterX, 0, afterW, H); ctx.clip();
+    drawBase();
+
+    // Primary style grade
+    ctx.globalCompositeOperation = grade.mode;
+    ctx.fillStyle = grade.primary;
+    ctx.fillRect(afterX, 0, afterW, H);
+
+    // Secondary depth layer
+    ctx.globalCompositeOperation = grade.mode2;
+    ctx.fillStyle = grade.secondary;
+    ctx.fillRect(afterX, 0, afterW, H);
+
     ctx.globalCompositeOperation = 'source-over';
 
-    // --- Vignette for depth ---
-    const vignette = ctx.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, canvas.height * 0.28,
-      canvas.width / 2, canvas.height / 2, canvas.height * 0.85,
-    );
-    vignette.addColorStop(0, 'rgba(0,0,0,0)');
-    vignette.addColorStop(1, 'rgba(0,0,0,0.32)');
-    ctx.fillStyle = vignette;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Radial vignette for depth
+    const vigCx = afterX + afterW / 2;
+    const vig = ctx.createRadialGradient(vigCx, H / 2, H * 0.18, vigCx, H / 2, H * 0.82);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, 'rgba(0,0,0,0.38)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(afterX, 0, afterW, H);
 
-    // --- Scene gradient overlay ---
-    const sceneGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    sceneGradient.addColorStop(0, 'rgba(10, 12, 15, 0.06)');
-    sceneGradient.addColorStop(0.55, palette.accentSoft);
-    sceneGradient.addColorStop(1, 'rgba(7, 9, 11, 0.22)');
-    ctx.fillStyle = sceneGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Bottom fade for text readability
+    const fade = ctx.createLinearGradient(0, H - 220, 0, H);
+    fade.addColorStop(0, 'rgba(0,0,0,0)');
+    fade.addColorStop(1, 'rgba(0,0,0,0.75)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(afterX, H - 220, afterW, 220);
 
-    // --- Top header bar ---
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-    ctx.fillRect(0, 0, canvas.width, 96);
+    ctx.restore();
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-    ctx.font = '600 20px Georgia, serif';
-    ctx.fillText('Concept Board  ·  After', 56, 54);
+    // ── DIVIDER ───────────────────────────────────────────────────
+    ctx.fillStyle = 'rgba(255,255,255,0.90)';
+    ctx.fillRect(SPLIT, 0, GAP, H);
 
-    ctx.font = '700 44px Georgia, serif';
-    ctx.fillText(styleInfo?.name || 'Home4U', 56, 112);
-
-    const selectedScore = analysis.style_scores?.find((item) => item.style_name === analysis.selected_style?.name)
-      || analysis.style_scores?.[0];
-    ctx.font = '600 18px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillStyle = palette.accent;
-    ctx.fillText(`Match ${Math.round(selectedScore?.score_value || 0)}%`, 56, 152);
-
-    // --- Right info panel ---
-    renderRoundedPanel(ctx, 810, 52, 414, 636, 28);
-    ctx.fillStyle = palette.panel;
+    // Center drag handle
+    const hCy = H / 2;
+    ctx.beginPath();
+    ctx.arc(SPLIT + GAP / 2, hCy, 18, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
+    ctx.fillStyle = palette.accent;
+    ctx.font = 'bold 15px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('⟷', SPLIT + GAP / 2, hCy + 5);
+    ctx.textAlign = 'left';
 
-    let panelY = 104;
+    // ── BEFORE LABEL ─────────────────────────────────────────────
+    ctx.fillStyle = 'rgba(0,0,0,0.58)';
+    roundRect(ctx, 18, 18, 96, 34, 6);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
+    ctx.font = '700 14px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillText('BEFORE', 30, 40);
 
-    // Style name
-    ctx.fillStyle = '#f6f0e8';
-    ctx.font = '600 15px ui-sans-serif, system-ui, sans-serif';
-    ctx.fillText('Style Direction', 850, panelY);
-    panelY += 38;
-    ctx.font = '700 28px Georgia, serif';
-    ctx.fillText(analysis.selected_style?.name || styleInfo?.name || 'Style', 850, panelY);
-    panelY += 28;
+    // ── AFTER LABEL ──────────────────────────────────────────────
+    ctx.fillStyle = 'rgba(0,0,0,0.58)';
+    roundRect(ctx, afterX + 18, 18, 90, 34, 6);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 14px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillText('AFTER', afterX + 30, 40);
 
-    // Summary (2 lines)
-    ctx.fillStyle = 'rgba(246, 240, 232, 0.78)';
-    ctx.font = '500 16px ui-sans-serif, system-ui, sans-serif';
-    renderWrappedText(ctx, analysis.summary, 850, panelY, 340, 24, 2);
-    panelY += 62;
-
-    // Matching aspects — what already fits
+    // ── AI CALLOUT PILLS (right side, top) ───────────────────────
     const matchingAspects = (analysis.matching_aspects || []).slice(0, 2);
-    const gapAspects = (analysis.gap_aspects || []).slice(0, 2);
-    const hasMG = matchingAspects.length > 0 || gapAspects.length > 0;
+    const gapAspects      = (analysis.gap_aspects      || []).slice(0, 2);
+    ctx.font = '500 13px ui-sans-serif, system-ui, sans-serif';
 
-    if (hasMG) {
-      if (matchingAspects.length > 0) {
-        ctx.fillStyle = '#7ecfb8';
-        ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillText('✓ Already fits your style', 850, panelY);
-        panelY += 22;
-        ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(246, 240, 232, 0.85)';
-        matchingAspects.forEach((aspect) => {
-          renderWrappedText(ctx, `· ${aspect}`, 850, panelY, 340, 20, 1);
-          panelY += 24;
-        });
-        panelY += 8;
-      }
-      if (gapAspects.length > 0) {
-        ctx.fillStyle = '#e8a870';
-        ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillText('→ Transform these next', 850, panelY);
-        panelY += 22;
-        ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(246, 240, 232, 0.85)';
-        gapAspects.forEach((aspect) => {
-          renderWrappedText(ctx, `· ${aspect}`, 850, panelY, 340, 20, 1);
-          panelY += 24;
-        });
-        panelY += 8;
-      }
-    } else {
-      // Fallback: top design signals
-      ctx.fillStyle = '#f6f0e8';
-      ctx.font = '600 15px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillText('Top Signals', 850, panelY);
-      panelY += 26;
-      ctx.font = '500 16px ui-sans-serif, system-ui, sans-serif';
+    let pillY = 72;
+    matchingAspects.forEach((aspect) => {
+      const label = `✓  ${aspect}`;
+      const tw = Math.min(ctx.measureText(label).width + 24, afterW - 36);
+      roundRect(ctx, afterX + 18, pillY, tw, 28, 14);
+      ctx.fillStyle = 'rgba(0, 45, 28, 0.75)';
+      ctx.fill();
+      ctx.fillStyle = '#7ecfb8';
+      ctx.fillText(label, afterX + 30, pillY + 19);
+      pillY += 36;
+    });
+    gapAspects.forEach((aspect) => {
+      const label = `→  ${aspect}`;
+      const tw = Math.min(ctx.measureText(label).width + 24, afterW - 36);
+      roundRect(ctx, afterX + 18, pillY, tw, 28, 14);
+      ctx.fillStyle = 'rgba(45, 22, 0, 0.75)';
+      ctx.fill();
+      ctx.fillStyle = '#e8a870';
+      ctx.fillText(label, afterX + 30, pillY + 19);
+      pillY += 36;
+    });
+
+    // Fallback: top tags if no AI aspects
+    if (matchingAspects.length === 0 && gapAspects.length === 0) {
+      ctx.font = '500 13px ui-sans-serif, system-ui, sans-serif';
       (analysis.suggested_tags || []).slice(0, 3).forEach((tag) => {
-        renderRoundedPanel(ctx, 850, panelY, 330, 32, 16);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        const label = `${tag.name}  ${Math.round(tag.confidence * 100)}%`;
+        const tw = Math.min(ctx.measureText(label).width + 24, afterW - 36);
+        roundRect(ctx, afterX + 18, pillY, tw, 28, 14);
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
         ctx.fill();
-        ctx.fillStyle = '#f6f0e8';
-        ctx.fillText(`${tag.name}  ${Math.round(tag.confidence * 100)}%`, 866, panelY + 21);
-        panelY += 46;
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.fillText(label, afterX + 30, pillY + 19);
+        pillY += 36;
       });
     }
 
-    // Priority move
+    // ── STYLE NAME + SCORE (right bottom) ────────────────────────
+    const selectedScore = analysis.style_scores?.find((s) => s.style_name === analysis.selected_style?.name)
+      || analysis.style_scores?.[0];
+    const styleName = analysis.selected_style?.name || styleInfo?.name || 'Style';
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 38px Georgia, serif';
+    ctx.fillText(styleName, afterX + 24, H - 72);
+
+    ctx.font = '600 17px ui-sans-serif, system-ui, sans-serif';
+    ctx.fillStyle = palette.accent;
+    ctx.fillText(`${Math.round(selectedScore?.score_value || 0)}% match`, afterX + 24, H - 40);
+
+    // Priority move tag bottom-right
     const topRec = (analysis.recommendations || [])[0];
     if (topRec) {
-      panelY = Math.max(panelY, 560);
-      ctx.fillStyle = palette.accent;
-      ctx.font = '600 13px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillText('Priority Move', 850, panelY);
-      panelY += 22;
-      ctx.fillStyle = 'rgba(246, 240, 232, 0.82)';
-      ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
-      renderWrappedText(ctx, topRec.description, 850, panelY, 340, 22, 2);
+      ctx.font = '500 13px ui-sans-serif, system-ui, sans-serif';
+      const recLabel = topRec.description.length > 60
+        ? topRec.description.slice(0, 57) + '…'
+        : topRec.description;
+      const recW = Math.min(ctx.measureText(recLabel).width + 28, afterW - 36);
+      roundRect(ctx, afterX + 24, H - 112, recW, 28, 14);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.fillText(recLabel, afterX + 38, H - 93);
     }
+
+    // ── BEFORE: summary text (left bottom) ───────────────────────
+    const leftFade = ctx.createLinearGradient(0, H - 140, 0, H);
+    leftFade.addColorStop(0, 'rgba(0,0,0,0)');
+    leftFade.addColorStop(1, 'rgba(0,0,0,0.68)');
+    ctx.fillStyle = leftFade;
+    ctx.fillRect(0, H - 140, SPLIT, 140);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.68)';
+    ctx.font = '500 14px ui-sans-serif, system-ui, sans-serif';
+    renderWrappedText(ctx, analysis.summary || '', 20, H - 52, SPLIT - 40, 22, 2);
 
     return canvas.toDataURL('image/png');
   } catch {

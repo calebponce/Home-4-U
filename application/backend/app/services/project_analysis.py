@@ -888,6 +888,7 @@ def _build_shopping_query(
     blueprint: dict,
     primary_tags: list[str],
     budget_tier: str,
+    per_item_ceiling: float = 0.0,
 ) -> str:
     style_key = "".join(ch for ch in selected_style.name.lower() if ch.isalnum())
     style_qualifier = STYLE_SEARCH_QUALIFIERS.get(style_key, selected_style.name.lower())
@@ -897,7 +898,11 @@ def _build_shopping_query(
         first_tag = primary_tags[0].split()[0]
         if first_tag not in style_qualifier:
             qualifiers.append(first_tag)
-    qualifiers.append(BUDGET_LANGUAGE.get(budget_tier, "mid-range"))
+    # Concrete price ceiling beats abstract tier language for search precision
+    if per_item_ceiling >= 20:
+        qualifiers.append(f"under ${int(per_item_ceiling)}")
+    else:
+        qualifiers.append(BUDGET_LANGUAGE.get(budget_tier, "mid-range"))
     return " ".join(part for part in qualifiers if part).replace("  ", " ").strip()
 
 
@@ -908,8 +913,9 @@ def _build_shopping_sources(
     estimated_cost: float = 0.0,
 ) -> list[dict]:
     encoded = quote_plus(search_query)
-    min_price = max(1, int(estimated_cost * 0.65)) if estimated_cost > 0 else 0
-    max_price = max(min_price + 30, int(estimated_cost * 1.40)) if estimated_cost > 0 else 0
+    # Tight ±22% band keeps links inside the per-item budget
+    min_price = max(1, int(estimated_cost * 0.78)) if estimated_cost > 0 else 0
+    max_price = max(min_price + 15, int(estimated_cost * 1.22)) if estimated_cost > 0 else 0
     sources = []
     for retailer in retailers:
         template = RETAILER_SEARCH_URLS.get(retailer)
@@ -1002,11 +1008,15 @@ def _build_product_matches(
     ranked_catalog_matches: list[tuple[float, ProductItem]] = []
 
     for product in selected_style.product_items or []:
+        product_cost = float(product.estimated_cost or 0.0)
+        # Hard reject catalog products that exceed 155% of the item's budget allocation
+        if target_cost > 0 and product_cost > target_cost * 1.55:
+            continue
         product_terms = _tokenize_match_terms(product.name)
         overlap = len(query_terms & product_terms)
         if overlap == 0 and query_terms:
             continue
-        cost_delta = abs(float(product.estimated_cost or 0.0) - target_cost)
+        cost_delta = abs(product_cost - target_cost)
         closeness = 1 / (1 + (cost_delta / max(target_cost, 120.0)))
         ranked_catalog_matches.append((overlap * 2.0 + closeness, product))
 
@@ -1071,17 +1081,25 @@ def build_project_shopping_plan(
     ]
     blueprints = _get_shopping_blueprint(room_label)
 
+    # Per-item budget ceiling: evenly divide the total budget, allow 40% over average
+    # so the anchor item can be a bit more substantial while still keeping links on-budget.
+    num_items = max(1, len(recommendations))
+    per_item_ceiling = max(80.0, (budget_value / num_items) * 1.40)
+
     shopping_plan = []
     for index, recommendation in enumerate(recommendations):
         blueprint = blueprints[min(index, len(blueprints) - 1)]
+        # Clamp to per-item ceiling so search links and catalog products stay within budget
+        raw_cost = float(recommendation.estimated_cost or 0.0)
+        estimated_cost = round(min(raw_cost, per_item_ceiling), 2)
         search_query = _build_shopping_query(
             selected_style=selected_style,
             room_label=room_label,
             blueprint=blueprint,
             primary_tags=primary_tags,
             budget_tier=budget_tier,
+            per_item_ceiling=estimated_cost,
         )
-        estimated_cost = round(float(recommendation.estimated_cost or 0.0), 2)
         shopping_plan.append(
             {
                 "key": f"{blueprint['key']}-{index + 1}",
