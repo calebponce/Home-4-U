@@ -23,8 +23,17 @@ def upgrade() -> None:
         "SET name = TRIM(room_type) || ' Project #' || id "
         "WHERE name IS NULL OR TRIM(name) = ''"
     )
-    op.alter_column("room_projects", "name", existing_type=sa.String(length=160), nullable=False)
+    # SQLite does not support ``ALTER COLUMN ... SET NOT NULL`` directly.
+    # Alembic batch mode rebuilds the table there and emits a regular alter on
+    # databases that support it.
+    with op.batch_alter_table("room_projects") as batch_op:
+        batch_op.alter_column(
+            "name",
+            existing_type=sa.String(length=160),
+            nullable=False,
+        )
 
 
 def downgrade() -> None:
-    op.drop_column("room_projects", "name")
+    with op.batch_alter_table("room_projects") as batch_op:
+        batch_op.drop_column("name")

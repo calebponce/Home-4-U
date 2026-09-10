@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime
 from pathlib import Path
 
 
@@ -677,7 +676,6 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 *This document is maintained by the repository documentation generator.*
 """
 

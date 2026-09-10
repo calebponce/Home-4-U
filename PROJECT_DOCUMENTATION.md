@@ -79,6 +79,7 @@ building/
 │   │   │   ├── tests_auth_rate_limit.py
 │   │   │   ├── tests_search_smoke.py
 │   │   │   └── tests_workspace_analysis_smoke.py
+│   │   ├── uploads
 │   │   ├── alembic.ini
 │   │   ├── package-lock.json
 │   │   ├── requirements.txt
@@ -201,8 +202,8 @@ building/
 |------------|---------|---------|
 | react | ^19.2.0 | UI framework |
 | react-dom | ^19.2.0 | DOM renderer |
-| react-router-dom | ^6.22.0 | Client-side routing |
-| axios | ^1.6.7 | HTTP client |
+| react-router-dom | ^7.18.3 | Client-side routing |
+| axios | ^1.20.0 | HTTP client |
 | framer-motion | ^12.38.0 | Motion and transitions |
 | lucide-react | ^0.577.0 | Icon library |
 | vite | ^8.0.0-beta.13 | Build and dev server |
@@ -436,5 +437,4 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-*Last Updated: 2026-09-09 19:26:35*
 *This document is maintained by the repository documentation generator.*
