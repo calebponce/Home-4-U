@@ -3,13 +3,20 @@
 **A data-driven room transformation planner for renters and first-time apartment dwellers.**
 
 [![App Quality](https://github.com/calebponce/Home-4-U/actions/workflows/app-quality.yml/badge.svg)](https://github.com/calebponce/Home-4-U/actions/workflows/app-quality.yml)
+[![Portfolio Demo](https://github.com/calebponce/Home-4-U/actions/workflows/portfolio-demo.yml/badge.svg)](https://github.com/calebponce/Home-4-U/actions/workflows/portfolio-demo.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](application/frontend)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](application/backend)
 
 Home4U turns room inspiration into an actionable plan. A user creates a room project, uploads a photo, selects a target design style and budget, and receives an explainable comparison with prioritized recommendations that can be saved and refined. A constraint-based optimizer then compares valid product combinations and produces three distinct purchasing strategies without exceeding the selected budget ceiling.
 
-> **Portfolio status:** The application and automated tests are available in this repository. The former public demo is temporarily unlisted while its TLS configuration is repaired.
+> **[Explore the live portfolio demo →](https://calebponce.github.io/Home-4-U/)** No sign-in, paid server, or sample-data setup is required.
+
+## Live portfolio demo
+
+The public case study isolates Home4U's signature decision engine in a fast, recruiter-friendly experience. Change the project budget to recompute Economical, Balanced, and Design Focused plans directly in the browser, then inspect the funded steps, constraint tradeoffs, objective weights, and deferred recommendations.
+
+The demo uses clearly labeled representative data and collects nothing. The complete authenticated React/FastAPI application, database models, migrations, upload flow, and API tests remain in this repository for engineering review. Every push to `master` runs the quality gates and publishes the static showcase to GitHub Pages at no hosting cost.
 
 ## Product tour
 
@@ -144,6 +151,8 @@ The application runs locally with safe development defaults. Production deployme
 | `HOME4U_UPLOAD_DIR` | Uploaded-image storage location |
 | `HOME4U_MAX_UPLOAD_BYTES` | Maximum upload size |
 | `VITE_API_BASE` | Frontend API base; defaults to `/api` |
+| `VITE_DEMO_MODE` | Builds the standalone, API-free portfolio case study when set to `true` |
+| `VITE_BASE_PATH` | Sets the static asset base path for subdirectory deployments |
 
 See [application/README.md](application/README.md) for the full configuration and migration reference.
 
@@ -151,7 +160,7 @@ See [application/README.md](application/README.md) for the full configuration an
 
 I served as **Team Lead and System Architecture lead**. In addition to coordinating delivery and maintaining the engineering documentation, my commits covered protected workspace flows, authentication and health hardening, migration/deployment automation, room-analysis diagnostics, scoring and recommendation UX, and post-demo product improvements.
 
-For this portfolio fork, I also led the post-course hardening work and added the constraint-based plan optimizer, its API contract, interactive comparison UI, regression tests, and CI coverage.
+For this portfolio fork, I also led the post-course hardening work and added the constraint-based plan optimizer, its API contract, interactive comparison UI, regression tests, CI coverage, and the zero-cost public case study deployment.
 
 This was a five-person CSC 648/848 software-engineering project. The complete team history is intentionally preserved so individual and collaborative contributions remain attributable.
 

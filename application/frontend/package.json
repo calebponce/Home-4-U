@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "test": "npm run test:hooks && npm run test:smoke",
-    "test:hooks": "node --test src/utils/styleContext.test.js",
+    "test:hooks": "node --test src/utils/styleContext.test.js src/demo/demoOptimizer.test.js",
     "test:smoke": "vitest run src/App.smoke.test.jsx src/pages/Dashboard.a11y.test.jsx src/pages/Workspace.a11y.test.jsx src/pages/ProjectDetails.smoke.test.jsx",
     "test:watch": "vitest",
     "lint": "eslint .",

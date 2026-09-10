@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'dist-*']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -25,6 +25,12 @@ export default defineConfig([
     rules: {
       // Framer Motion uses <motion.div /> — `motion` is used in JSX but not flagged without react/jsx-uses-vars
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]|^motion$' }],
+    },
+  },
+  {
+    files: ['vite.config.js'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ])

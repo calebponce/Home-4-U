@@ -11,16 +11,22 @@ import './styles/material.css'
 import './index.css'
 import App from './App.jsx'
 
+const PORTFOLIO_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <AmbienceProvider>
-          <ApiHealthProvider>
-            <App />
-          </ApiHealthProvider>
-        </AmbienceProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    {PORTFOLIO_DEMO_MODE ? (
+      <App />
+    ) : (
+      <BrowserRouter>
+        <AuthProvider>
+          <AmbienceProvider>
+            <ApiHealthProvider>
+              <App />
+            </ApiHealthProvider>
+          </AmbienceProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    )}
   </StrictMode>,
 )

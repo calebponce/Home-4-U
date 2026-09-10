@@ -10,6 +10,9 @@ import Navbar from './components/Navbar'
 import PageMotion from './components/PageMotion'
 import ApiStatusBanner from './components/ApiStatusBanner'
 import SessionLoadingGate from './components/SessionLoadingGate'
+import PortfolioDemo from './pages/PortfolioDemo'
+
+const PORTFOLIO_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const ProjectDetails = lazy(() => import('./pages/ProjectDetails'))
@@ -47,7 +50,7 @@ const ProtectedRoute = ({ children }) => {
   )
 }
 
-function App() {
+function AuthenticatedApplication() {
   const { loading } = useAuth()
   const location = useLocation();
 
@@ -290,6 +293,18 @@ function App() {
       </AnimatePresence>
     </ErrorBoundary>
   )
+}
+
+function App() {
+  if (PORTFOLIO_DEMO_MODE) {
+    return (
+      <ErrorBoundary>
+        <PortfolioDemo />
+      </ErrorBoundary>
+    )
+  }
+
+  return <AuthenticatedApplication />
 }
 
 export default App
