@@ -33,9 +33,9 @@ def get_project_structure(root_path: Path, max_depth: int = 3, exclude_dirs=None
             "venv",
             "dist",
             "build",
+            "uploads",
         }
     exclude_files = {"home4u.db"}
-    no_descend_dirs = {"uploads"}
 
     lines: list[str] = []
 
@@ -59,11 +59,12 @@ def get_project_structure(root_path: Path, max_depth: int = 3, exclude_dirs=None
             branch = "└── " if is_last else "├── "
             lines.append(f"{prefix}{branch}{item.name}")
 
-            if item.is_dir() and item.name not in no_descend_dirs:
+            if item.is_dir():
                 extension = "    " if is_last else "│   "
                 walk_dir(item, prefix + extension, depth + 1)
 
-    lines.append(root_path.name + "/")
+    # Keep generated output stable across differently named local/CI checkouts.
+    lines.append("Home-4-U/")
     walk_dir(root_path)
     return "\n".join(lines)
 

@@ -58,7 +58,7 @@
 ## Directory Structure
 
 ```
-building/
+Home-4-U/
 ├── application
 │   ├── backend
 │   │   ├── alembic
@@ -79,7 +79,6 @@ building/
 │   │   │   ├── tests_auth_rate_limit.py
 │   │   │   ├── tests_search_smoke.py
 │   │   │   └── tests_workspace_analysis_smoke.py
-│   │   ├── uploads
 │   │   ├── alembic.ini
 │   │   ├── package-lock.json
 │   │   ├── requirements.txt
