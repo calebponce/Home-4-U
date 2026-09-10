@@ -11,9 +11,19 @@ Home4U turns room inspiration into an actionable plan. A user creates a room pro
 
 > **Portfolio status:** The application and automated tests are available in this repository. The former public demo is temporarily unlisted while its TLS configuration is repaired.
 
-![Home4U product design concept](docs/mockups/home4u-redesign-concept.svg)
+## Product tour
 
-_Product design concept illustrating the dashboard and transformation workspace._
+### Project dashboard
+
+![Home4U authenticated project dashboard](docs/screenshots/home4u-dashboard.png)
+
+### Saved room plan and budget
+
+![Home4U saved room project with style score and budget overview](docs/screenshots/home4u-project-plan.png)
+
+### Explainable recommendations and purchase planning
+
+![Home4U saved analysis signals and purchase board](docs/screenshots/home4u-purchase-board.png)
 
 ## Product flow
 
