@@ -100,11 +100,13 @@ Home-4-U/
 │   │   └── quick_fix.sh
 │   ├── frontend
 │   │   ├── public
+│   │   │   ├── home4u-mark.svg
 │   │   │   └── vite.svg
 │   │   ├── src
 │   │   │   ├── assets
 │   │   │   ├── components
 │   │   │   ├── context
+│   │   │   ├── demo
 │   │   │   ├── pages
 │   │   │   ├── services
 │   │   │   ├── styles

@@ -48,6 +48,7 @@ def get_project_structure(root_path: Path, max_depth: int = 3, exclude_dirs=None
                 item
                 for item in sorted(path.iterdir(), key=lambda x: (x.is_file(), x.name))
                 if item.name not in exclude_dirs
+                and not (item.is_dir() and item.name.startswith("dist-"))
                 and item.name not in exclude_files
                 and not item.name.startswith(".")
             ]
