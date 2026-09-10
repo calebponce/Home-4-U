@@ -111,7 +111,7 @@ describe('ProjectDetails smoke states', () => {
 
     await user.click(screen.getByRole('button', { name: /retry loading/i }));
 
-    expect(await screen.findByRole('heading', { name: /scandinavian/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /living room/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /project unavailable/i })).not.toBeInTheDocument();
   });
 
@@ -126,7 +126,7 @@ describe('ProjectDetails smoke states', () => {
 
     renderProjectDetails();
 
-    await screen.findByRole('heading', { name: /scandinavian/i });
+    await screen.findByRole('heading', { name: /living room/i });
     await user.click(screen.getByRole('button', { name: /refresh plan/i }));
 
     await waitFor(() => {
@@ -139,7 +139,7 @@ describe('ProjectDetails smoke states', () => {
 
     renderProjectDetails();
 
-    await screen.findByRole('heading', { name: /scandinavian/i });
+    await screen.findByRole('heading', { name: /living room/i });
 
     const budgetInput = screen.getByRole('spinbutton', { name: /adjust budget ceiling/i });
     await user.clear(budgetInput);

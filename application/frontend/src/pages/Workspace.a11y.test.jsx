@@ -128,7 +128,7 @@ describe('Workspace accessibility', () => {
     vi.restoreAllMocks();
   });
 
-  it('announces slider value text and supports keyboard comparison controls', async () => {
+  it('labels both sides of the room comparison', async () => {
     const user = userEvent.setup();
 
     render(
@@ -158,17 +158,9 @@ describe('Workspace accessibility', () => {
 
     await user.click(generateButton);
 
-    const slider = await screen.findByRole('slider', { name: /before and after comparison/i }, { timeout: 4000 });
-    expect(slider).toHaveAttribute('aria-valuetext', 'Before 60 percent visible, After 40 percent visible');
-
-    slider.focus();
-    fireEvent.keyDown(slider, { key: 'PageUp', code: 'PageUp' });
-    expect(slider).toHaveAttribute('aria-valuenow', '70');
-    expect(slider).toHaveAttribute('aria-valuetext', 'Before 70 percent visible, After 30 percent visible');
-
-    fireEvent.keyDown(slider, { key: ' ', code: 'Space' });
-    expect(slider).toHaveAttribute('aria-valuenow', '0');
-    expect(slider).toHaveAttribute('aria-valuetext', 'Before 0 percent visible, After 100 percent visible');
+    expect(await screen.findByRole('img', { name: /^before$/i }, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /^after$/i })).toBeInTheDocument();
+    expect(screen.getByText(/82% style match/i)).toBeInTheDocument();
   }, 8000);
 
   it('rejects non-image uploads before the backend run begins', async () => {
@@ -271,7 +263,8 @@ describe('Workspace accessibility', () => {
     await user.click(screen.getByRole('button', { name: /living room/i }));
 
     await user.click(screen.getByRole('button', { name: /generate plan/i }));
-    expect(await screen.findByRole('slider', { name: /before and after comparison/i }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await screen.findByRole('img', { name: /^before$/i }, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /^after$/i })).toBeInTheDocument();
 
     projectAnalyzeMock.mockRejectedValueOnce({
       response: {
@@ -285,6 +278,7 @@ describe('Workspace accessibility', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/analysis service is temporarily unavailable/i);
     expect(screen.getByText('Previous plan restored', { selector: '.status' })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(/still available while you retry/i);
-    expect(screen.getByRole('slider', { name: /before and after comparison/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /^before$/i })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /^after$/i })).toBeInTheDocument();
   }, 8000);
 });

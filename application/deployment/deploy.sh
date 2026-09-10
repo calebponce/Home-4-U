@@ -69,8 +69,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Run seed script to create database and test users
-echo "[5/8] Seeding database..."
+# Seed public reference data. Demo users are opt-in through environment variables.
+echo "[5/8] Seeding style reference data..."
 HOME4U_ENV=production HOME4U_DATA_DIR=/home/ec2-user/data python seed.py
 deactivate
 
@@ -179,6 +179,5 @@ else
   echo "Health check is at http://$PUBLIC_DNS/health"
 fi
 echo ""
-echo "Test users:"
-echo "  - test@example.com / test123"
-echo "  - demo@home4u.com / demo123"
+echo "No default user credentials were created. Register through the application"
+echo "or configure an intentional demo account outside the repository."

@@ -292,7 +292,7 @@ def test_project_budget_validation_and_photo_limits():
     )
     assert valid_upload.status_code == 200, valid_upload.text
     assert valid_upload.headers["X-Request-ID"] == upload_request_id
-    photo_url = valid_upload.json()["photo_url"]
+    photo_url = valid_upload.json()["project"]["photo_url"]
     assert "/uploads/" in photo_url
     assert photo_url.split("/")[-1].startswith(f"project_{project.id}_")
     _cleanup_uploaded_photo(photo_url)
@@ -510,7 +510,12 @@ def test_analysis_validation_rejects_tiny_or_missing_scan_inputs():
             description="Quiet interiors with simple, functional furniture.",
             tag_names=["clean", "simple", "neutral", "functional"],
         )
-        project = RoomProject(user_id=user_id, room_type="Bedroom", budget=1800)
+        project = RoomProject(
+            user_id=user_id,
+            name="Bedroom Validation Project",
+            room_type="Bedroom",
+            budget=1800,
+        )
         db.add(project)
         db.commit()
         db.refresh(project)

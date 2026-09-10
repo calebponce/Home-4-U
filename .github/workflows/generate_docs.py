@@ -460,9 +460,9 @@ def generate_documentation() -> None:
 ## Runtime Contract
 
 - Backend route modules currently live under `application/backend/app/api/v1/`, but the public backend URLs are **not** versioned as `/api/v1/*`.
-- The frontend uses `VITE_API_BASE=/api` in [api.js](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/src/services/api.js) and [AuthContext.jsx](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/src/context/AuthContext.jsx).
-- In development, [vite.config.js](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/vite.config.js) strips `/api` before forwarding requests to `http://127.0.0.1:8000`, and proxies `/uploads` directly.
-- In production, [nginx.conf](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/deployment/nginx.conf) applies the same `/api` rewrite and `/uploads` proxy behavior.
+- The frontend uses `VITE_API_BASE=/api` in [api.js](application/frontend/src/services/api.js) and [AuthContext.jsx](application/frontend/src/context/AuthContext.jsx).
+- In development, [vite.config.js](application/frontend/vite.config.js) strips `/api` before forwarding requests to `http://127.0.0.1:8000`, and proxies `/uploads` directly.
+- In production, [nginx.conf](application/deployment/nginx.conf) applies the same `/api` rewrite and `/uploads` proxy behavior.
 - Uploaded room images are served by the backend static mount at `/uploads/*`.
 
 ---
@@ -503,15 +503,13 @@ def generate_documentation() -> None:
 
 ## Team Members
 
-| # | Name | SFSU Email | GitHub | Discord | Role | Contract |
-|---|------|------------|--------|---------|------|----------|
-| 1 | Caleb Ponce | cponce8@sfsu.edu | calebponce | fusionn8 | Team Lead | Yes |
-| 2 | Mason Lee | mlee82@sfsu.edu | mlee82 | masonl | - | Yes |
-| 3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg | - | Yes |
-| 4 | Tyler Morris | tmorris6@sfsu.edu | tylerrendon | sinigang4463 | Unsure | Yes |
-| 5 | Dias Almat | dalmat@sfsu.edu | vincivv | vinciv | - | Yes |
-| 6 | - | - | - | - | - | No |
-| 7 | - | - | - | - | - | No |
+| Name | GitHub | Primary responsibility |
+|------|--------|------------------------|
+| Caleb Ponce | [calebponce](https://github.com/calebponce) | Team Lead / System Architecture |
+| Mason Lee | [mlee82](https://github.com/mlee82) | Data Modeling / Scoring Engine |
+| Christopher Quach | [rexchris2](https://github.com/rexchris2) | Frontend Development |
+| Tyler Morris | [tylerrendon](https://github.com/tylerrendon) | Backend / AI Integration |
+| Dias Almat | [vincivv](https://github.com/vincivv) | Technical Writing |
 
 ---
 
@@ -601,14 +599,14 @@ Frontend URLs:
 
 ## Data and Configuration Notes
 
-- Development defaults to SQLite via [database.py](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/backend/app/core/database.py).
+- Development defaults to SQLite via [database.py](application/backend/app/core/database.py).
 - `HOME4U_ENV=production` moves the default SQLite path outside the repo so deployments do not lose local data on `git pull`.
 - `DATABASE_URL` can override the default database connection for other relational database deployments.
 - `HOME4U_SECRET_KEY` should be supplied in production rather than relying on the repo default.
 - `HOME4U_CORS_ORIGINS` can be used to allow direct cross-origin backend access when the app is not using the same-origin `/api` proxy.
 - `HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS`, and `HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS` tune failed-login throttling; defaults are `5`, `20`, and `300`.
 - Public-facing repo docs and smoke-test snippets should derive from a single `HOME4U_PUBLIC_URL` value that points to a stable domain or Elastic-IP-backed hostname.
-- The current stable public base URL is `https://home4uu.duckdns.org/`, secured with Let's Encrypt SSL. The Elastic IP `18.225.42.247` is used for SSH access only.
+- Validate DNS and the full TLS certificate chain before publishing a live-demo URL. The former deployment is currently unlisted while TLS is repaired.
 - The production systemd unit supports an optional `/etc/home4u/home4u.env` file for backend environment variables.
 - The backend currently starts without requiring an AI provider key; Workspace analysis is implemented through deterministic backend scoring rather than an external model call.
 
@@ -626,7 +624,7 @@ Frontend URLs:
 
 ### Repository Policy
 
-- The root [README.md](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/README.md) states that `master` is the branch used for grading.
+- The root [README.md](README.md) is the portfolio entry point; the preserved course milestones document the original delivery requirements.
 - Feature branches and pull requests are still the safer day-to-day workflow, but repository-wide decisions should stay consistent with the course policy documented in the root README.
 
 ### Suggested Engineering Workflow
@@ -660,7 +658,7 @@ Examples: feat(workspace): add project analysis flow
 ### Frontend Development
 
 - Add frontend code under `application/frontend/src/`.
-- Use functional React components and keep route-level behavior aligned with [App.jsx](/Users/caleb/csc648-848-project-sp26-vibecoding-for-internship/application/frontend/src/App.jsx).
+- Use functional React components and keep route-level behavior aligned with [App.jsx](application/frontend/src/App.jsx).
 - The frontend currently expects `/api/*` and `/uploads/*` to be available through dev and production proxies.
 
 ### API Design
@@ -671,11 +669,11 @@ Examples: feat(workspace): add project analysis flow
 
 ---
 
-## Contact
+## Project provenance
 
-- Team Lead: Caleb Ponce (`cponce8@sfsu.edu`)
-- Repository: GitHub Classroom course repository
-- Decision Making Policy: Consensus
+- Team Lead: [Caleb Ponce](https://github.com/calebponce)
+- Originally developed as a five-person CSC 648/848 team project.
+- Contributor attribution is preserved in Git history.
 
 ---
 

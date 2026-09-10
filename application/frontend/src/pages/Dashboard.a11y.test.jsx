@@ -174,7 +174,7 @@ describe('Dashboard accessibility', () => {
 
     await user.click(screen.getAllByRole('button', { name: /\+ new project/i })[0]);
     await user.selectOptions(screen.getByRole('combobox'), 'Kitchen');
-    await user.click(screen.getByRole('button', { name: /^create$/i }));
+    await user.click(screen.getByRole('button', { name: /^create project$/i }));
 
     expect(projectsCreateMock).toHaveBeenCalledWith('Kitchen');
     await waitFor(() => {

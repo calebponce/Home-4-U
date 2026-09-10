@@ -79,5 +79,5 @@ src/
 
 ## License
 
-To be determined.
+Home4U is available under the repository's [MIT License](../../LICENSE).
 

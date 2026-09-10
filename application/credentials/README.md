@@ -1,299 +1,44 @@
-# Home4U Cloud Credentials
+# Credential handling
 
-> **IMPORTANT**: This folder documents cloud access for Home4U, but live private keys are not distributed through the repository.
-> Treat any PEM file that was previously committed here as compromised and rotate it in AWS before further use.
->
-> Current host values:
-> - Elastic IP: `18.225.42.247` (used for SSH only)
-> - AWS-generated DNS: `ec2-18-225-42-247.us-east-2.compute.amazonaws.com`
-> - **App URL: `https://home4uu.duckdns.org/`** (HTTPS, Let's Encrypt SSL)
->
-> The domain `home4uu.duckdns.org` is the canonical public URL. The Elastic IP is
-> used for SSH access only. Use the domain for all links, smoke tests, and browser access.
+This directory intentionally contains **no live credentials, private keys, account identifiers, host addresses, or database access details**.
 
----
+## Rules
 
-## Quick Start (5 Minutes)
+- Store production secrets in the deployment platform's secret manager or in a root-owned environment file outside the repository.
+- Never commit PEM files, API keys, passwords, JWT signing secrets, database URLs, cloud account IDs, instance IDs, or private host information.
+- Treat any credential that reaches Git history as compromised and rotate it immediately.
+- Limit SSH and database access to authorized operators and least-privilege network rules.
+- Use separate development, demo, and production credentials.
 
-### Step 1: Obtain the PEM Key Securely
-1. Get the current PEM key from the Team Lead through an approved secure channel
-2. Do not download or reuse an old key from the Git repository
-3. Verify you are using the rotated replacement key before connecting
+## Backend environment variables
 
-### Step 2: Set Up the Rotated Key (macOS/Linux)
-```bash
-# Open Terminal and navigate to downloaded file
-cd ~/.ssh
+| Variable | Requirement |
+|---|---|
+| `HOME4U_SECRET_KEY` | Required in production; use a long random value |
+| `DATABASE_URL` | Optional external relational database connection |
+| `HOME4U_CORS_ORIGINS` | Explicit direct-backend origins, when needed |
+| `HOME4U_DATA_DIR` | Persistent production data directory |
+| `HOME4U_UPLOAD_DIR` | Persistent uploaded-image directory |
+| `HOME4U_SEED_DEMO_EMAIL` | Optional demo-account email; set only with the password variable |
+| `HOME4U_SEED_DEMO_PASSWORD` | Optional demo-account password; inject through secret storage |
 
-# Set correct permissions
-chmod 400 home4u-rotated
-```
-
-### Step 3: Connect to Server
-```bash
-ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247
-```
-
-### Step 4: Access Database
-```bash
-# After connecting, run:
-sqlite3 /home/ec2-user/data/home4u.db
-```
-
----
-
-## Table of Contents
-
-1. [AWS Account Information](#aws-account-information)
-2. [EC2 Instance Details](#ec2-instance-details)
-3. [Step-by-Step SSH Access](#step-by-step-ssh-access)
-4. [Database Access Instructions](#database-access-instructions)
-5. [PEM Key Setup](#pem-key-setup)
-6. [Troubleshooting](#troubleshooting)
-7. [Contact](#contact)
-
----
-
-## AWS Account Information
-
-| Item | Value |
-|------|-------|
-| **AWS Account ID** | 0974-5736-7365 |
-| **AWS Account Name** | vibingcaleb |
-| **Region** | us-east-2 (Ohio) |
-
----
-
-## EC2 Instance Details
-
-| Item | Value |
-|------|-------|
-| **Instance ID** | i-048b1547e5254509c |
-| **Instance Name** | Home4U |
-| **Instance Type** | t3.micro |
-| **Elastic IP Address** | 18.225.42.247 |
-| **AWS-generated DNS** | ec2-18-225-42-247.us-east-2.compute.amazonaws.com |
-| **Public App URL** | https://home4uu.duckdns.org/ |
-| **SSH Username** | ec2-user |
-| **SSH Port** | 22 |
-
----
-
-## Step-by-Step SSH Access
-
-### Windows Users (Using PuTTY)
-
-1. **Obtain the rotated key** through an approved secure channel
-2. **Convert PEM to PPK** using PuTTYgen:
-   - Open PuTTYgen → Load → Select `home4u-rotated` → Save private key
-3. **Connect with PuTTY**:
-   - Host: `ec2-user@18.225.42.247`
-   - Port: 22
-   - SSH → Auth → Browse for your PPK file
-
-### macOS / Linux Users
-
-#### Step 1: Obtain the Rotated Key
-1. Request the current PEM key from the Team Lead through an approved secure channel
-2. Save the rotated key to your `~/.ssh` folder
-
-#### Step 2: Set Permissions
-Open Terminal and run:
+The systemd unit can read these values from `/etc/home4u/home4u.env`. On a production host, keep that file owned by root with mode `600`:
 
 ```bash
-cd ~/.ssh
-chmod 400 home4u-rotated
+sudo install -d -m 700 /etc/home4u
+sudo install -m 600 /dev/null /etc/home4u/home4u.env
 ```
 
-#### Step 3: Connect to EC2
-Run this command in Terminal:
+Populate the file through an authorized administrative channel. Do not paste real values into issues, pull requests, screenshots, logs, or documentation.
 
-```bash
-ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247
-```
+## Demo accounts
 
-**Expected Result:**
-```
-The authenticity of host '18.225.42.247 (18.225.42.247)' can't be established.
-ECDSA key fingerprint is SHA256:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.
-Are you sure you (yes/no)? want to continue connecting yes
-Warning: Permanently added '18.225.42.247' (ECDSA) to the list of known hosts.
-```
+`application/backend/seed.py` seeds the style catalog without creating a user by default. To create an intentional demo account, supply both demo variables at runtime. Never use a predictable demo password on an internet-facing deployment.
 
-#### Step 4: Verify Connection
-Once connected, you should see the command prompt change to:
-```
-[ec2-user@ip-172-31-13-59 ~]$
-```
+## If a secret is exposed
 
----
-
-## Database Access Instructions
-
-### Current Production Database
-
-Home4U production currently uses **SQLite**, stored at:
-`/home/ec2-user/data/home4u.db`
-
-### After SSH Connection:
-
-#### Option 1: Check users
-
-Run this command on the EC2 server:
-
-```bash
-sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"
-```
-
-#### Option 2: Check project count
-
-```bash
-sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"
-```
-
-#### Option 3: Open interactive SQLite shell
-
-```bash
-sqlite3 /home/ec2-user/data/home4u.db
-```
-
----
-
-## PEM Key Setup
-
-### For macOS / Linux
-
-```bash
-# Navigate to where you saved the file
-cd ~/.ssh
-
-# Set permissions (REQUIRED - otherwise SSH will fail)
-chmod 400 home4u-rotated
-
-# Test SSH connection
-ssh -i home4u-rotated ec2-user@18.225.42.247
-```
-
-### For Windows (PowerShell)
-
-```powershell
-# Set permissions
-icacls home4u-rotated /inheritance:r
-icacls home4u-rotated /grant:r "$($env:USERNAME):(R)"
-```
-
-### For Windows (Using Git Bash)
-
-```bash
-chmod 400 home4u-rotated
-ssh -i home4u-rotated ec2-user@18.225.42.247
-```
-
----
-
-## Troubleshooting
-
-### Problem: "Permission Denied (publickey)"
-
-**Cause:** PEM file permissions are too open
-
-**Solution:**
-```bash
-chmod 400 ~/.ssh/home4u-rotated
-```
-
----
-
-### Problem: "Connection Timed Out"
-
-**Cause:** Security group not allowing your IP
-
-**Solution:**
-1. Go to AWS Console → EC2 → Security Groups
-2. Check inbound rules for SSH (port 22)
-3. Your IP needs to be allowed
-
----
-
-### Problem: "Host Key Verification Failed"
-
-**Cause:** Server was recreated, old key cached
-
-**Solution:**
-```bash
-ssh-keygen -R 18.225.42.247
-ssh-keygen -R ec2-18-225-42-247.us-east-2.compute.amazonaws.com
-```
-
----
-
-### Problem: "Database file missing"
-
-**Cause:** Deployment did not initialize the production data path yet.
-
-**Solution:**
-```bash
-# Check expected production DB path
-ls -lah /home/ec2-user/data/home4u.db
-
-# Re-run deploy if missing
-cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
-bash application/deployment/deploy_fix.sh
-```
-
----
-
-### Problem: "sqlite3: command not found"
-
-**Cause:** SQLite CLI package is not installed on the instance.
-
-**Solution:**
-```bash
-sudo yum install -y sqlite
-```
-
----
-
-## Quick Reference Commands
-
-| Task | Command |
-|------|---------|
-| **SSH Connect** | `ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247` |
-| **Open App** | `https://home4uu.duckdns.org/` |
-| **List users** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"` |
-| **Count projects** | `sqlite3 /home/ec2-user/data/home4u.db "SELECT COUNT(*) FROM room_projects;"` |
-| **Open DB shell** | `sqlite3 /home/ec2-user/data/home4u.db` |
-| **Exit DB shell** | `.quit` |
-| **Exit SSH** | `exit` |
-
----
-
-## What to Do If Still Having Issues
-
-1. **Double-check the IP address**: Make sure you're using `18.225.42.247` for SSH (app URL is `https://home4uu.duckdns.org/`)
-2. **Verify key file location**: Use the full path like `~/.ssh/home4u-rotated`
-3. **Check permissions**: Run `ls -la ~/.ssh/home4u-rotated` - should show `-r--------`
-4. **Try with verbose mode**: `ssh -v -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247`
-
----
-
-## Contact
-
-If you have followed all steps exactly and still cannot connect:
-
-- **Team Lead**: Caleb Ponce - cponce8@sfsu.edu
-- **Backend Lead**: [To be assigned]
-
----
-
-## File Manifest
-
-| File | Description |
-|------|-------------|
-| `README.md` | This instruction file |
-| `home4u-rotated` | Current SSH private key for EC2 access, distributed out-of-band |
-
----
-
-*Last Updated: 2026-04-20*
-*Follow steps exactly in order - do not skip any step*
+1. Revoke or rotate it at the provider.
+2. Remove it from the current tree.
+3. Audit provider and application logs for misuse.
+4. Purge it from Git history when appropriate.
+5. Notify affected collaborators and redeploy with the replacement secret.

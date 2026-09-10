@@ -196,8 +196,8 @@ PostgreSQL adoption should be done by setting `DATABASE_URL` and running Alembic
 database before switching deployment traffic.
 
 Public repository docs and smoke-test examples should use a single `HOME4U_PUBLIC_URL` value
-backed by a stable domain or Elastic IP. Avoid committing the temporary EC2 public hostname
-into repo documentation. The current stable public base URL is `https://home4uu.duckdns.org/`, secured with HTTPS via Let's Encrypt.
+backed by a stable domain. Validate DNS and the complete TLS certificate chain before publishing
+that URL as a live demo. The former public deployment is currently unlisted while TLS is repaired.
 
 
 Do not include secrets or credentials in this file.
@@ -258,7 +258,7 @@ Suggested pull request workflow:
 
 ## License
 
-License to be determined.
+Home4U is available under the repository's [MIT License](../LICENSE).
 
 ---
 

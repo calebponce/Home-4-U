@@ -176,6 +176,7 @@ def test_analysis_quality_benchmarks():
             )
             project = RoomProject(
                 user_id=user_id,
+                name=f"{case['project']['room_type']} Benchmark",
                 room_type=case["project"]["room_type"],
                 budget=case["project"]["budget"],
             )

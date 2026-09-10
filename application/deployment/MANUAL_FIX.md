@@ -1,104 +1,61 @@
-# Manual Fix Instructions for AWS Server
+# Home4U deployment recovery guide
 
-Since I cannot connect to your AWS server remotely, please follow these steps manually.
-Stable Elastic IP (SSH only): `18.225.42.247`.
-AWS-generated DNS: `ec2-18-225-42-247.us-east-2.compute.amazonaws.com`.
-Public app URL: `https://home4uu.duckdns.org/` (HTTPS, secured with Let's Encrypt).
-Because the instance uses an Elastic IP, the IP remains stable across restarts. The domain `home4uu.duckdns.org` is kept in sync via a systemd timer running every 5 minutes.
+This public guide intentionally uses placeholders. Keep hostnames, account identifiers, SSH keys, database paths, and credentials in private operations documentation.
 
----
+## 1. Connect to the host
 
-## Step 1: SSH into your server
 ```bash
-ssh -i ~/.ssh/home4u-rotated ec2-user@18.225.42.247
+ssh -i /secure/path/to/key <ssh-user>@<host>
 ```
 
----
+## 2. Configure production secrets
 
-## Step 2: Confirm the production secret is configured
+Create a root-owned environment file outside the repository:
+
 ```bash
-sudo mkdir -p /etc/home4u
-sudo test -s /etc/home4u/home4u.env && grep '^HOME4U_SECRET_KEY=' /etc/home4u/home4u.env
+sudo install -d -m 700 /etc/home4u
+sudo install -m 600 /dev/null /etc/home4u/home4u.env
+sudoedit /etc/home4u/home4u.env
 ```
 
-If nothing prints, create the file before restarting the backend:
+At minimum, set a strong `HOME4U_SECRET_KEY`. Add `DATABASE_URL`, CORS origins, and persistent data/upload paths when the deployment requires them. Do not place real values in this repository.
+
+## 3. Update and deploy
+
 ```bash
-sudo sh -c 'printf "HOME4U_SECRET_KEY=replace-with-a-long-random-secret\n" > /etc/home4u/home4u.env'
-sudo chmod 600 /etc/home4u/home4u.env
+cd /path/to/Home-4-U
+git fetch origin
+git switch master
+git pull --ff-only origin master
+bash application/deployment/deploy_fix.sh
 ```
 
----
+## 4. Validate services
 
-## Step 3: Check if backend is running
 ```bash
 sudo systemctl status home4u-backend --no-pager
-curl -s http://127.0.0.1:8000/health
-```
-
-If not running, start it:
-```bash
-sudo systemctl restart home4u-backend
-sudo journalctl -u home4u-backend -n 80 --no-pager
-```
-
----
-
-## Step 4: Check if database is seeded
-```bash
-sqlite3 /home/ec2-user/data/home4u.db "SELECT id, email FROM users LIMIT 10;"
-```
-
-If empty, run seed:
-```bash
-cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/backend
-source .venv/bin/activate
-HOME4U_ENV=production HOME4U_DATA_DIR=/home/ec2-user/data python seed.py
-sudo systemctl restart home4u-backend
-```
-
----
-
-## Step 5: Fix nginx configuration
-```bash
-cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
-PUBLIC_DNS="$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
-PUBLIC_IP="$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
-SERVER_NAMES="$PUBLIC_DNS $PUBLIC_IP"
-
-# Prevent `server_name _` conflicts with distro defaults.
-if [ -f /etc/nginx/conf.d/default.conf ]; then
-  sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled
-fi
-
-sed "s/__SERVER_NAMES__/$SERVER_NAMES/g" application/deployment/nginx.conf | \
-  sudo tee /etc/nginx/conf.d/home4u.conf >/dev/null
-```
-
----
-
-## Step 6: Restart nginx and test
-```bash
 sudo nginx -t
-sudo systemctl restart nginx
+curl -fsS http://127.0.0.1:8000/health
+curl -fsS http://127.0.0.1/health
 ```
 
----
+The health check deliberately avoids user credentials. Register a disposable account through the application when an authenticated smoke test is required.
 
-## Step 7: Test login
+## 5. Validate the public endpoint
+
+Before advertising a live demo, verify:
+
+- DNS resolves to the intended host.
+- The TLS certificate covers the published hostname and presents a valid full chain.
+- HTTP redirects to HTTPS.
+- `/health`, the frontend, `/api/*`, and `/uploads/*` use the intended proxy routes.
+- No default or predictable user credentials exist.
+
+## 6. Troubleshooting
+
 ```bash
-curl -X POST http://localhost/api/auth/login \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=test@example.com&password=test123"
+sudo journalctl -u home4u-backend -n 120 --no-pager
+sudo tail -n 120 /var/log/nginx/error.log
 ```
 
-Expected response should contain `"access_token"`
-
----
-
-## If Frontend Build is Missing
-If you get "404 Not Found" for the frontend:
-```bash
-cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship/application/frontend
-npm install
-npm run build
-```
+If a key, password, account identifier, or private host detail was previously committed, treat it as exposed and rotate or replace it before redeploying.

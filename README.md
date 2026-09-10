@@ -1,290 +1,149 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/NZDUfFQM)
-# CSC648 / CSC848 — Software Engineering Repository
+# Home4U
 
-![Course](https://img.shields.io/badge/Course-CSC648%20%2F%20CSC848-blue)
-![Discipline](https://img.shields.io/badge/Discipline-Software%20Engineering-blueviolet)
-![Team Based](https://img.shields.io/badge/Project-Team--Based-orange)
-![Lifecycle](https://img.shields.io/badge/Focus-Full%20Lifecycle-green)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
+**A data-driven room transformation planner for renters and first-time apartment dwellers.**
 
-This repository is the official workspace for the CSC648/848 Software Engineering course project. It is used 
-for **all milestones, documentation, prototypes, and the final product**.
+[![App Quality](https://github.com/calebponce/Home-4-U/actions/workflows/app-quality.yml/badge.svg)](https://github.com/calebponce/Home-4-U/actions/workflows/app-quality.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](application/frontend)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](application/backend)
 
-This course simulates a real world software engineering environment. Expectations around ownership, communication, 
-and delivery are enforced accordingly.
+Home4U turns room inspiration into an actionable plan. A user creates a room project, uploads a photo, selects a target design style and budget, and receives an explainable comparison with prioritized recommendations that can be saved and refined.
 
----
+> **Portfolio status:** The application and automated tests are available in this repository. The former public demo is temporarily unlisted while its TLS configuration is repaired.
 
-## Initial Setup Instructions
+![Home4U product design concept](docs/mockups/home4u-redesign-concept.svg)
 
-Complete the following steps **as soon as the repository is created**, and no later than  
-the **second lecture** of the semester.
+_Product design concept illustrating the dashboard and transformation workspace._
 
-By **the second lecture of the semester**, any student who does not belong to a team or whose team has not completed all 
-required steps below will be **dropped from the course**. No exceptions.
+## Product flow
 
----
+1. Create an account and a room project.
+2. Select a target style, room type, and budget.
+3. Upload a room image or use a sample room.
+4. Analyze room signals and compare them with structured style definitions.
+5. Review style-match scores, a concept board, and budget-aware recommendations.
+6. Save the plan and track recommendation completion.
 
-## Team Lead or GitHub Master
+## Engineering highlights
 
-### Repository Naming
+- **Full-stack application:** React 19 and Vite frontend with a FastAPI backend.
+- **Explainable recommendations:** deterministic style scoring keeps the primary analysis reproducible and reviewable.
+- **Project persistence:** SQLAlchemy models store users, room projects, images, analysis runs, scores, and recommendations.
+- **Database evolution:** Alembic migrations support controlled schema upgrades; SQLite is the development default and `DATABASE_URL` enables PostgreSQL.
+- **Authentication hardening:** JWT sessions, normalized email handling, production secret validation, and configurable login throttling.
+- **Production routing:** Nginx serves the frontend and proxies `/api/*` and `/uploads/*` to the backend.
+- **Quality automation:** GitHub Actions runs frontend tests, accessibility/smoke coverage, linting, backend migrations, and API smoke tests.
+- **Operational diagnostics:** request IDs, response-time headers, health checks, and persisted analysis history support debugging and QA.
 
-Replace your GitHub username in the repository name with your **team alias**.
+## Architecture
 
-Example:
-
-If your repository is initially named:
-
-`csc648-848-03-sp26-project-jortizco`
-
-and your team alias is `StackOverflowSurvivors`, rename it to:
-
-`csc648-848-03-sp26-project-stackoverflowsurvivors`
-
-
-This naming convention is mandatory and used for grading, automation, and evaluation.
-
-##
-
-### Add Team Members
-
-Once the Team Lead or GitHub Master creates the repository, the instructor will assign **admin permissions** to those roles.
-
-After that:
-
-- Add **ALL** team members as collaborators with **WRITE** permissions only.
-- Team members **must accept the invitation** for it to count.
-- Only the **Team Lead** and **GitHub Master** may have **ADMIN** permissions.
-
-Improper permissions may result in grading penalties.
-
----
-
-## All Team Members
-
-### Sign the Team Contract
-
-Every student, including the Team Lead, **must** sign the following contract:
-
-🔗 **[Team Contract](https://forms.gle/dxATAsa9isXKbcBn7)**
-
-- The contract must be signed **by the second lecture** of the semester.
-- Failure to sign may result in being dropped from the course.
-
-##
-
-### Team Information
-
-Every member of the team must complete and maintain the following table.
-
-This information is used throughout the semester for communication, grading, and project evaluation.
-
-| Student | Full Name | SFSU Email | GitHub Username | Discord Username | Role(s) | Contract Signed |
-|:------:|:---------:|:----------:|:---------------:|:----------------:|:------:|:---------------:|
-| #1 | Caleb Ponce | cponce8@sfsu.edu| calebponce | fusionn8 | Team Lead | Yes |
-| #2 |Mason Lee |mlee82@sfsu.edu |mlee82 |masonl | | Yes |
-| #3 | Christopher Quach | cquach@sfsu.edu | rexchris2 | tanglungg |  | Yes |
-| #4 | Tyler Morris | tmorris6@sfsu.edu |  tylerrendon| sinigang4463| Unsure  | Yes |
-| #5 | Dias Almat | dalmat@sfsu.edu | vincivv | vinciv |  | Yes |
-| #6 | | | | | | No |
-| #7 | | | | | | No |
-
-## 
-
-### Roles
-
-Roles indicate **primary responsibility**, not exclusivity.  
-Every student must contribute to **all** aspects of the project and documentation.
-
-Suggested roles:
-
-- **Team Lead** — Coordinates work, enforces deadlines, and represents the team.
-- **Backend Lead** — Server side logic, APIs, scalability, and performance.
-- **Frontend Lead** — UI, UX, accessibility, and client side behavior.
-- **Software Architect** — System structure and high level design decisions.
-- **Database Administrator** — Data modeling, integrity, performance, and security.
-- **GitHub Master** — Branching strategy, merges, repository hygiene.
-- **Technical Writer** — Documentation quality and clarity.
-- **Scrum Master** — Agile process facilitation and workflow discipline.
-
-- Students may hold multiple roles.
-- All roles must be assigned by the **second lecture**, except Team Lead, which must be assigned immediately.
-- Roles may change during the semester, except for Team Lead.
-
----
-
-## Project Information
-
-The Team Lead or GitHub Master is responsible for keeping this table **up to date at all times**.
-
-This URL will be used to test prototypes and the final product.
-
-If the URL does not work at the time of testing, the team will receive **no credit**.
-
-Use one stable public base URL for repository documentation and smoke-test snippets. Treat
-`HOME4U_PUBLIC_URL` as the single source of truth, and point it at a custom domain or an
-Elastic-IP-backed hostname instead of the temporary EC2-generated public DNS name.
-
-| Team Alias | Project Name | Project URL | Decision Making Policy |
-|:----------:|:------------:|:-----------:|:----------------------:|
-| Vibecoding for Internship | Home4U | https://home4uu.duckdns.org/ | Consensus |
-
-## Deployment Info
-
-Set one public base URL and reuse it across all manual smoke tests:
-```bash
-export HOME4U_PUBLIC_URL="https://home4uu.duckdns.org"
+```mermaid
+flowchart LR
+    User[Browser] --> UI[React + Vite]
+    UI -->|/api/*| Proxy[Nginx]
+    UI -->|/uploads/*| Proxy
+    Proxy --> API[FastAPI]
+    API --> Auth[JWT auth + rate limiting]
+    API --> Analysis[Room analysis + scoring]
+    API --> Data[SQLAlchemy]
+    Data --> DB[(SQLite / PostgreSQL)]
+    API --> Files[(Uploaded images)]
 ```
 
-- Public App URL: `$HOME4U_PUBLIC_URL`
-- Proxied API Base: `$HOME4U_PUBLIC_URL/api/`
-- Public Health Check: `$HOME4U_PUBLIC_URL/health`
-- Test login (returns JWT):
-  ```bash
-  curl -X POST -F 'username=test@example.com' -F 'password=test123' \
-    "$HOME4U_PUBLIC_URL/api/auth/login"
-  ```
+The frontend and production proxy share the same public contract: browser requests use `/api/*`, while the backend exposes unversioned routes internally. See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) for the generated endpoint and runtime inventory.
 
-Production routing:
-- Browser/frontend requests `http://<host>/api/*`
-- Nginx strips `/api` and forwards the request to FastAPI on `127.0.0.1:8000`
-- Uploaded assets are served through `http://<host>/uploads/*`
-- Do not commit temporary EC2 public hostnames into repo docs. If the instance is stopped/started,
-  the AWS-generated hostname can change unless the deployment uses an Elastic IP or custom domain.
-- Trusted HTTPS is not currently available on the raw EC2 `amazonaws.com` hostname. A custom domain
-  or load balancer hostname is required before Let’s Encrypt or AWS-managed TLS can be added cleanly.
+## Repository layout
 
-### Deployment / Ops Checklist (AWS)
+```text
+application/
+├── backend/       FastAPI routes, services, models, migrations, and tests
+├── frontend/      React application, styles, and UI tests
+├── deployment/    Nginx, systemd, and deployment scripts
+└── credentials/   Safe credential-handling policy (no live credentials)
+docs/               Product design artifacts
+milestones/         Archived course deliverables and project history
+```
 
-1. Pull latest code and restart the service
-   ```bash
-   cd /home/ec2-user/csc648-848-project-sp26-vibecoding-for-internship
-   git fetch origin
-   git switch master
-   git pull origin master
-   bash application/deployment/deploy_fix.sh
-   ```
-2. Smoke test the public health endpoint and proxied API
-   ```bash
-   curl -sf "$HOME4U_PUBLIC_URL/health"
-   curl -X POST -F 'username=test@example.com' -F 'password=test123' \
-     "$HOME4U_PUBLIC_URL/api/auth/login"
-   ```
-   - Health and API responses expose `X-Request-ID` and `X-Response-Time` headers to simplify QA tracing.
-3. Keep code/DB in sync
-   - Ensure shell and service use the same DB (`DATABASE_URL` if changed).
-   - For managed relational DB upgrades, run `application/backend/run_migrations.sh upgrade`.
-   - For an existing database created before Alembic was added, stamp it once with `application/backend/run_migrations.sh stamp head`.
-   - If a user exists locally but not on AWS, add/reset once in the AWS DB.
-4. Service management
-   - Managed by systemd unit `home4u-backend` (uvicorn on `127.0.0.1:8000`, exposed publicly through Nginx).
-   - The repo service unit supports an optional `/etc/home4u/home4u.env` file for values such as `HOME4U_SECRET_KEY`, `HOME4U_CORS_ORIGINS`, and the login throttle settings (`HOME4U_LOGIN_RATE_LIMIT_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_IP_ATTEMPTS`, `HOME4U_LOGIN_RATE_LIMIT_WINDOW_SECONDS`).
-   - Logs: `journalctl -u home4u-backend -n 200 --no-pager`.
+## Run locally
 
----
+### Prerequisites
 
-## Repository Structure
+- Python 3.12
+- Node.js 18 or newer
+- npm
 
-- No code may exist in the root directory.
-- All application source code must be stored inside the `application/` folder.
-- The `application` folder may be renamed to match your project name.
+### Backend
 
-## 
+```bash
+cd application/backend
+python3 -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python seed.py                  # seeds styles; demo users are opt-in
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
 
-### Milestones
+The API is available at `http://127.0.0.1:8000`; interactive documentation is at `http://127.0.0.1:8000/docs`.
 
-Each milestone folder must contain two versions:
+### Frontend
 
-1. **Version 1 (V1)**  
-   - Submitted for feedback.  
-   - Frozen after submission and may not be edited.
+```bash
+cd application/frontend
+npm ci
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
 
-2. **Version 2 (V2)**  
-   - Incorporates instructor and TA feedback.  
-   - Final graded submission.
+Open `http://127.0.0.1:5173`.
 
-Version 2 of a milestone is due at the same time as Version 1 of the next milestone.
+## Tests and quality checks
 
-Example:  
-When submitting **Milestone 2 V1**, the Milestone 1 folder must contain:
-- Milestone 1 V1  
-- Milestone 1 V2 (with revisions)
+```bash
+# Frontend
+cd application/frontend
+npm ci
+npm test
+npm run lint
 
-Each milestone includes its own README file with submission instructions and grading rubrics. Rubrics are applied 
-exactly as written.
+# Backend
+cd ../backend
+pip install -r requirements.txt
+./run_smoke_tests.sh
+```
 
-##
+The CI workflow also upgrades a fresh SQLite database through every Alembic migration before running backend smoke tests.
 
-### Credentials Folder
+## Configuration
 
-The folder `application/credentials/` must not be renamed.
+The application runs locally with safe development defaults. Production deployments should provide secrets outside the repository.
 
-It will contain access instructions required by the CTO or other authorized personnel.  
-Additional details will be provided when Milestone 1 is assigned.
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Optional relational database connection; defaults to SQLite locally |
+| `HOME4U_SECRET_KEY` | Required secret for production JWT signing |
+| `HOME4U_CORS_ORIGINS` | Optional comma-separated direct backend origins |
+| `HOME4U_DATA_DIR` | Persistent production data directory |
+| `HOME4U_UPLOAD_DIR` | Uploaded-image storage location |
+| `HOME4U_MAX_UPLOAD_BYTES` | Maximum upload size |
+| `VITE_API_BASE` | Frontend API base; defaults to `/api` |
 
----
+See [application/README.md](application/README.md) for the full configuration and migration reference.
 
-## Submission and Grading Policies
+## My contribution
 
-**Note:** The use of AI tools is permitted only as a productivity aid. AI may support analysis, exploration, or 
-iteration, but it must never replace your own understanding, judgment, or ownership. Any work committed to the 
-repository must be fully understood and defensible by the student who committed it. Additional details will be 
-discussed during the first team meetings.
+I served as **Team Lead and System Architecture lead**. In addition to coordinating delivery and maintaining the engineering documentation, my commits covered protected workspace flows, authentication and health hardening, migration/deployment automation, room-analysis diagnostics, scoring and recommendation UX, and post-demo product improvements.
 
-The following rules apply to all milestones and are non-negotiable.
+This was a five-person CSC 648/848 software-engineering project. The complete team history is intentionally preserved so individual and collaborative contributions remain attributable.
 
-- All work must be committed to the `master` branch. Only the `master` branch will be graded.
-- This course is graded on ownership and quality, not quantity. By committing work, you assert that you fully 
-  understand it and can explain and defend the related design decisions, architectural trade-offs, and implementation 
-  choices during team meetings with the instructor.
-- Work that cannot be explained or defended will not be considered a valid contribution and will be graded accordingly.
-- Your work is evaluated using the same criteria applied in real software industry environments; quality, clarity, 
-  correctness, maintainability, communication, and ownership of decisions matter more than volume of code.
-- Due dates are final. Plan ahead.
-- The Team Lead is responsible for milestone submissions. Incomplete documents, broken links, or non-functional 
-  deployments will result in a zero for that deliverable.
-- For each milestone version 1, team members must complete a feedback survey providing feedback on the team as a whole and on 
-  individual team members. This feedback is for the instructor’s eyes only. Any issues will be addressed directly 
-  with the team by the instructor without referencing the feedback itself or identifying who provided it.
-- Late submissions are not accepted.
-- Each milestone consists of two versions:
-  - **Version 1 (V1):** Submitted for feedback. The strongest Version 1 submission for each milestone may receive up to 3 points of extra credit for team members who contributed consistently and demonstrated ownership.
-  - **Version 2 (V2):** Final graded submission incorporating feedback.
+## Team
 
-For complete course policies and expectations, refer to the official syllabus on Canvas.
+- [Caleb Ponce](https://github.com/calebponce) — Team Lead / System Architecture
+- [Mason Lee](https://github.com/mlee82) — Data Modeling / Scoring Engine
+- [Christopher Quach](https://github.com/rexchris2) — Frontend Development
+- [Tyler Morris](https://github.com/tylerrendon) — Backend / AI Integration
+- [Dias Almat](https://github.com/vincivv) — Technical Writing
 
----
+Originally developed in the [SFSU course repository](https://github.com/sfsu-joseo/Home4U). Course milestones remain under [`milestones/`](milestones/) as an engineering record, but they are not required to run the application.
 
-## Grade Appeal Policy
+## License
 
-Grade appeals must be submitted within one week of the grade being posted on Canvas.
-
-To request a grade review:
-1. Schedule office hours with the instructor.
-2. Clearly identify where points were deducted in error based on the posted rubric.
-
-After one week, all grades are final.
-
----
-
-## Final Reminder
-
-This course simulates a real software engineering environment.
-
-You are expected to plan, communicate, take ownership of your decisions, and deliver working systems on time. The goal is not only to ship software, but to understand, explain, and defend the engineering decisions behind it.
-
-The work you produce should be something you can confidently discuss in interviews and include in your professional portfolio.
-
----
-
-## Copyright
-
-© 2026 Vibecoding for Internship. All rights reserved.
-
-Each team must replace **Team Alias** with their approved team alias. Repositories that do not update this section will be considered incomplete.
-
-No part of this repository may be reproduced, distributed, or transmitted without prior written permission from the instructor or the owning team.
-
----
-
-*This document may be updated during the semester. Students are responsible for reviewing the latest version.*
+This project is available under the [MIT License](LICENSE). Contributor attribution is preserved in the Git history.

@@ -141,14 +141,11 @@ nginx -t
 systemctl restart nginx
 echo "Nginx restarted"
 
-# Step 5: Test the full flow
+# Step 5: Test the public health endpoint without requiring user credentials
 echo ""
-echo "[5/5] Testing login endpoint..."
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost/api/auth/login \
-    -H "Content-Type: application/x-www-form-urlencoded" \
-    -d "username=test@example.com&password=test123")
-
-echo "Login response: $LOGIN_RESPONSE"
+echo "[5/5] Testing health endpoint..."
+curl -fsS http://localhost/health
+echo ""
 
 echo ""
 echo "=== Fix Complete! ==="
