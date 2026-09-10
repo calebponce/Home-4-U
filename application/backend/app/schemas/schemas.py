@@ -191,6 +191,48 @@ class ShoppingPlanItem(BaseModel):
     products: List[ShoppingProductMatch] = []
 
 
+class OptimizedPlanItem(BaseModel):
+    plan_item_key: str
+    plan_item_label: str
+    category: str
+    room_zone: str
+    priority_rank: int = Field(ge=1)
+    product_key: str
+    product_name: str
+    retailer: str
+    estimated_cost: float = Field(ge=0.0)
+    match_label: str
+    source_kind: Literal["catalog", "search", "allocation"]
+    url: Optional[str] = None
+
+
+class OptimizedPlanScenario(BaseModel):
+    key: Literal["economical", "balanced", "design-focused"]
+    title: str
+    description: str
+    budget_ceiling: float = Field(ge=0.0)
+    total_cost: float = Field(ge=0.0)
+    budget_remaining: float = Field(ge=0.0)
+    budget_usage_percent: float = Field(ge=0.0, le=100.0)
+    coverage_count: int = Field(ge=0)
+    coverage_total: int = Field(ge=0)
+    coverage_percent: float = Field(ge=0.0, le=100.0)
+    impact_score: float = Field(ge=0.0, le=100.0)
+    constraint_status: Literal["valid"] = "valid"
+    items: List[OptimizedPlanItem] = Field(default_factory=list)
+    excluded_items: List[str] = Field(default_factory=list)
+
+
+class PlanOptimization(BaseModel):
+    algorithm: str
+    project_budget: float = Field(ge=0.0)
+    currency: str = "USD"
+    evaluated_combinations: int = Field(ge=0)
+    hard_constraints: List[str] = Field(default_factory=list)
+    assumptions: List[str] = Field(default_factory=list)
+    scenarios: List[OptimizedPlanScenario] = Field(default_factory=list)
+
+
 class SuggestedTagDetail(BaseModel):
     id: int
     name: str
@@ -253,6 +295,7 @@ class ProjectAnalysisResponse(BaseModel):
     style_scores: List[StyleScoreDetail]
     recommendations: List[RecommendationResponse]
     shopping_plan: List[ShoppingPlanItem] = []
+    optimization: Optional[PlanOptimization] = None
     matching_aspects: List[str] = []
     gap_aspects: List[str] = []
     ai_powered: bool = False

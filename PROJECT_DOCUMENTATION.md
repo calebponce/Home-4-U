@@ -77,6 +77,7 @@ Home-4-U/
 │   │   │   ├── tests_analysis_quality_benchmark.py
 │   │   │   ├── tests_api_smoke.py
 │   │   │   ├── tests_auth_rate_limit.py
+│   │   │   ├── tests_plan_optimizer.py
 │   │   │   ├── tests_search_smoke.py
 │   │   │   └── tests_workspace_analysis_smoke.py
 │   │   ├── alembic.ini
@@ -127,10 +128,14 @@ Home-4-U/
 │   │   └── vite.config.js
 │   └── README.md
 ├── docs
-│   └── mockups
-│       ├── home4u-product-tour-concept.png
-│       ├── home4u-product-tour-flow.png
-│       └── home4u-redesign-concept.svg
+│   ├── mockups
+│   │   ├── home4u-product-tour-concept.png
+│   │   ├── home4u-product-tour-flow.png
+│   │   └── home4u-redesign-concept.svg
+│   └── screenshots
+│       ├── home4u-dashboard.png
+│       ├── home4u-project-plan.png
+│       └── home4u-purchase-board.png
 ├── milestones
 │   ├── M1
 │   │   ├── feedback
@@ -240,7 +245,8 @@ Home-4-U/
 - Authentication: signup, login, JWT session validation, and `/auth/me` checks.
 - Dashboard flow: protected dashboard, style selection, project creation, and workspace launch.
 - Workspace flow: project creation, budget and room-type updates, local photo upload, project analysis, concept-board rendering, and saved recommendations.
-- Project management: recommendation retrieval, completion tracking, and plan refresh.
+- Project management: recommendation retrieval, completion tracking, plan refresh, and three constraint-valid purchasing strategies.
+- Decision support: a bounded grouped exhaustive search compares product combinations under hard budget and one-product-per-recommendation constraints.
 - Discovery: public style catalog plus fuzzy style search.
 
 ---
@@ -260,7 +266,7 @@ Home-4-U/
 | PUT | `/projects/{project_id}` | Protected | `projects.py::update_project` | - |
 | DELETE | `/projects/{project_id}` | Protected | `projects.py::delete_project` | - |
 | GET | `/projects/{project_id}/analysis` | Protected | `projects.py::get_project_analysis` | - |
-| POST | `/projects/{project_id}/analysis` | Protected | `projects.py::analyze_project` | Persists room tags, style scores, and recommendations for Workspace. |
+| POST | `/projects/{project_id}/analysis` | Protected | `projects.py::analyze_project` | Persists room tags, style scores, recommendations, and constraint-optimized purchase plans. |
 | POST | `/projects/{project_id}/photo` | Protected | `projects.py::upload_project_photo` | Accepts JPG, PNG, and WebP uploads up to 5MB. |
 | POST | `/recommendations/` | Protected | `recommendations.py::create_recommendation` | Uses a required `project_id` query parameter. |
 | POST | `/recommendations/generate/{project_id}` | Protected | `recommendations.py::generate_recommendations` | Builds a fresh plan from saved resemblance scores. |
@@ -362,7 +368,7 @@ Frontend URLs:
 - Public-facing repo docs and smoke-test snippets should derive from a single `HOME4U_PUBLIC_URL` value that points to a stable domain or Elastic-IP-backed hostname.
 - Validate DNS and the full TLS certificate chain before publishing a live-demo URL. The former deployment is currently unlisted while TLS is repaired.
 - The production systemd unit supports an optional `/etc/home4u/home4u.env` file for backend environment variables.
-- The backend currently starts without requiring an AI provider key; Workspace analysis is implemented through deterministic backend scoring rather than an external model call.
+- The backend currently starts without requiring an AI provider key; Workspace analysis uses deterministic scoring and a bounded product-combination optimizer rather than depending on an external model call.
 
 ---
 

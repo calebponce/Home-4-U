@@ -19,17 +19,13 @@ Existing inspiration platforms such as Pinterest and Houzz provide visual refere
 
 Home4U solves this gap by:
 
-Allowing users to upload a room image
-
-Capturing room signals such as lighting, palette, and selected design tags
-
-Comparing the room against structured style definitions
-
-Computing a weighted resemblance score
-
-Generating prioritized, budget-aware recommendations
-
-Persisting a project plan that can be reviewed and refined later
+- Allowing users to upload a room image
+- Capturing room signals such as lighting, palette, and selected design tags
+- Comparing the room against structured style definitions
+- Computing a weighted resemblance score
+- Generating prioritized, budget-aware recommendations
+- Comparing constraint-valid Economical, Balanced, and Design Focused purchase plans
+- Persisting a project plan that can be reviewed and refined later
 
 The system focuses on explainability, personalization, and structured decision support rather than simple inspiration browsing.
 
@@ -37,25 +33,17 @@ The system focuses on explainability, personalization, and structured decision s
 
 ## Features
 
-User authentication and account management
-
-Room project creation and management
-
-Image upload and project photo management
-
-Multi-style comparison engine
-
-Weighted resemblance scoring algorithm
-
-Budget-aware prioritization of recommendations
-
-Workspace analysis and saved project plans
-
-Persisted analysis-run history for QA tracing and backend diagnostics
-
-Authenticated internal tag management and style metadata browsing
-
-About page with team introduction and company information
+- User authentication and account management
+- Room project creation and management
+- Image upload and project photo management
+- Multi-style comparison engine
+- Weighted resemblance scoring algorithm
+- Budget-aware prioritization of recommendations
+- Constraint-based product-combination optimization with explicit tradeoffs
+- Workspace analysis and saved project plans
+- Persisted analysis-run history for QA tracing and backend diagnostics
+- Authenticated internal tag management and style metadata browsing
+- About page with team introduction and company information
 
 ---
 

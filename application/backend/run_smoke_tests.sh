@@ -26,6 +26,7 @@ echo "Running backend smoke tests..."
 "$PYTHON_BIN" app/tests_search_smoke.py
 "$PYTHON_BIN" app/tests_workspace_analysis_smoke.py
 "$PYTHON_BIN" app/tests_analysis_quality_benchmark.py
+"$PYTHON_BIN" app/tests_plan_optimizer.py
 "$PYTHON_BIN" app/tests_auth_rate_limit.py
 
 echo "All backend smoke tests passed."

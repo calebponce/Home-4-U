@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](application/frontend)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110-009688?logo=fastapi&logoColor=white)](application/backend)
 
-Home4U turns room inspiration into an actionable plan. A user creates a room project, uploads a photo, selects a target design style and budget, and receives an explainable comparison with prioritized recommendations that can be saved and refined.
+Home4U turns room inspiration into an actionable plan. A user creates a room project, uploads a photo, selects a target design style and budget, and receives an explainable comparison with prioritized recommendations that can be saved and refined. A constraint-based optimizer then compares valid product combinations and produces three distinct purchasing strategies without exceeding the selected budget ceiling.
 
 > **Portfolio status:** The application and automated tests are available in this repository. The former public demo is temporarily unlisted while its TLS configuration is repaired.
 
@@ -25,6 +25,10 @@ Home4U turns room inspiration into an actionable plan. A user creates a room pro
 
 ![Home4U saved analysis signals and purchase board](docs/screenshots/home4u-purchase-board.png)
 
+### Signature feature: constraint plan optimizer
+
+The saved project view generates three valid purchase plans from the same recommendation set. Each plan exposes its budget ceiling, funded steps, remaining budget, objective score, selected retailer option, and any recommendation deferred to satisfy the constraints. This makes the tradeoff logic inspectable instead of presenting an unexplained “best” answer.
+
 ## Product flow
 
 1. Create an account and a room project.
@@ -32,12 +36,15 @@ Home4U turns room inspiration into an actionable plan. A user creates a room pro
 3. Upload a room image or use a sample room.
 4. Analyze room signals and compare them with structured style definitions.
 5. Review style-match scores, a concept board, and budget-aware recommendations.
-6. Save the plan and track recommendation completion.
+6. Compare Economical, Balanced, and Design Focused plans generated under hard budget and product-selection constraints.
+7. Save the plan and track recommendation completion.
 
 ## Engineering highlights
 
 - **Full-stack application:** React 19 and Vite frontend with a FastAPI backend.
 - **Explainable recommendations:** deterministic style scoring keeps the primary analysis reproducible and reviewable.
+- **Constraint-based planning:** a bounded grouped exhaustive search evaluates valid product combinations, enforces the strategy budget ceiling, and selects at most one product for each recommendation.
+- **Visible tradeoffs:** Economical, Balanced, and Design Focused strategies use different objective weights so users can compare coverage, cost efficiency, priority, and style fit instead of accepting one opaque answer.
 - **Project persistence:** SQLAlchemy models store users, room projects, images, analysis runs, scores, and recommendations.
 - **Database evolution:** Alembic migrations support controlled schema upgrades; SQLite is the development default and `DATABASE_URL` enables PostgreSQL.
 - **Authentication hardening:** JWT sessions, normalized email handling, production secret validation, and configurable login throttling.
@@ -55,6 +62,8 @@ flowchart LR
     Proxy --> API[FastAPI]
     API --> Auth[JWT auth + rate limiting]
     API --> Analysis[Room analysis + scoring]
+    Analysis --> Optimizer[Constraint plan optimizer]
+    Optimizer --> Strategies[Economical / Balanced / Design Focused]
     API --> Data[SQLAlchemy]
     Data --> DB[(SQLite / PostgreSQL)]
     API --> Files[(Uploaded images)]
@@ -141,6 +150,8 @@ See [application/README.md](application/README.md) for the full configuration an
 ## My contribution
 
 I served as **Team Lead and System Architecture lead**. In addition to coordinating delivery and maintaining the engineering documentation, my commits covered protected workspace flows, authentication and health hardening, migration/deployment automation, room-analysis diagnostics, scoring and recommendation UX, and post-demo product improvements.
+
+For this portfolio fork, I also led the post-course hardening work and added the constraint-based plan optimizer, its API contract, interactive comparison UI, regression tests, and CI coverage.
 
 This was a five-person CSC 648/848 software-engineering project. The complete team history is intentionally preserved so individual and collaborative contributions remain attributable.
 

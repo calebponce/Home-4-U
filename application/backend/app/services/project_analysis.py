@@ -7,6 +7,7 @@ from urllib.parse import quote_plus, urlparse
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.settings import AI_ANALYSIS_ENABLED, AI_ANALYSIS_MODEL
+from app.services.plan_optimizer import optimize_shopping_plan
 from app.models.database import (
     ProductItem,
     ProjectAnalysisRun,
@@ -967,8 +968,14 @@ def _build_search_product_matches(
     selected_style: Style,
 ) -> list[dict]:
     matches = []
+    # Give the optimizer a real price-versus-fit tradeoff instead of making the
+    # first-ranked result both the cheapest and the strongest match.
+    cost_factors = (1.08, 0.86, 0.97)
     for index, source in enumerate(shopping_item["sources"][:3]):
-        adjusted_cost = round(float(shopping_item["estimated_cost"] or 0.0) * (0.92 + index * 0.08), 2)
+        adjusted_cost = round(
+            float(shopping_item["estimated_cost"] or 0.0) * cost_factors[index],
+            2,
+        )
         matches.append(
             {
                 "key": f"{shopping_item['key']}-search-{index + 1}",
@@ -1196,6 +1203,19 @@ def load_saved_project_analysis(
             f"({round(scan_assessment['confidence_score'] * 100):.0f}%)."
         )
 
+    resolved_budget_tier = (
+        latest_run.budget_tier
+        if latest_run is not None
+        else _infer_budget_tier_from_value(project.budget)
+    )
+    shopping_plan = build_project_shopping_plan(
+        project=project,
+        selected_style=selected_style,
+        recommendations=saved_recommendations,
+        suggested_tags=suggested_records,
+        budget_tier=resolved_budget_tier,
+    )
+
     return {
         "project": project,
         "selected_style": selected_style,
@@ -1208,15 +1228,11 @@ def load_saved_project_analysis(
         "recommendations": saved_recommendations,
         "matching_aspects": [],
         "gap_aspects": [],
-        "shopping_plan": build_project_shopping_plan(
-            project=project,
-            selected_style=selected_style,
-            recommendations=saved_recommendations,
-            suggested_tags=suggested_records,
-            budget_tier=(
-                latest_run.budget_tier
-                if latest_run is not None
-                else _infer_budget_tier_from_value(project.budget)
+        "shopping_plan": shopping_plan,
+        "optimization": optimize_shopping_plan(
+            shopping_plan=shopping_plan,
+            project_budget=float(
+                project.budget or DEFAULT_BUDGET_BY_TIER.get(resolved_budget_tier, 2600.0)
             ),
         ),
     }
@@ -1586,6 +1602,14 @@ def analyze_project_design(
         if _ai_comprehensive else []
     )
 
+    shopping_plan = build_project_shopping_plan(
+        project=project,
+        selected_style=selected_style,
+        recommendations=recommendations,
+        suggested_tags=list(suggested_map.values()),
+        budget_tier=budget_tier,
+    )
+
     return {
         "project": project,
         "selected_style": selected_style,
@@ -1596,12 +1620,10 @@ def analyze_project_design(
         "suggested_tags": suggested_tags_payload,
         "style_scores": style_scores_payload,
         "recommendations": recommendations,
-        "shopping_plan": build_project_shopping_plan(
-            project=project,
-            selected_style=selected_style,
-            recommendations=recommendations,
-            suggested_tags=list(suggested_map.values()),
-            budget_tier=budget_tier,
+        "shopping_plan": shopping_plan,
+        "optimization": optimize_shopping_plan(
+            shopping_plan=shopping_plan,
+            project_budget=float(project.budget or DEFAULT_BUDGET_BY_TIER.get(budget_tier, 2600.0)),
         ),
         "matching_aspects": matching_aspects,
         "gap_aspects": gap_aspects,

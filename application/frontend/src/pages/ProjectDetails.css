@@ -447,6 +447,272 @@
   text-transform: uppercase;
 }
 
+.optimizer-board {
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+  border: 1px solid var(--pd-border);
+  background:
+    linear-gradient(135deg, rgb(var(--pd-accent-rgb) / 0.1), transparent 42%),
+    var(--pd-surface);
+}
+
+.optimizer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.optimizer-head-copy {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.optimizer-head-copy h2,
+.optimizer-plan-summary h3 {
+  margin: 0;
+  color: var(--pd-text);
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.optimizer-head-copy h2 {
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+}
+
+.optimizer-head-copy > p:last-child,
+.optimizer-plan-summary h3 {
+  max-width: 62ch;
+  color: var(--pd-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.optimizer-proof {
+  min-width: 180px;
+  display: grid;
+  gap: 0.16rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--pd-border-strong);
+  background: rgb(var(--pd-accent-rgb) / 0.1);
+  text-align: right;
+}
+
+.optimizer-proof span,
+.optimizer-proof small {
+  color: var(--pd-muted);
+  font-size: 0.67rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.optimizer-proof strong {
+  color: var(--pd-text);
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+}
+
+.optimizer-constraints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.optimizer-constraints span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.4rem 0.62rem;
+  border: 1px solid rgb(var(--pd-accent-rgb) / 0.32);
+  background: rgb(var(--pd-accent-rgb) / 0.08);
+  color: var(--pd-text);
+  font-size: 0.72rem;
+}
+
+.optimizer-scenarios {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.optimizer-scenario {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.9rem;
+  border: 1px solid var(--pd-border);
+  background: var(--pd-surface-soft);
+  color: var(--pd-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.optimizer-scenario:hover {
+  transform: translateY(-2px);
+  border-color: var(--pd-border-strong);
+}
+
+.optimizer-scenario.active {
+  border-color: rgb(var(--pd-accent-rgb) / 0.78);
+  background: rgb(var(--pd-accent-rgb) / 0.12);
+  color: var(--pd-text);
+}
+
+.optimizer-scenario-label {
+  color: var(--pd-text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.optimizer-scenario > strong {
+  color: var(--pd-text);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.optimizer-scenario > span:not(.optimizer-scenario-label) {
+  font-size: 0.72rem;
+}
+
+.optimizer-meter {
+  height: 5px;
+  overflow: hidden;
+  background: rgb(var(--color-paper-50-rgb) / 0.08);
+}
+
+.optimizer-meter span {
+  display: block;
+  height: 100%;
+  background: var(--pd-accent);
+}
+
+.optimizer-plan-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--pd-border);
+  background: rgb(var(--color-paper-50-rgb) / 0.025);
+}
+
+.optimizer-plan-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.optimizer-plan-summary > div:first-child {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.optimizer-plan-summary h3 {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.optimizer-plan-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.optimizer-plan-metrics span {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 104px;
+  padding: 0.6rem 0.7rem;
+  border-left: 2px solid rgb(var(--pd-accent-rgb) / 0.64);
+  background: rgb(var(--color-paper-50-rgb) / 0.04);
+}
+
+.optimizer-plan-metrics small {
+  color: var(--pd-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.optimizer-plan-metrics strong {
+  color: var(--pd-text);
+  font-size: 0.9rem;
+}
+
+.optimizer-item-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.optimizer-item {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.78rem;
+  border: 1px solid var(--pd-border);
+  background: var(--pd-surface-soft);
+}
+
+.optimizer-item-topline,
+.optimizer-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.optimizer-item-topline span {
+  color: var(--pd-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.optimizer-item h4,
+.optimizer-item p {
+  margin: 0;
+}
+
+.optimizer-item h4 {
+  color: var(--pd-text);
+  font-size: 0.9rem;
+}
+
+.optimizer-item p,
+.optimizer-item-footer span {
+  color: var(--pd-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.optimizer-item-footer strong {
+  color: var(--pd-text);
+  font-size: 0.82rem;
+}
+
+.optimizer-tradeoff,
+.optimizer-assumption {
+  margin: 0;
+  color: var(--pd-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.optimizer-tradeoff strong {
+  color: var(--pd-text);
+}
+
+.optimizer-assumption {
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--pd-border);
+  font-size: 0.7rem;
+}
+
 .kanban-header {
   display: flex;
   justify-content: space-between;
@@ -976,18 +1242,28 @@
 @media (max-width: 860px) {
   .kanban-columns,
   .shopping-lane-grid,
-  .project-hero-metrics {
+  .project-hero-metrics,
+  .optimizer-scenarios,
+  .optimizer-item-grid {
     grid-template-columns: 1fr;
   }
 
   .purchase-board-head,
-  .shopping-lane-head {
+  .shopping-lane-head,
+  .optimizer-head,
+  .optimizer-plan-summary {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .purchase-board-summary {
+  .purchase-board-summary,
+  .optimizer-plan-metrics {
     justify-content: flex-start;
+  }
+
+  .optimizer-proof {
+    min-width: 0;
+    text-align: left;
   }
 }
 
@@ -1001,6 +1277,7 @@
   .analysis-card,
   .project-feature-panel,
   .project-photo-panel,
+  .optimizer-board,
   .shopping-board,
   .kanban-board {
     border-radius: 0;

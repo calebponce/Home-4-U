@@ -69,6 +69,69 @@ describe('ProjectDetails smoke states', () => {
           { style_id: 3, style_name: 'Scandinavian', score_value: 82, matched_tags: ['neutral'] },
         ],
         shopping_plan: [],
+        optimization: {
+          algorithm: 'Bounded grouped exhaustive search',
+          evaluated_combinations: 243,
+          hard_constraints: [
+            'Never exceed the strategy budget ceiling',
+            'Select at most one product for each recommendation',
+          ],
+          assumptions: ['Prices are planning estimates'],
+          scenarios: [
+            {
+              key: 'economical',
+              title: 'Economical',
+              description: 'Protect cash and fund the highest-priority changes first.',
+              budget_ceiling: 1560,
+              total_cost: 980,
+              budget_remaining: 1620,
+              budget_usage_percent: 37.7,
+              coverage_count: 2,
+              coverage_total: 4,
+              impact_score: 74,
+              items: [
+                {
+                  plan_item_key: 'sofa',
+                  plan_item_label: 'Main seating anchor',
+                  category: 'Furniture',
+                  room_zone: 'Conversation area',
+                  priority_rank: 1,
+                  product_name: 'Value sofa',
+                  retailer: 'IKEA',
+                  estimated_cost: 760,
+                  match_label: 'Best Value',
+                },
+              ],
+              excluded_items: ['Accent finish'],
+            },
+            {
+              key: 'balanced',
+              title: 'Balanced',
+              description: 'Balance room coverage, priority, style fit, and cost efficiency.',
+              budget_ceiling: 2210,
+              total_cost: 1840,
+              budget_remaining: 760,
+              budget_usage_percent: 70.8,
+              coverage_count: 3,
+              coverage_total: 4,
+              impact_score: 86,
+              items: [
+                {
+                  plan_item_key: 'sofa',
+                  plan_item_label: 'Main seating anchor',
+                  category: 'Furniture',
+                  room_zone: 'Conversation area',
+                  priority_rank: 1,
+                  product_name: 'Balanced sofa',
+                  retailer: 'Wayfair',
+                  estimated_cost: 1040,
+                  match_label: 'Best Fit',
+                },
+              ],
+              excluded_items: [],
+            },
+          ],
+        },
         recommendations: [
           {
             id: 91,
@@ -148,5 +211,26 @@ describe('ProjectDetails smoke states', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent(/enter a positive budget amount/i);
     expect(projectUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it('shows optimization evidence and lets the user compare valid strategies', async () => {
+    const user = userEvent.setup();
+
+    renderProjectDetails();
+
+    expect(
+      await screen.findByRole('heading', { name: /three valid plans. one hard budget/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('243')).toBeInTheDocument();
+    expect(screen.getByRole('tabpanel', { name: /balanced optimized plan/i })).toHaveTextContent(
+      'Balanced sofa',
+    );
+
+    await user.click(screen.getByRole('tab', { name: /economical/i }));
+
+    expect(screen.getByRole('tabpanel', { name: /economical optimized plan/i })).toHaveTextContent(
+      'Value sofa',
+    );
+    expect(screen.getByText(/deferred to respect this ceiling/i)).toBeInTheDocument();
   });
 });

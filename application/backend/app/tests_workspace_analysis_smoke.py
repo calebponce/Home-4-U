@@ -105,6 +105,16 @@ def test_workspace_analysis():
         assert payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
         assert len(payload["shopping_plan"][0]["products"]) >= 1
         assert payload["shopping_plan"][0]["products"][0]["url"].startswith("https://")
+        assert payload["optimization"]["algorithm"] == "Bounded grouped exhaustive search"
+        assert payload["optimization"]["evaluated_combinations"] > 0
+        assert [scenario["key"] for scenario in payload["optimization"]["scenarios"]] == [
+            "economical",
+            "balanced",
+            "design-focused",
+        ]
+        for scenario in payload["optimization"]["scenarios"]:
+            assert scenario["total_cost"] <= scenario["budget_ceiling"]
+            assert scenario["constraint_status"] == "valid"
 
         saved_response = client.get(
             f"/projects/{project.id}/analysis",
@@ -119,6 +129,7 @@ def test_workspace_analysis():
         assert saved_payload["room_state"]["openness"] == "high"
         assert saved_payload["shopping_plan"][0]["sources"][0]["url"].startswith("https://")
         assert len(saved_payload["shopping_plan"][0]["products"]) >= 1
+        assert saved_payload["optimization"]["scenarios"][1]["key"] == "balanced"
 
         runs_response = client.get(
             f"/projects/{project.id}/analysis/runs",

@@ -77,6 +77,8 @@ const SHOPPING_LANES = [
   },
 ];
 
+const EMPTY_SCENARIOS = [];
+
 const getShoppingLaneKey = (index) => {
   if (index === 0) return 'buy-first';
   if (index <= 2) return 'layer-next';
@@ -116,7 +118,9 @@ const ProjectDetails = () => {
   const [generating, setGenerating] = useState(false);
   const [savingBudget, setSavingBudget] = useState(false);
   const [completingRecommendationId, setCompletingRecommendationId] = useState(null);
+  const [activeOptimizerKey, setActiveOptimizerKey] = useState('balanced');
   const shoppingPlan = analysis?.shopping_plan || [];
+  const optimizedScenarios = analysis?.optimization?.scenarios || EMPTY_SCENARIOS;
 
   const fetchData = useCallback(async ({ showSkeleton = true } = {}) => {
     if (showSkeleton) setLoading(true);
@@ -178,6 +182,15 @@ const ProjectDetails = () => {
   useEffect(() => {
     setProjectNameDraft(project?.name || '');
   }, [project?.name]);
+
+  useEffect(() => {
+    if (!optimizedScenarios.length) return;
+    setActiveOptimizerKey((current) => {
+      if (optimizedScenarios.some((scenario) => scenario.key === current)) return current;
+      return optimizedScenarios.find((scenario) => scenario.key === 'balanced')?.key
+        || optimizedScenarios[0].key;
+    });
+  }, [optimizedScenarios]);
 
   const handleUpdateBudget = async (e) => {
     e.preventDefault();
@@ -362,6 +375,9 @@ const ProjectDetails = () => {
   const shoppingProgress = shoppingPlan.length ? Math.round((completedShoppingCount / shoppingPlan.length) * 100) : 0;
   const hasOutstandingPurchases = shoppingPlan.some((item) => !item.is_completed);
   const projectImageUrl = resolveProjectImageUrl(project?.photo_url);
+  const activeOptimizationScenario = optimizedScenarios.find(
+    (scenario) => scenario.key === activeOptimizerKey,
+  ) || optimizedScenarios[0] || null;
 
   const purchaseBoard = (() => {
     const laneMap = new Map(
@@ -622,6 +638,118 @@ const ProjectDetails = () => {
                   className="project-photo-image"
                   loading="lazy"
                 />
+              </div>
+            </section>
+          )}
+
+          {!!activeOptimizationScenario && (
+            <section className="optimizer-board" aria-labelledby="optimizer-heading">
+              <div className="optimizer-head">
+                <div className="optimizer-head-copy">
+                  <p className="project-eyebrow">Constraint Plan Optimizer</p>
+                  <h2 id="optimizer-heading">Three valid plans. One hard budget.</h2>
+                  <p>
+                    Compare product combinations generated from the saved analysis. Every option
+                    stays under its strategy ceiling and uses at most one product per plan step.
+                  </p>
+                </div>
+                <div className="optimizer-proof" aria-label="Optimization evidence">
+                  <span>{analysis.optimization.algorithm}</span>
+                  <strong>
+                    {Number(analysis.optimization.evaluated_combinations || 0).toLocaleString()}
+                  </strong>
+                  <small>valid combinations evaluated</small>
+                </div>
+              </div>
+
+              <div className="optimizer-constraints" aria-label="Hard constraints">
+                {(analysis.optimization.hard_constraints || []).map((constraint) => (
+                  <span key={constraint}>
+                    <CheckCircle2 size={14} aria-hidden="true" />
+                    {constraint}
+                  </span>
+                ))}
+              </div>
+
+              <div className="optimizer-scenarios" role="tablist" aria-label="Optimized room plans">
+                {optimizedScenarios.map((scenario) => {
+                  const isActive = scenario.key === activeOptimizationScenario.key;
+                  return (
+                    <button
+                      key={scenario.key}
+                      type="button"
+                      role="tab"
+                      id={`optimizer-tab-${scenario.key}`}
+                      aria-selected={isActive}
+                      aria-controls="optimizer-plan-panel"
+                      className={`optimizer-scenario ${isActive ? 'active' : ''}`}
+                      onClick={() => setActiveOptimizerKey(scenario.key)}
+                    >
+                      <span className="optimizer-scenario-label">{scenario.title}</span>
+                      <strong>{formatCurrency(scenario.total_cost)}</strong>
+                      <span>{scenario.coverage_count}/{scenario.coverage_total} steps funded</span>
+                      <span className="optimizer-meter" aria-hidden="true">
+                        <span style={{ width: `${Math.min(100, scenario.budget_usage_percent || 0)}%` }} />
+                      </span>
+                      <span>{Math.round(scenario.budget_usage_percent || 0)}% of total budget</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div
+                id="optimizer-plan-panel"
+                className="optimizer-plan-panel"
+                role="tabpanel"
+                aria-label={`${activeOptimizationScenario.title} optimized plan`}
+              >
+                <div className="optimizer-plan-summary">
+                  <div>
+                    <p className="project-eyebrow">{activeOptimizationScenario.title} strategy</p>
+                    <h3>{activeOptimizationScenario.description}</h3>
+                  </div>
+                  <div className="optimizer-plan-metrics">
+                    <span>
+                      <small>Strategy ceiling</small>
+                      <strong>{formatCurrency(activeOptimizationScenario.budget_ceiling)}</strong>
+                    </span>
+                    <span>
+                      <small>Project budget left</small>
+                      <strong>{formatCurrency(activeOptimizationScenario.budget_remaining)}</strong>
+                    </span>
+                    <span>
+                      <small>Impact score</small>
+                      <strong>{Math.round(activeOptimizationScenario.impact_score || 0)}/100</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="optimizer-item-grid">
+                  {(activeOptimizationScenario.items || []).map((item) => (
+                    <article key={`${activeOptimizationScenario.key}-${item.plan_item_key}`} className="optimizer-item">
+                      <div className="optimizer-item-topline">
+                        <span>Priority {item.priority_rank}</span>
+                        <span>{item.match_label}</span>
+                      </div>
+                      <h4>{item.product_name}</h4>
+                      <p>{item.plan_item_label} · {item.room_zone}</p>
+                      <div className="optimizer-item-footer">
+                        <span>{item.retailer}</span>
+                        <strong>{formatCurrency(item.estimated_cost)}</strong>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                {!!activeOptimizationScenario.excluded_items?.length && (
+                  <p className="optimizer-tradeoff">
+                    <strong>Deferred to respect this ceiling:</strong>{' '}
+                    {activeOptimizationScenario.excluded_items.join(', ')}.
+                  </p>
+                )}
+                <p className="optimizer-assumption">
+                  {(analysis.optimization.assumptions || []).join(' · ')}
+                </p>
               </div>
             </section>
           )}

@@ -164,7 +164,7 @@ def find_api_endpoints() -> list[dict[str, str]]:
 
     route_notes = {
         "upload_project_photo": "Accepts JPG, PNG, and WebP uploads up to 5MB.",
-        "analyze_project": "Persists room tags, style scores, and recommendations for Workspace.",
+        "analyze_project": "Persists room tags, style scores, recommendations, and constraint-optimized purchase plans.",
         "create_recommendation": "Uses a required `project_id` query parameter.",
         "generate_recommendations": "Builds a fresh plan from saved resemblance scores.",
         "create_tag": "Prototype admin endpoint; no auth enforcement is currently wired.",
@@ -518,7 +518,8 @@ def generate_documentation() -> None:
 - Authentication: signup, login, JWT session validation, and `/auth/me` checks.
 - Dashboard flow: protected dashboard, style selection, project creation, and workspace launch.
 - Workspace flow: project creation, budget and room-type updates, local photo upload, project analysis, concept-board rendering, and saved recommendations.
-- Project management: recommendation retrieval, completion tracking, and plan refresh.
+- Project management: recommendation retrieval, completion tracking, plan refresh, and three constraint-valid purchasing strategies.
+- Decision support: a bounded grouped exhaustive search compares product combinations under hard budget and one-product-per-recommendation constraints.
 - Discovery: public style catalog plus fuzzy style search.
 
 ---
@@ -608,7 +609,7 @@ Frontend URLs:
 - Public-facing repo docs and smoke-test snippets should derive from a single `HOME4U_PUBLIC_URL` value that points to a stable domain or Elastic-IP-backed hostname.
 - Validate DNS and the full TLS certificate chain before publishing a live-demo URL. The former deployment is currently unlisted while TLS is repaired.
 - The production systemd unit supports an optional `/etc/home4u/home4u.env` file for backend environment variables.
-- The backend currently starts without requiring an AI provider key; Workspace analysis is implemented through deterministic backend scoring rather than an external model call.
+- The backend currently starts without requiring an AI provider key; Workspace analysis uses deterministic scoring and a bounded product-combination optimizer rather than depending on an external model call.
 
 ---
 
