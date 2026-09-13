@@ -107,6 +107,19 @@ def _iter_valid_combinations(groups: list[list[dict]], ceiling: float) -> Iterab
             yield combination
 
 
+def _search_space_size(groups: list[list[dict]]) -> int:
+    """Return the bounded non-empty search space before budget filtering.
+
+    Each recommendation can be skipped or matched to one shortlisted product.
+    Keeping this number in the response makes the exhaustive-search claim
+    inspectable without making runtime-dependent performance promises.
+    """
+    choices = 1
+    for group in groups:
+        choices *= len(group) + 1
+    return max(0, choices - 1)
+
+
 def _score_combination(
     combination: tuple[dict | None, ...],
     *,
@@ -228,6 +241,7 @@ def optimize_shopping_plan(*, shopping_plan: list[dict], project_budget: float) 
     if not any(groups):
         return None
 
+    candidate_combinations_per_scenario = _search_space_size(groups)
     scenarios = []
     evaluated_combinations = 0
     for profile in PROFILE_CONFIG:
@@ -245,6 +259,8 @@ def optimize_shopping_plan(*, shopping_plan: list[dict], project_budget: float) 
         "project_budget": budget,
         "currency": "USD",
         "evaluated_combinations": evaluated_combinations,
+        "candidate_combinations_per_scenario": candidate_combinations_per_scenario,
+        "candidate_combinations_total": candidate_combinations_per_scenario * len(PROFILE_CONFIG),
         "hard_constraints": [
             "Never exceed the strategy budget ceiling",
             "Select at most one product for each recommendation",

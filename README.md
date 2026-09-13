@@ -138,6 +138,23 @@ pip install -r requirements.txt
 
 The CI workflow also upgrades a fresh SQLite database through every Alembic migration before running backend smoke tests.
 
+### Optimizer benchmark
+
+The optimizer bounds its exhaustive search to eight recommendations with at most three shortlisted products each. That creates at most `4^8 - 1` non-empty candidate combinations per strategy, or `196,605` across the three visible strategies. Run the reproducible benchmark from `application/backend`:
+
+```powershell
+# PowerShell (Windows)
+$env:PYTHONPATH = "."
+python app/benchmark_plan_optimizer.py
+```
+
+```bash
+# macOS / Linux
+PYTHONPATH=. python app/benchmark_plan_optimizer.py
+```
+
+It reports median execution time for the maximum supported search space while checking budget, product-selection, and accounting invariants on every generated strategy.
+
 ## Configuration
 
 The application runs locally with safe development defaults. Production deployments should provide secrets outside the repository.
