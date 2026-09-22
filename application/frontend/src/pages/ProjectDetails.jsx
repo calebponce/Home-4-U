@@ -649,8 +649,8 @@ const ProjectDetails = () => {
                   <p className="project-eyebrow">Constraint Plan Optimizer</p>
                   <h2 id="optimizer-heading">Three valid plans. One hard budget.</h2>
                   <p>
-                    Compare product combinations generated from the saved analysis. Every option
-                    stays under its strategy ceiling and uses at most one product per plan step.
+                    Compare saved product candidates and any unsourced budget allocations. Every
+                    option stays under its strategy ceiling and funds at most one choice per step.
                   </p>
                 </div>
                 <div className="optimizer-proof" aria-label="Optimization evidence">

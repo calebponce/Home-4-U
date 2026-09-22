@@ -1,3 +1,5 @@
+import json
+
 from app.services.plan_optimizer import optimize_shopping_plan
 
 
@@ -137,9 +139,46 @@ def test_optimizer_bounds_the_search_to_eight_recommendations():
     assert result["candidate_combinations_total"] == ((4**8) - 1) * 3
 
 
+def test_optimizer_rejects_non_finite_money_without_emitting_invalid_json():
+    shopping_plan = [_shopping_item(1)]
+    for invalid_budget in (float("inf"), float("-inf"), float("nan"), "Infinity"):
+        assert optimize_shopping_plan(
+            shopping_plan=shopping_plan, project_budget=invalid_budget
+        ) is None
+
+    shopping_plan[0]["products"][0]["estimated_cost"] = float("inf")
+    shopping_plan[0]["products"][1]["estimated_cost"] = float("nan")
+    result = optimize_shopping_plan(shopping_plan=shopping_plan, project_budget=800.0)
+
+    assert result is not None
+    assert result["candidate_combinations_per_scenario"] == 1
+    assert all(
+        item["product_key"] == "item-1-alternate"
+        for scenario in result["scenarios"]
+        for item in scenario["items"]
+    )
+    json.dumps(result, allow_nan=False)
+
+
+def test_unsourced_step_is_disclosed_as_an_allocation_not_a_product():
+    result = optimize_shopping_plan(
+        shopping_plan=[{"key": "paint", "label": "Paint", "estimated_cost": 80.0}],
+        project_budget=300.0,
+    )
+
+    assert result is not None
+    assert all(
+        scenario["items"][0]["source_kind"] == "allocation"
+        for scenario in result["scenarios"]
+    )
+    assert any("not purchasable products" in note for note in result["assumptions"])
+
+
 if __name__ == "__main__":
     test_optimizer_returns_distinct_budget_valid_strategies()
     test_optimizer_is_deterministic_and_handles_missing_inputs()
     test_optimizer_preserves_hard_invariants_across_budget_and_candidate_edges()
     test_optimizer_bounds_the_search_to_eight_recommendations()
+    test_optimizer_rejects_non_finite_money_without_emitting_invalid_json()
+    test_unsourced_step_is_disclosed_as_an_allocation_not_a_product()
     print("plan optimizer tests passed")

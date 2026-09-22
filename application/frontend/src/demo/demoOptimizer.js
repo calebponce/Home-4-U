@@ -194,7 +194,7 @@ export const buildDemoOptimization = (projectBudget, items = DEMO_PLAN_ITEMS) =>
     hardConstraints: [
       'Never exceed the strategy budget ceiling',
       'Select at most one product per recommendation',
-      'Use only products attached to the saved analysis',
+      'Use only candidates in this representative analysis',
     ],
     scenarios,
   }

@@ -34,7 +34,9 @@ The demo uses clearly labeled representative data and collects nothing. The comp
 
 ### Signature feature: constraint plan optimizer
 
-The saved project view generates three valid purchase plans from the same recommendation set. Each plan exposes its budget ceiling, funded steps, remaining budget, objective score, selected retailer option, and any recommendation deferred to satisfy the constraints. This makes the tradeoff logic inspectable instead of presenting an unexplained “best” answer.
+The saved project view generates three budget-valid plans from the same recommendation set. Each plan exposes its budget ceiling, funded steps, remaining budget, objective score, selected retailer option or budget allocation, and any recommendation deferred to satisfy the constraints. This makes the tradeoff logic inspectable instead of presenting an unexplained “best” answer.
+
+When a step has no priced candidate, the backend may carry its estimated amount as a **budget allocation**. That is a planning placeholder, not a purchasable retailer product. Invalid or non-finite monetary inputs are ignored before plans are scored, and non-finite project budgets produce no plan.
 
 ## Product flow
 

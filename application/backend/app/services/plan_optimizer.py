@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import product
+from math import isfinite
 from typing import Any, Iterable
 
 
@@ -37,8 +38,9 @@ MATCH_QUALITY = {
 
 def _as_money(value: Any) -> float:
     try:
-        return round(max(0.0, float(value or 0.0)), 2)
-    except (TypeError, ValueError):
+        amount = float(value or 0.0)
+        return round(max(0.0, amount), 2) if isfinite(amount) else 0.0
+    except (TypeError, ValueError, OverflowError):
         return 0.0
 
 
@@ -264,10 +266,11 @@ def optimize_shopping_plan(*, shopping_plan: list[dict], project_budget: float) 
         "hard_constraints": [
             "Never exceed the strategy budget ceiling",
             "Select at most one product for each recommendation",
-            "Use only products attached to the saved analysis",
+            "Use saved candidates or an explicit budget allocation for unsourced steps",
         ],
         "assumptions": [
             "Prices are planning estimates and should be verified with the retailer",
+            "Budget allocations are planning placeholders, not purchasable products",
             "Product dimensions are not yet available, so spatial fit is not enforced",
         ],
         "scenarios": scenarios,

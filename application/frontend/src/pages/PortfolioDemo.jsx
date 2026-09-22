@@ -105,10 +105,10 @@ function PortfolioDemo() {
             </ul>
           </div>
 
-          <div className="portfolio-demo__analysis-card" aria-label="Representative room analysis">
+          <div className="portfolio-demo__analysis-card" aria-label="Illustrative room analysis">
             <div className="portfolio-demo__analysis-topline">
-              <span><ScanLine size={15} aria-hidden="true" /> Saved room analysis</span>
-              <span className="portfolio-demo__live-indicator">Validated</span>
+              <span><ScanLine size={15} aria-hidden="true" /> Illustrative room analysis</span>
+              <span className="portfolio-demo__live-indicator">Sample data</span>
             </div>
             <div className="portfolio-demo__analysis-main">
               <div className="portfolio-demo__score-ring" aria-label="87 percent Scandinavian style alignment">
@@ -145,7 +145,7 @@ function PortfolioDemo() {
           <div><strong>3</strong><span>Distinct strategies</span></div>
           <div><strong>{optimization.evaluatedCombinations.toLocaleString()}</strong><span>Valid combinations at {formatCurrency(budget)}</span></div>
           <div><strong>3</strong><span>Hard constraints enforced</span></div>
-          <div><strong>27</strong><span>Frontend checks</span></div>
+          <div><strong>CI</strong><span>Frontend checks</span></div>
         </section>
 
         <section className="portfolio-demo__optimizer" id="optimizer" aria-labelledby="optimizer-demo-title">
