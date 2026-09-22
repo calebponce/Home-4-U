@@ -1,13 +1,6 @@
-# Project Info
+# Home4U application
 
-
-This directory contains the complete source code for the project.
-
-This README serves as the **main entry point** for the application and is intended to be the primary 
-documentation users, reviewers, and potential employers will see once the project is separated from the course 
-repository at the end of the semester.
-
-The **Technical Writer** or **GitHub Master** is responsible for keeping this document accurate and up to date throughout the project lifecycle.
+This directory contains the complete React/FastAPI application. Start with the [root README](../README.md) for the product tour, public demo, contribution history, and test summary. This page covers local setup and runtime configuration.
 
 ---
 
@@ -126,7 +119,7 @@ Generate a saved plan to create or update a project, upload the photo, and calcu
 
 Review the returned summary, saved recommendations, and project plan.
 
-Screenshots or short examples may be added if helpful.
+For a no-sign-in demonstration, use the [public portfolio case study](https://calebponce.github.io/Home-4-U/). The case study uses representative data; the authenticated application runs from this directory.
 
 ---
 
@@ -183,9 +176,7 @@ For milestone stability, the application still boots safely against the current 
 PostgreSQL adoption should be done by setting `DATABASE_URL` and running Alembic against the target
 database before switching deployment traffic.
 
-Public repository docs and smoke-test examples should use a single `HOME4U_PUBLIC_URL` value
-backed by a stable domain. Validate DNS and the complete TLS certificate chain before publishing
-that URL as a live demo. The former public deployment is currently unlisted while TLS is repaired.
+The hosted backend is not required for the portfolio case study. To deploy the authenticated application, configure a stable public URL and validate DNS and TLS before directing users to it.
 
 
 Do not include secrets or credentials in this file.
@@ -224,8 +215,7 @@ application/
 
 Repository policy:
 
-- The root repository README identifies `master` as the branch used for grading.
-- Feature branches are still recommended for isolated work before merging back into `master`.
+- Use a feature branch for changes and run the local checks before requesting review.
 
 Code standards:
 
@@ -267,7 +257,3 @@ Dias Almat — Technical Writer
 Instructor: Jose Ortiz
 
 ---
-
-**Note:**  
-This README is expected to evolve from a course artifact into a professional project README. Teams should write it with 
-the assumption that it will be read outside the academic context.
